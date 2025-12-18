@@ -43,3 +43,10 @@ data class DoctorStage(
 data class DoctorData(
     val prescription: JsonElement? = null
 )
+
+@Serializable
+data class Message(
+    val from: String,
+    val content: String,
+    val timestamp: String
+)

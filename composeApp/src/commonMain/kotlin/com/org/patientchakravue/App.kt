@@ -1,65 +1,89 @@
 package com.org.patientchakravue
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import kotlinx.coroutines.launch
 
-import patientchakravue.composeapp.generated.resources.Res
-import patientchakravue.composeapp.generated.resources.compose_multiplatform
+sealed class Screen {
+    data object Login : Screen()
+    data object Dashboard : Screen()
+}
+
+class Navigator(initialScreen: Screen) {
+    var currentScreen by mutableStateOf(initialScreen)
+        private set
+
+    private val backStack = mutableListOf<Screen>()
+
+    fun navigateTo(screen: Screen, clearBackStack: Boolean = false) {
+        if (clearBackStack) {
+            backStack.clear()
+        } else {
+            backStack.add(currentScreen)
+        }
+        currentScreen = screen
+    }
+
+    fun canGoBack(): Boolean = backStack.isNotEmpty()
+
+    fun goBack() {
+        if (canGoBack()) {
+            currentScreen = backStack.removeLast()
+        }
+    }
+}
 
 @Composable
-@Preview
 fun App() {
-        MaterialTheme {
-            val sessionManager = remember { SessionManager() }
-            val snackbarHostState = remember { SnackbarHostState() }
-            val scope = rememberCoroutineScope()
+    MaterialTheme {
+        val sessionManager = remember { SessionManager() }
+        val snackbarHostState = remember { SnackbarHostState() }
+        val scope = rememberCoroutineScope()
 
-            // Check session
-            var isLoggedIn by remember { mutableStateOf(sessionManager.getPatient() != null) }
+        val initialScreen = if (sessionManager.getPatient() != null) Screen.Dashboard else Screen.Login
+        val navigator = remember { Navigator(initialScreen) }
 
-            Scaffold(
-                snackbarHost = { SnackbarHost(snackbarHostState) }
-            ) {
-                if (isLoggedIn) {
+        // This is where platform-specific back handling would be connected to navigator.goBack()
+        // For now, we will just manage the screen state.
+
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) {
+            when (navigator.currentScreen) {
+                is Screen.Login -> {
+                    LoginScreen(
+                        onLoginSuccess = {
+                            navigator.navigateTo(Screen.Dashboard, clearBackStack = true)
+                        },
+                        showSnackbar = { msg ->
+                            scope.launch { snackbarHostState.showSnackbar(msg) }
+                        }
+                    )
+                }
+                is Screen.Dashboard -> {
                     val patient = sessionManager.getPatient()
                     if (patient != null) {
                         DashboardScreen(
                             patient = patient,
                             onLogout = {
                                 sessionManager.clearSession()
-                                isLoggedIn = false
+                                navigator.navigateTo(Screen.Login, clearBackStack = true)
                             },
                             showSnackbar = { msg ->
-                                // Helper to show snackbar
-                                // In real app, launch this in a coroutine
+                                scope.launch { snackbarHostState.showSnackbar(msg) }
                             }
                         )
                     } else {
-                        // Error state
-                        Button(onClick = { isLoggedIn = false }) { Text("Session Error. Logout") }
+                        // This case should ideally not happen if logic is correct.
+                        // If it does, we force a logout.
+                        sessionManager.clearSession()
+                        navigator.navigateTo(Screen.Login, clearBackStack = true)
                     }
-                } else {
-                    LoginScreen(
-                        onLoginSuccess = { isLoggedIn = true },
-                        showSnackbar = { msg ->
-                            // scope.launch { snackbarHostState.showSnackbar(msg) }
-                            // Note: Coroutine launch needed here
-                        }
-                    )
                 }
             }
         }
     }
+}

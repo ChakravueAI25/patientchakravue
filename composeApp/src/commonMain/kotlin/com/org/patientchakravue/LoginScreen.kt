@@ -20,8 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
-import patientapp.composeapp.generated.resources.Res
-import patientapp.composeapp.generated.resources.login_bg
+import patientchakravue.composeapp.generated.resources.Login_bg
+import patientchakravue.composeapp.generated.resources.Res
 
 @Composable
 fun LoginScreen(
@@ -47,7 +47,7 @@ fun LoginScreen(
     ) {
         // 1. BACKGROUND IMAGE
         Image(
-            painter = painterResource(Res.drawable.login_bg), // KMP Resource
+            painter = painterResource(Res.drawable.Login_bg), // KMP Resource
             contentDescription = "Background",
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
