@@ -22,28 +22,44 @@ import patientchakravue.composeapp.generated.resources.compose_multiplatform
 @Composable
 @Preview
 fun App() {
-    MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Button(onClick = { showContent = !showContent }) {
-                Text("Click me!")
-            }
-            AnimatedVisibility(showContent) {
-                val greeting = remember { Greeting().greet() }
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-                    Text("Compose: $greeting")
+        MaterialTheme {
+            val sessionManager = remember { SessionManager() }
+            val snackbarHostState = remember { SnackbarHostState() }
+            val scope = rememberCoroutineScope()
+
+            // Check session
+            var isLoggedIn by remember { mutableStateOf(sessionManager.getPatient() != null) }
+
+            Scaffold(
+                snackbarHost = { SnackbarHost(snackbarHostState) }
+            ) {
+                if (isLoggedIn) {
+                    val patient = sessionManager.getPatient()
+                    if (patient != null) {
+                        DashboardScreen(
+                            patient = patient,
+                            onLogout = {
+                                sessionManager.clearSession()
+                                isLoggedIn = false
+                            },
+                            showSnackbar = { msg ->
+                                // Helper to show snackbar
+                                // In real app, launch this in a coroutine
+                            }
+                        )
+                    } else {
+                        // Error state
+                        Button(onClick = { isLoggedIn = false }) { Text("Session Error. Logout") }
+                    }
+                } else {
+                    LoginScreen(
+                        onLoginSuccess = { isLoggedIn = true },
+                        showSnackbar = { msg ->
+                            // scope.launch { snackbarHostState.showSnackbar(msg) }
+                            // Note: Coroutine launch needed here
+                        }
+                    )
                 }
             }
         }
     }
-}
