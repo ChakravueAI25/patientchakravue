@@ -50,6 +50,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+            implementation(libs.ktor.client.logging)
             // 1. Networking (Replaces 'http')
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)

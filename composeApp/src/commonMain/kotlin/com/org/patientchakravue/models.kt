@@ -1,6 +1,8 @@
 package com.org.patientchakravue
+
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.SerialName
 
 @Serializable
 data class LoginRequest(
@@ -10,18 +12,17 @@ data class LoginRequest(
 
 @Serializable
 data class Patient(
-    val _id: String, // MongoDB ID often comes as "_id"
-    val name: String?,
-    val phone: String?,
+    @SerialName("_id") val mongoId: String,
+    val name: String? = null,
+    val phone: String? = null,
     val age: String? = null,
     val sex: String? = null,
     val email: String? = null,
-    val doctor_id: String? = null,
+    @SerialName("doctor_id") val doctorId: String? = null,
     val visits: List<Visit>? = null,
-    val prescription: JsonElement? = null // Flexible field
+    val prescription: JsonElement? = null
 ) {
-    // Helper to get a clean ID string
-    val id: String get() = _id
+    val id: String get() = mongoId
 }
 
 @Serializable
@@ -44,9 +45,22 @@ data class DoctorData(
     val prescription: JsonElement? = null
 )
 
+// --- NEW TYPED MODELS TO FIX SERIALIZATION ERROR ---
+
 @Serializable
-data class Message(
-    val from: String,
-    val content: String,
-    val timestamp: String
+data class AdherenceResponse(
+    val weekly: List<AdherenceDay> = emptyList()
+)
+
+@Serializable
+data class AdherenceDay(
+    val day: String,
+    val taken: Int,
+    val expected: Int
+)
+
+@Serializable
+data class DoctorNote(
+    @SerialName("note_text") val noteText: String? = null,
+    val timestamp: String? = null
 )
