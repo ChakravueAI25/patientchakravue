@@ -1,4 +1,4 @@
-package com.org.patientchakravue
+package com.org.patientchakravue.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -18,6 +18,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.org.patientchakravue.data.ApiRepository
+import com.org.patientchakravue.data.SessionManager
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import patientchakravue.composeapp.generated.resources.Login_bg

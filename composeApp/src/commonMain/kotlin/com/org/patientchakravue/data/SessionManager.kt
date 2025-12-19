@@ -1,5 +1,6 @@
-package com.org.patientchakravue
+package com.org.patientchakravue.data
 
+import com.org.patientchakravue.model.Patient
 import com.russhwolf.settings.Settings
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -25,3 +26,4 @@ class SessionManager {
         settings.clear()
     }
 }
+

@@ -1,5 +1,9 @@
-package com.org.patientchakravue
+package com.org.patientchakravue.data
 
+import com.org.patientchakravue.model.AdherenceResponse
+import com.org.patientchakravue.model.DoctorNote
+import com.org.patientchakravue.model.LoginRequest
+import com.org.patientchakravue.model.Patient
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -112,3 +116,4 @@ class ApiRepository {
         }
     }
 }
+

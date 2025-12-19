@@ -1,4 +1,4 @@
-package com.org.patientchakravue
+package com.org.patientchakravue.platform
 
 import platform.UIKit.UIDevice
 

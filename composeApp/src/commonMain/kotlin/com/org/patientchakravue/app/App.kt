@@ -1,40 +1,14 @@
-package com.org.patientchakravue
+package com.org.patientchakravue.app
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
+import com.org.patientchakravue.data.SessionManager
+import com.org.patientchakravue.ui.DashboardScreen
+import com.org.patientchakravue.ui.LoginScreen
 import kotlinx.coroutines.launch
-
-sealed class Screen {
-    data object Login : Screen()
-    data object Dashboard : Screen()
-}
-
-class Navigator(initialScreen: Screen) {
-    var currentScreen by mutableStateOf(initialScreen)
-        private set
-
-    private val backStack = mutableListOf<Screen>()
-
-    fun navigateTo(screen: Screen, clearBackStack: Boolean = false) {
-        if (clearBackStack) {
-            backStack.clear()
-        } else {
-            backStack.add(currentScreen)
-        }
-        currentScreen = screen
-    }
-
-    fun canGoBack(): Boolean = backStack.isNotEmpty()
-
-    fun goBack() {
-        if (canGoBack()) {
-            currentScreen = backStack.removeLast()
-        }
-    }
-}
 
 @Composable
 fun App() {
@@ -87,3 +61,4 @@ fun App() {
         }
     }
 }
+

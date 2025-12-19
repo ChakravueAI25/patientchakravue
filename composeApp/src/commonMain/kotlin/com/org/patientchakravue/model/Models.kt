@@ -1,4 +1,4 @@
-package com.org.patientchakravue
+package com.org.patientchakravue.model
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
