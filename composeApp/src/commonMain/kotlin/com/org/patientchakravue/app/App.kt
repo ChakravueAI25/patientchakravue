@@ -1,8 +1,9 @@
 package com.org.patientchakravue.app
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material3.*
@@ -22,6 +23,10 @@ fun App() {
         val navigator = remember { Navigator(initialScreen) }
 
         val bottomNavScreens = listOf(Screen.Dashboard, Screen.AfterCare, Screen.Vision, Screen.Notifications)
+
+        BackHandler(enabled = navigator.currentScreen != Screen.Dashboard) {
+            navigator.navigateTo(Screen.Dashboard, true)
+        }
 
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -58,10 +63,19 @@ fun App() {
                     }
                 }
                 is Screen.Profile -> {
-                    ProfileScreen(onBack = { navigator.goBack() })
+                    ProfileScreen(onBack = { navigator.navigateTo(Screen.Dashboard, true) })
                 }
                 is Screen.AdherenceGraph -> {
-                    AdherenceGraphScreen(onBack = { navigator.goBack() })
+                    AdherenceGraphScreen(onBack = { navigator.navigateTo(Screen.Dashboard, true) })
+                }
+                is Screen.Vision -> {
+                    VisionScreen()
+                }
+                is Screen.AfterCare -> {
+                    // Placeholder for AfterCareScreen
+                }
+                is Screen.Notifications -> {
+                    // Placeholder for NotificationsScreen
                 }
                 is Screen.MedicineList -> {
                     // Placeholder for MedicineListScreen
@@ -101,7 +115,7 @@ fun BottomNavigationBar(navigator: Navigator) {
             onClick = { navigator.navigateTo(Screen.Dashboard) }
         )
         NavigationBarItem(
-            icon = { Icon(Icons.Default.List, contentDescription = "AfterCare") },
+            icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "AfterCare") },
             label = { Text("AfterCare") },
             selected = navigator.currentScreen == Screen.AfterCare,
             onClick = { navigator.navigateTo(Screen.AfterCare) }

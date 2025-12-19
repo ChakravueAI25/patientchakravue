@@ -1,13 +1,12 @@
 package com.org.patientchakravue.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,6 +18,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.model.*
+import kotlinx.coroutines.launch
+
+data class UiMedicine(
+    val name: String,
+    val time: String,
+    val doctorName: String
+)
 
 @Composable
 fun DashboardScreen(
@@ -30,6 +36,7 @@ fun DashboardScreen(
 ) {
     val api = remember { ApiRepository() }
     var adherence by remember { mutableStateOf<AdherenceResponse?>(null) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         adherence = api.getAdherenceStats(patient.id)
@@ -42,7 +49,8 @@ fun DashboardScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .fillMaxSize()
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
             // HEADER
@@ -60,7 +68,7 @@ fun DashboardScreen(
                 )
 
                 IconButton(onClick = onNavigateToAdherence) {
-                    Icon(Icons.Default.ShowChart, contentDescription = "Adherence")
+                    Icon(Icons.AutoMirrored.Filled.ShowChart, contentDescription = "Adherence")
                 }
 
                 IconButton(onClick = onNavigateToProfile) {
@@ -68,27 +76,32 @@ fun DashboardScreen(
                 }
             }
 
-            // PIE CHART (simplified circular indicator)
-            Card(
+            // MEDICINES SECTION
+            Column(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
                     .fillMaxWidth()
-                    .clickable { onNavigateToMedicineList() },
-                shape = RoundedCornerShape(16.dp)
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Medication, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("MEDICINES", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                val weekly = adherence?.weekly ?: emptyList()
+                val taken = weekly.sumOf { it.taken }
+                val total = weekly.sumOf { it.expected }.coerceAtLeast(1)
+                val progress = taken.toFloat() / total
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Text("Prescriptions", fontWeight = FontWeight.SemiBold)
-
-                    Spacer(Modifier.height(16.dp))
-
-                    val weekly = adherence?.weekly ?: emptyList()
-                    val taken = weekly.sumOf { it.taken }
-                    val expected = weekly.sumOf { it.expected }
-                    val progress =
-                        if (expected > 0) taken.toFloat() / expected else 0f
 
                     Box(contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(
@@ -96,47 +109,113 @@ fun DashboardScreen(
                             strokeWidth = 10.dp,
                             modifier = Modifier.size(120.dp)
                         )
-                        Text("${(progress * 100).toInt()}%", fontWeight = FontWeight.Bold)
+                        Icon(
+                            Icons.Default.LocalPharmacy,
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
+
+                    Spacer(Modifier.width(24.dp))
+
+                    Text(
+                        text = "$taken/$total Taken",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(24.dp))
 
-            // PRESCRIPTION LIST
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(Icons.Default.Description, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("PRESCRIPTION", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            }
+
+            Spacer(Modifier.height(8.dp))
+
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             ) {
+
                 val visits = patient.visits ?: emptyList()
 
                 items(visits) { visit ->
+
+                    val doctorData = visit.stages?.doctor?.data
+                    val prescription = doctorData?.prescription as? Map<*, *> ?: return@items
+                    val itemsList = prescription["items"] as? List<Map<String, Any>> ?: emptyList()
+
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 8.dp),
                         shape = RoundedCornerShape(16.dp)
                     ) {
+
                         Column(Modifier.padding(16.dp)) {
+
                             Text(
-                                text = "Doctor Visit",
+                                text = "Doctor",
                                 fontWeight = FontWeight.Bold
                             )
 
-                            Spacer(Modifier.height(8.dp))
-
-                            Text("Next visit: TBD", color = Color.Gray)
+                            Text(
+                                text = "Next Appointment: TBD",
+                                color = Color.Gray,
+                                fontSize = 12.sp
+                            )
 
                             Spacer(Modifier.height(12.dp))
 
-                            Button(
-                                onClick = { 
-                                    // backend record call can be wired here
-                                },
-                                shape = CircleShape
-                            ) {
-                                Text("Mark Medicine Taken")
+                            itemsList.forEach { med ->
+
+                                val medName = med["name"]?.toString() ?: "Medicine"
+                                val time = med["timing"]?.toString() ?: "—"
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+
+                                    Text(
+                                        text = medName,
+                                        modifier = Modifier.weight(1f)
+                                    )
+
+                                    Text(
+                                        text = time,
+                                        modifier = Modifier.weight(0.5f),
+                                        fontSize = 12.sp
+                                    )
+
+                                    Button(
+                                        onClick = {
+                                            // REAL BACKEND CALL
+                                            scope.launch {
+                                                api.recordAdherence(
+                                                    patientId = patient.id,
+                                                    medicine = medName,
+                                                    taken = 1
+                                                )
+                                                adherence = api.getAdherenceStats(patient.id)
+                                            }
+                                        },
+                                        modifier = Modifier.height(32.dp)
+                                    ) {
+                                        Text("Taken", fontSize = 12.sp)
+                                    }
+                                }
+
+                                Spacer(Modifier.height(8.dp))
                             }
                         }
                     }
