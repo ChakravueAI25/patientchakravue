@@ -25,10 +25,7 @@ coil3 = "3.0.3"
 
 # --- UTILS (Replaces intl) ---
 datetime = "0.6.1"
-
-
-
-
+peekaboo = "0.5.2" # Latest stable for K2/Kotlin 2.x
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -62,6 +59,10 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil3"
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil3" }
 # --- DATE & TIME ---
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }
+# Image Picker
+peekaboo-image-picker = { module = "io.github.onseok:peekaboo-image-picker", version.ref = "peekaboo" }
+# Extended Icons (for Eye, Water, etc.)
+compose-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version = "1.7.3" }
 
 
 [plugins]

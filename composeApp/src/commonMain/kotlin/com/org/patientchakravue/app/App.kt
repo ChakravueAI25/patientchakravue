@@ -66,6 +66,25 @@ fun App() {
                 is Screen.MedicineList -> {
                     // Placeholder for MedicineListScreen
                 }
+                is Screen.AfterCare -> {
+                    val patient = sessionManager.getPatient()
+                    if (patient != null) {
+                        AfterCareScreen(
+                            patient = patient,
+                            onBack = { navigator.goBack() },
+                            showSnackbar = { msg ->
+                                scope.launch { snackbarHostState.showSnackbar(msg) }
+                            },
+                            contentPadding = paddingValues
+                        )
+                    }
+                }
+                is Screen.Vision -> {
+                    VisionScreen()
+                }
+                is Screen.Notifications -> {
+                    NotificationsScreen()
+                }
                 else -> {}
             }
         }

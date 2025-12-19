@@ -55,6 +55,9 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.peekaboo.image.picker)
+            implementation(libs.compose.icons.extended)
+
 
             // 2. Storage (Replaces 'shared_preferences')
             implementation(libs.multiplatform.settings)
