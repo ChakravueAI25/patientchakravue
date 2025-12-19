@@ -1,13 +1,14 @@
 package com.org.patientchakravue.app
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.RemoveRedEye
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import com.org.patientchakravue.data.SessionManager
-import com.org.patientchakravue.ui.DashboardScreen
-import com.org.patientchakravue.ui.LoginScreen
+import com.org.patientchakravue.ui.*
 import kotlinx.coroutines.launch
 
 @Composable
@@ -20,12 +21,16 @@ fun App() {
         val initialScreen = if (sessionManager.getPatient() != null) Screen.Dashboard else Screen.Login
         val navigator = remember { Navigator(initialScreen) }
 
-        // This is where platform-specific back handling would be connected to navigator.goBack()
-        // For now, we will just manage the screen state.
+        val bottomNavScreens = listOf(Screen.Dashboard, Screen.AfterCare, Screen.Vision, Screen.Notifications)
 
         Scaffold(
-            snackbarHost = { SnackbarHost(snackbarHostState) }
-        ) {
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            bottomBar = {
+                if (navigator.currentScreen in bottomNavScreens) {
+                    BottomNavigationBar(navigator)
+                }
+            }
+        ) { paddingValues ->
             when (navigator.currentScreen) {
                 is Screen.Login -> {
                     LoginScreen(
@@ -42,23 +47,57 @@ fun App() {
                     if (patient != null) {
                         DashboardScreen(
                             patient = patient,
-                            onLogout = {
-                                sessionManager.clearSession()
-                                navigator.navigateTo(Screen.Login, clearBackStack = true)
-                            },
-                            showSnackbar = { msg ->
-                                scope.launch { snackbarHostState.showSnackbar(msg) }
-                            }
+                            onNavigateToProfile = { navigator.navigateTo(Screen.Profile) },
+                            onNavigateToAdherence = { navigator.navigateTo(Screen.AdherenceGraph) },
+                            onNavigateToMedicineList = { navigator.navigateTo(Screen.MedicineList) },
+                            bottomBar = { BottomNavigationBar(navigator) }
                         )
                     } else {
-                        // This case should ideally not happen if logic is correct.
-                        // If it does, we force a logout.
                         sessionManager.clearSession()
                         navigator.navigateTo(Screen.Login, clearBackStack = true)
                     }
                 }
+                is Screen.Profile -> {
+                    ProfileScreen(onBack = { navigator.goBack() })
+                }
+                is Screen.AdherenceGraph -> {
+                    AdherenceGraphScreen(onBack = { navigator.goBack() })
+                }
+                is Screen.MedicineList -> {
+                    // Placeholder for MedicineListScreen
+                }
+                else -> {}
             }
         }
     }
 }
 
+@Composable
+fun BottomNavigationBar(navigator: Navigator) {
+    NavigationBar {
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Dashboard, contentDescription = "Dashboard") },
+            label = { Text("Dashboard") },
+            selected = navigator.currentScreen == Screen.Dashboard,
+            onClick = { navigator.navigateTo(Screen.Dashboard) }
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.List, contentDescription = "AfterCare") },
+            label = { Text("AfterCare") },
+            selected = navigator.currentScreen == Screen.AfterCare,
+            onClick = { navigator.navigateTo(Screen.AfterCare) }
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.RemoveRedEye, contentDescription = "Vision") },
+            label = { Text("Vision") },
+            selected = navigator.currentScreen == Screen.Vision,
+            onClick = { navigator.navigateTo(Screen.Vision) }
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Notifications, contentDescription = "Notifications") },
+            label = { Text("Notifications") },
+            selected = navigator.currentScreen == Screen.Notifications,
+            onClick = { navigator.navigateTo(Screen.Notifications) }
+        )
+    }
+}
