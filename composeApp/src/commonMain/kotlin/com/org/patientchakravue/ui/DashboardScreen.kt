@@ -1,6 +1,5 @@
 package com.org.patientchakravue.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,13 +18,9 @@ import androidx.compose.ui.unit.sp
 import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.model.*
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.*
 
-data class UiMedicine(
-    val name: String,
-    val time: String,
-    val doctorName: String
-)
-
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun DashboardScreen(
     patient: Patient,
@@ -36,10 +31,39 @@ fun DashboardScreen(
 ) {
     val api = remember { ApiRepository() }
     var adherence by remember { mutableStateOf<AdherenceResponse?>(null) }
+    var todayDoses by remember { mutableStateOf<List<DoseItem>>(emptyList()) }
     val scope = rememberCoroutineScope()
 
+    // Initial load
     LaunchedEffect(Unit) {
         adherence = api.getAdherenceStats(patient.id)
+        todayDoses = api.getTodayDoses(patient.id)
+    }
+
+    // Build prescription lookup by medicine name from latest visit prescription items (if present)
+    val prescriptionByName = remember(patient) {
+        val map = mutableMapOf<String, JsonObject>()
+        try {
+            val visits = patient.visits ?: emptyList()
+            val last = if (visits.isNotEmpty()) visits[visits.size - 1] else null
+            val presElement = last?.stages?.doctor?.data?.prescription ?: patient.prescription
+            if (presElement != null && presElement is JsonObject) {
+                val itemsEl = presElement["items"]
+                if (itemsEl is JsonArray) {
+                    for (el in itemsEl) {
+                        if (el is JsonObject) {
+                            val name = el["name"]?.jsonPrimitive?.contentOrNull
+                            if (name != null) {
+                                map[name] = el
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (_: Exception) {
+            // don't fail; leave map empty
+        }
+        map
     }
 
     Scaffold(
@@ -146,76 +170,122 @@ fun DashboardScreen(
                     .padding(horizontal = 16.dp)
             ) {
 
-                val visits = patient.visits ?: emptyList()
+                // Render one card per distinct prescription/doctor grouping using today's doses
+                // Group by doctor_id for card separation while keeping each dose independent
+                val grouped = todayDoses.groupBy { it.doctor_id ?: "_unknown" }
 
-                items(visits) { visit ->
+                grouped.entries.forEach { (doctorId, doses) ->
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Column(Modifier.padding(16.dp)) {
 
-                    val doctorData = visit.stages?.doctor?.data
-                    val prescription = doctorData?.prescription as? Map<*, *> ?: return@items
-                    val itemsList = prescription["items"] as? List<Map<String, Any>> ?: emptyList()
+                                Text(
+                                    text = "Doctor",
+                                    fontWeight = FontWeight.Bold
+                                )
 
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-
-                        Column(Modifier.padding(16.dp)) {
-
-                            Text(
-                                text = "Doctor",
-                                fontWeight = FontWeight.Bold
-                            )
-
-                            Text(
-                                text = "Next Appointment: TBD",
-                                color = Color.Gray,
-                                fontSize = 12.sp
-                            )
-
-                            Spacer(Modifier.height(12.dp))
-
-                            itemsList.forEach { med ->
-
-                                val medName = med["name"]?.toString() ?: "Medicine"
-                                val time = med["timing"]?.toString() ?: "—"
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-
-                                    Text(
-                                        text = medName,
-                                        modifier = Modifier.weight(1f)
-                                    )
-
-                                    Text(
-                                        text = time,
-                                        modifier = Modifier.weight(0.5f),
-                                        fontSize = 12.sp
-                                    )
-
-                                    Button(
-                                        onClick = {
-                                            // REAL BACKEND CALL
-                                            scope.launch {
-                                                api.recordAdherence(
-                                                    patientId = patient.id,
-                                                    medicine = medName,
-                                                    taken = 1
-                                                )
-                                                adherence = api.getAdherenceStats(patient.id)
-                                            }
-                                        },
-                                        modifier = Modifier.height(32.dp)
-                                    ) {
-                                        Text("Taken", fontSize = 12.sp)
-                                    }
+                                // NEXT VISIT: backend must provide a field; show only if present in patient.prescription or top-level
+                                // Per rules: Do NOT guess — display only if backend provided a top-level known key "next_visit"
+                                // Patient model does not define next_visit; check patient.prescription JsonElement raw if available
+                                val nextVisitText = remember(patient) {
+                                    var nv: String? = null
+                                    try {
+                                        val p = patient.prescription
+                                        // don't parse or guess structure; only check if there is a direct key named "next_visit" at top level
+                                        if (p != null && p is JsonObject) {
+                                            val el = p["next_visit"]
+                                            if (el != null) nv = el.toString()
+                                        }
+                                    } catch (_: Exception) { /* ignore */ }
+                                    nv
                                 }
 
-                                Spacer(Modifier.height(8.dp))
+                                if (nextVisitText != null) {
+                                    Text(
+                                        text = "Next Appointment: $nextVisitText",
+                                        color = Color.Gray,
+                                        fontSize = 12.sp
+                                    )
+                                } else {
+                                    Text(
+                                        text = "Next Appointment: ",
+                                        color = Color.Gray,
+                                        fontSize = 12.sp
+                                    )
+                                }
+
+                                Spacer(Modifier.height(12.dp))
+
+                                // Each dose row
+                                doses.forEach { dose ->
+                                    // Line 1 (Primary): medicine name + strength -> backend provides medicine_name; use it directly
+                                    val primary = dose.medicine_name
+
+                                    // Look up prescription metadata by medicine name to obtain dosage and frequency strings
+                                    val presItem = prescriptionByName[dose.medicine_name]
+                                    val dosage = presItem?.get("dosage")?.jsonPrimitive?.contentOrNull
+                                    val frequency = presItem?.get("frequency")?.jsonPrimitive?.contentOrNull
+
+                                    // Line 2 (Secondary - same line): show dosage · frequency if provided by backend
+                                    val secondary = listOfNotNull(dosage, frequency).joinToString(" · ")
+
+                                    // Line 3 (Tertiary): dose_label comes directly from backend dose record
+                                    val tertiary = dose.dose_label
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(text = primary, fontWeight = FontWeight.SemiBold)
+
+                                            Spacer(Modifier.height(4.dp))
+
+                                            if (secondary.isNotEmpty()) {
+                                                Text(text = secondary, color = Color.Gray, fontSize = 12.sp)
+                                            } else {
+                                                // If backend didn't provide dosage/frequency, fall back to scheduled_time as a visible value
+                                                Text(text = dose.scheduled_time, color = Color.Gray, fontSize = 12.sp)
+                                            }
+
+                                            Spacer(Modifier.height(2.dp))
+
+                                            Text(text = tertiary, color = Color.Gray, fontSize = 12.sp)
+                                        }
+
+                                        // Taken button: backend-driven
+                                        var buttonEnabled by remember(dose.id, dose.taken) { mutableStateOf(!dose.taken) }
+
+                                        Button(
+                                            onClick = {
+                                                // Disable immediately
+                                                buttonEnabled = false
+                                                scope.launch {
+                                                    val ok = api.markDoseTaken(patient.id, dose.id)
+                                                    // After backend response: re-fetch doses and adherence stats
+                                                    todayDoses = api.getTodayDoses(patient.id)
+                                                    adherence = api.getAdherenceStats(patient.id)
+                                                    // Button remains disabled until backend exposes next eligible dose (handled by refetch)
+                                                }
+                                            },
+                                            enabled = buttonEnabled,
+                                            modifier = Modifier.height(32.dp)
+                                        ) {
+                                            Text(
+                                                if (dose.taken) "Taken" else "Mark Taken",
+                                                fontSize = 12.sp
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(Modifier.height(8.dp))
+                                }
                             }
                         }
                     }

@@ -4,6 +4,8 @@ import com.org.patientchakravue.model.AdherenceResponse
 import com.org.patientchakravue.model.DoctorNote
 import com.org.patientchakravue.model.LoginRequest
 import com.org.patientchakravue.model.Patient
+import com.org.patientchakravue.model.DoseItem
+import com.org.patientchakravue.model.NextDoseResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -115,5 +117,47 @@ class ApiRepository {
             false
         }
     }
-}
 
+    // --- NEW: Fetch today's doses exactly as backend exposes them ---
+    suspend fun getTodayDoses(patientId: String): List<DoseItem> {
+        return try {
+            val response = NetworkClient.client.get("$baseUrl/patients/$patientId/today-doses")
+            if (response.status == HttpStatusCode.OK) {
+                response.body<List<DoseItem>>()
+            } else emptyList()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    // --- NEW: Mark a specific scheduled dose as taken (idempotent) ---
+    suspend fun markDoseTaken(patientId: String, doseId: String): Boolean {
+        return try {
+            val response = NetworkClient.client.post("$baseUrl/patients/$patientId/doses/$doseId/take")
+            if (response.status == HttpStatusCode.OK || response.status == HttpStatusCode.Created) {
+                // backend returns { "status": "taken" } or { "status": "already_taken" }
+                val body = response.body<Map<String, Any>>()
+                val status = body["status"]?.toString() ?: ""
+                status == "taken" || status == "already_taken"
+            } else false
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    // --- NEW: Fetch next upcoming untaken dose ---
+    suspend fun getNextDose(patientId: String): DoseItem? {
+        return try {
+            val response = NetworkClient.client.get("$baseUrl/patients/$patientId/next-dose")
+            if (response.status == HttpStatusCode.OK) {
+                val container = response.body<NextDoseResponse>()
+                container.next
+            } else null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+}
