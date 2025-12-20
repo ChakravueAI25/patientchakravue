@@ -1,5 +1,7 @@
 package com.org.patientchakravue.app
 
+import com.org.patientchakravue.model.DoctorNote
+
 sealed class Screen {
     data object Login : Screen()
     data object Dashboard : Screen()
@@ -9,4 +11,6 @@ sealed class Screen {
     data object AfterCare : Screen()
     data object Vision : Screen()
     data object Notifications : Screen()
+    // New route for feedback detail
+    data class FeedbackDetail(val note: DoctorNote) : Screen()
 }

@@ -111,6 +111,8 @@ fun AfterCareScreen(
                 scope.launch {
                     val fields = mapOf(
                         "patient_id" to patient.id,
+                        "patient_name" to (patient.name ?: "Unknown"),
+                        "doctor_id" to (patient.doctorId ?: "68f0a9a6038e7bdb2b37d58f"),
                         "pain_scale" to pain.toString(),
                         "vision_blur" to blurredVision.toString(),
                         "redness" to redness.toString(),
@@ -124,14 +126,14 @@ fun AfterCareScreen(
                         showSnackbar("Report submitted successfully!")
                         onBack()
                     } else {
-                        showSnackbar("Failed to submit report")
+                        showSnackbar("Failed to submit. Check your internet connection.")
                     }
                     isSubmitting = false
                 }
             },
             enabled = !isSubmitting,
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDAA520))
         ) {
             if (isSubmitting) CircularProgressIndicator(color = Color.White)
             else Text("SUBMIT", fontWeight = FontWeight.Bold, fontSize = 18.sp)

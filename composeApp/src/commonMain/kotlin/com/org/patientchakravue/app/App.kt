@@ -89,10 +89,41 @@ fun App() {
                     VisionScreen()
                 }
                 is Screen.Notifications -> {
-                    Text("Notifications Screen", modifier = Modifier.padding(paddingValues))
+                    val patient = sessionManager.getPatient()
+                    if (patient != null) {
+                        NotificationsScreen(
+                            patient = patient,
+                            contentPadding = paddingValues,
+                            onNoteClick = { note ->
+                                navigator.navigateTo(Screen.FeedbackDetail(note))
+                            }
+                        )
+                    } else {
+                        sessionManager.clearSession()
+                        navigator.navigateTo(Screen.Login, clearBackStack = true)
+                    }
                 }
                 is Screen.MedicineList -> {
                     Text("Medicine List Screen", modifier = Modifier.padding(paddingValues))
+                }
+                is Screen.FeedbackDetail -> {
+                    // Cast the screen state to get the note
+                    val screen = navigator.currentScreen as Screen.FeedbackDetail
+                    // Extract submission ID from the note
+                    val subId = screen.note.submissionId ?: ""
+
+                    if (subId.isNotEmpty()) {
+                        ChatScreen(
+                            submissionId = subId,
+                            onBack = { navigator.handleBackIntent() }
+                        )
+                    } else {
+                        // Fallback for old notes without submission links
+                        FeedbackDetailScreen(
+                            note = screen.note,
+                            onBack = { navigator.handleBackIntent() }
+                        )
+                    }
                 }
             }
         }
