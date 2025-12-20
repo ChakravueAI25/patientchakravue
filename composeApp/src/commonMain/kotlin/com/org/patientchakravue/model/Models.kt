@@ -60,35 +60,7 @@ data class AdherenceDay(
 )
 
 @Serializable
-data class SubmissionDetails(
-    @SerialName("image_file_id") val imageId: String? = null,
-    @SerialName("pain_scale") val pain: Int = 0,
-    @SerialName("vision_blur") val vision: Int = 0,
-    @SerialName("redness") val redness: Int = 0,
-    @SerialName("watering") val watering: Int = 0,
-    @SerialName("itching") val itching: Int = 0,
-    @SerialName("discharge") val discharge: Int = 0,
-    val comments: String? = null
-)
-
-@Serializable
 data class DoctorNote(
     @SerialName("note_text") val noteText: String? = null,
-    val timestamp: String? = null,
-    @SerialName("submission_id") val submissionId: String? = null,
-    // Joined fields from the backend aggregation
-    @SerialName("submission_details") val details: SubmissionDetails? = null
+    val timestamp: String? = null
 )
-
-@Serializable
-data class ChatMessage(
-    val id: String,
-    val sender: String, // "patient" or "doctor" or "system"
-    val type: String,   // "report" or "text"
-    val content: String? = null,
-    val timestamp: String? = null,
-    // Fields specific to "report" type
-    @SerialName("image_file_id") val imageId: String? = null,
-    val symptoms: Map<String, Int>? = null
-)
-

@@ -1,7 +1,6 @@
 package com.org.patientchakravue.data
 
 import com.org.patientchakravue.model.AdherenceResponse
-import com.org.patientchakravue.model.ChatMessage
 import com.org.patientchakravue.model.DoctorNote
 import com.org.patientchakravue.model.LoginRequest
 import com.org.patientchakravue.model.Patient
@@ -36,12 +35,7 @@ object NetworkClient {
 
 // 2. The API Functions
 class ApiRepository {
-    // PUBLIC BASE URL for use by UI components (e.g., image loading)
-    companion object {
-        const val BASE_URL = "https://patient.chakravue.co.in"
-    }
-
-    private val baseUrl = BASE_URL
+    private val baseUrl = "https://patient.chakravue.co.in"
 
     suspend fun login(email: String, password: String): Patient? {
         return try {
@@ -118,23 +112,7 @@ class ApiRepository {
             )
             response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK
         } catch (e: Exception) {
-            e.printStackTrace()
-            println("Submit report failed: ${e.message}")
             false
-        }
-    }
-
-    suspend fun getConversation(submissionId: String): List<ChatMessage> {
-        return try {
-            val response = NetworkClient.client.get("$baseUrl/submissions/$submissionId/conversation")
-            if (response.status == HttpStatusCode.OK) {
-                response.body<List<ChatMessage>>()
-            } else {
-                emptyList()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emptyList()
         }
     }
 }
