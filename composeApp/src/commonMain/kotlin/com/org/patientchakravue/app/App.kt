@@ -1,6 +1,7 @@
 package com.org.patientchakravue.app
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Dashboard
@@ -8,6 +9,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import com.org.patientchakravue.data.SessionManager
 import com.org.patientchakravue.ui.*
 import kotlinx.coroutines.launch
@@ -24,6 +26,7 @@ fun App() {
 
         val bottomNavScreens = listOf(Screen.Dashboard, Screen.AfterCare, Screen.Vision, Screen.Notifications)
 
+        // Global back handler to navigate to Dashboard from any other screen
         BackHandler(enabled = navigator.currentScreen != Screen.Dashboard) {
             navigator.navigateTo(Screen.Dashboard, true)
         }
@@ -68,38 +71,31 @@ fun App() {
                 is Screen.AdherenceGraph -> {
                     AdherenceGraphScreen(onBack = { navigator.navigateTo(Screen.Dashboard, true) })
                 }
-                is Screen.Vision -> {
-                    VisionScreen()
-                }
-                is Screen.AfterCare -> {
-                    // Placeholder for AfterCareScreen
-                }
-                is Screen.Notifications -> {
-                    // Placeholder for NotificationsScreen
-                }
-                is Screen.MedicineList -> {
-                    // Placeholder for MedicineListScreen
-                }
                 is Screen.AfterCare -> {
                     val patient = sessionManager.getPatient()
                     if (patient != null) {
                         AfterCareScreen(
                             patient = patient,
-                            onBack = { navigator.goBack() },
+                            onBack = { navigator.navigateTo(Screen.Dashboard, true) },
                             showSnackbar = { msg ->
                                 scope.launch { snackbarHostState.showSnackbar(msg) }
                             },
                             contentPadding = paddingValues
                         )
+                    } else {
+                        sessionManager.clearSession()
+                        navigator.navigateTo(Screen.Login, clearBackStack = true)
                     }
                 }
                 is Screen.Vision -> {
                     VisionScreen()
                 }
                 is Screen.Notifications -> {
-                    NotificationsScreen()
+                    Text("Notifications Screen", modifier = Modifier.padding(paddingValues))
                 }
-                else -> {}
+                is Screen.MedicineList -> {
+                    Text("Medicine List Screen", modifier = Modifier.padding(paddingValues))
+                }
             }
         }
     }
