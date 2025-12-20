@@ -1,6 +1,5 @@
 package com.org.patientchakravue.app
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -26,9 +25,8 @@ fun App() {
 
         val bottomNavScreens = listOf(Screen.Dashboard, Screen.AfterCare, Screen.Vision, Screen.Notifications)
 
-        // Global back handler to navigate to Dashboard from any other screen
-        BackHandler(enabled = navigator.currentScreen != Screen.Dashboard) {
-            navigator.navigateTo(Screen.Dashboard, true)
+        AppBackHandler {
+            navigator.handleBackIntent()
         }
 
         Scaffold(
@@ -66,17 +64,17 @@ fun App() {
                     }
                 }
                 is Screen.Profile -> {
-                    ProfileScreen(onBack = { navigator.navigateTo(Screen.Dashboard, true) })
+                    ProfileScreen(onBack = { navigator.handleBackIntent() })
                 }
                 is Screen.AdherenceGraph -> {
-                    AdherenceGraphScreen(onBack = { navigator.navigateTo(Screen.Dashboard, true) })
+                    AdherenceGraphScreen(onBack = { navigator.handleBackIntent() })
                 }
                 is Screen.AfterCare -> {
                     val patient = sessionManager.getPatient()
                     if (patient != null) {
                         AfterCareScreen(
                             patient = patient,
-                            onBack = { navigator.navigateTo(Screen.Dashboard, true) },
+                            onBack = { navigator.handleBackIntent() },
                             showSnackbar = { msg ->
                                 scope.launch { snackbarHostState.showSnackbar(msg) }
                             },
