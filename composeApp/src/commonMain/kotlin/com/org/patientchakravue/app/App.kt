@@ -1,6 +1,7 @@
 package com.org.patientchakravue.app
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Dashboard
@@ -30,6 +31,7 @@ fun App() {
         }
 
         Scaffold(
+            modifier = Modifier.statusBarsPadding(),
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 if (navigator.currentScreen in bottomNavScreens) {

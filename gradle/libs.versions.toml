@@ -24,7 +24,7 @@ multiplatformSettings = "1.2.0"
 coil3 = "3.0.3"
 
 # --- UTILS (Replaces intl) ---
-datetime = "0.6.1"
+datetime = "0.4.1"
 peekaboo = "0.5.2" # Latest stable for K2/Kotlin 2.x
 
 [libraries]
