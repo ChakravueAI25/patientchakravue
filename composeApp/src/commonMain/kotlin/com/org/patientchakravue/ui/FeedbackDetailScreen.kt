@@ -45,7 +45,7 @@ fun FeedbackDetailScreen(
             if (note.details?.imageId != null) {
                 Card(modifier = Modifier.fillMaxWidth().height(250.dp)) {
                     AsyncImage(
-                        model = "https://patient.chakravue.co.in/files/${note.details.imageId}",
+                        model = "https://patient.chakravue.co.in/images/${note.details.imageId}",
                         contentDescription = "Eye Photo",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop

@@ -1,7 +1,9 @@
 package com.org.patientchakravue.data
 
 import com.org.patientchakravue.model.AdherenceResponse
+import com.org.patientchakravue.model.ChatMessage
 import com.org.patientchakravue.model.DoctorNote
+import com.org.patientchakravue.model.DoseItem
 import com.org.patientchakravue.model.LoginRequest
 import com.org.patientchakravue.model.Patient
 import io.ktor.client.*
@@ -35,7 +37,12 @@ object NetworkClient {
 
 // 2. The API Functions
 class ApiRepository {
-    private val baseUrl = "https://patient.chakravue.co.in"
+    // PUBLIC BASE URL for use by UI components (e.g., image loading)
+    companion object {
+        const val BASE_URL = "https://patient.chakravue.co.in"
+    }
+
+    private val baseUrl = BASE_URL
 
     suspend fun login(email: String, password: String): Patient? {
         return try {
@@ -112,6 +119,44 @@ class ApiRepository {
             )
             response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK
         } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun getConversation(submissionId: String): List<ChatMessage> {
+        return try {
+            val response = NetworkClient.client.get("$baseUrl/submissions/$submissionId/conversation")
+            if (response.status == HttpStatusCode.OK) {
+                response.body<List<ChatMessage>>()
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    suspend fun getTodayDoses(patientId: String): List<DoseItem> {
+        return try {
+            val response = NetworkClient.client.get("$baseUrl/patients/$patientId/doses/today")
+            if (response.status == HttpStatusCode.OK) {
+                response.body<List<DoseItem>>()
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    suspend fun markDoseTaken(patientId: String, doseId: String): Boolean {
+        return try {
+            val response = NetworkClient.client.post("$baseUrl/patients/$patientId/doses/$doseId/taken")
+            response.status == HttpStatusCode.OK || response.status == HttpStatusCode.Created
+        } catch (e: Exception) {
+            e.printStackTrace()
             false
         }
     }
