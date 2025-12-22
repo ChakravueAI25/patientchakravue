@@ -100,3 +100,13 @@ data class DoseItem(
     val taken: Boolean
 )
 
+@Serializable
+data class VisionTestRecord(
+    val id: String,
+    @SerialName("test_type") val testType: String, // "Amsler Grid"
+    @SerialName("eye_side") val eyeSide: String,   // "Left", "Right"
+    @SerialName("timestamp") val timestamp: String,
+    @SerialName("image_file_id") val imageId: String? = null,
+    val notes: String? = null
+)
+

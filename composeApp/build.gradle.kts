@@ -11,6 +11,8 @@ plugins {
 }
 
 kotlin {
+    applyDefaultHierarchyTemplate()
+
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
@@ -30,6 +32,7 @@ kotlin {
     }
     
     sourceSets {
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
@@ -43,7 +46,7 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
-            implementation(compose.materialIconsExtended) // Add this line for icons
+            implementation(compose.materialIconsExtended) // Material Icons Extended for KMP
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
@@ -58,7 +61,6 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.peekaboo.image.picker)
-            implementation(libs.compose.icons.extended)
 
 
             // 2. Storage (Replaces 'shared_preferences')

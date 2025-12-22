@@ -6,6 +6,7 @@ import com.org.patientchakravue.model.DoctorNote
 import com.org.patientchakravue.model.DoseItem
 import com.org.patientchakravue.model.LoginRequest
 import com.org.patientchakravue.model.Patient
+import com.org.patientchakravue.model.VisionTestRecord
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -155,6 +156,46 @@ class ApiRepository {
         return try {
             val response = NetworkClient.client.post("$baseUrl/patients/$patientId/doses/$doseId/taken")
             response.status == HttpStatusCode.OK || response.status == HttpStatusCode.Created
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun getVisionHistory(patientId: String): List<VisionTestRecord> {
+        return try {
+            val response = NetworkClient.client.get("$baseUrl/vision/patient/$patientId")
+            if (response.status == HttpStatusCode.OK) {
+                response.body<List<VisionTestRecord>>()
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    suspend fun submitAmslerTest(
+        imageBytes: ByteArray,
+        patientId: String,
+        eyeSide: String,
+        notes: String
+    ): Boolean {
+        return try {
+            val response = NetworkClient.client.submitFormWithBinaryData(
+                url = "$baseUrl/vision/amsler",
+                formData = formData {
+                    append("patient_id", patientId)
+                    append("eye_side", eyeSide)
+                    append("notes", notes)
+                    append("image", imageBytes, Headers.build {
+                        append(HttpHeaders.ContentType, "image/jpeg")
+                        append(HttpHeaders.ContentDisposition, "filename=\"amsler_test.jpg\"")
+                    })
+                }
+            )
+            response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK
         } catch (e: Exception) {
             e.printStackTrace()
             false

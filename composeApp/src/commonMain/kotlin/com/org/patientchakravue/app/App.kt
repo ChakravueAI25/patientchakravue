@@ -88,7 +88,36 @@ fun App() {
                     }
                 }
                 is Screen.Vision -> {
-                    VisionScreen()
+                    val patient = sessionManager.getPatient()
+                    if (patient != null) {
+                        VisionScreen(
+                            patient = patient,
+                            contentPadding = paddingValues,
+                            onNavigateToAmsler = { navigator.navigateTo(Screen.AmslerGrid) },
+                            onNavigateToTumblingE = { navigator.navigateTo(Screen.TumblingE) }
+                        )
+                    } else {
+                        sessionManager.clearSession()
+                        navigator.navigateTo(Screen.Login, clearBackStack = true)
+                    }
+                }
+                is Screen.AmslerGrid -> {
+                    val patient = sessionManager.getPatient()
+                    if (patient != null) {
+                        AmslerTestScreen(
+                            patient = patient,
+                            onBack = { navigator.handleBackIntent() },
+                            showSnackbar = { msg ->
+                                scope.launch { snackbarHostState.showSnackbar(msg) }
+                            }
+                        )
+                    } else {
+                        sessionManager.clearSession()
+                        navigator.navigateTo(Screen.Login, clearBackStack = true)
+                    }
+                }
+                is Screen.TumblingE -> {
+                    Text("Tumbling E Screen Coming Soon", modifier = Modifier.padding(paddingValues))
                 }
                 is Screen.Notifications -> {
                     val patient = sessionManager.getPatient()
