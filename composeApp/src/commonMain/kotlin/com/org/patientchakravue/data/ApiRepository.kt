@@ -160,5 +160,18 @@ class ApiRepository {
             false
         }
     }
+    
+    suspend fun getPatientProfile(patientId: String): Patient? {
+        return try {
+            val response = NetworkClient.client.get("$baseUrl/patients/$patientId")
+            if (response.status == HttpStatusCode.OK) {
+                response.body<Patient>()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 }
-
