@@ -18,9 +18,14 @@ data class Patient(
     val age: String? = null,
     val sex: String? = null,
     val email: String? = null,
+    val address: String? = null,
     @SerialName("doctor_id") val doctorId: String? = null,
     val visits: List<Visit>? = null,
-    val prescription: JsonElement? = null
+    val prescription: JsonElement? = null,
+    val bloodType: String? = null,
+    val registrationId: String? = null,
+    val emergencyContactName: String? = null,
+    val emergencyContactPhone: String? = null
 ) {
     val id: String get() = mongoId
 }

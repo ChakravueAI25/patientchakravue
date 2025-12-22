@@ -66,7 +66,14 @@ fun App() {
                     }
                 }
                 is Screen.Profile -> {
-                    ProfileScreen(onBack = { navigator.handleBackIntent() })
+                    ProfileScreen(
+                        sessionManager = sessionManager,
+                        onBack = { navigator.handleBackIntent() },
+                        onLogout = {
+                            sessionManager.clearSession()
+                            navigator.navigateTo(Screen.Login, clearBackStack = true)
+                        }
+                    )
                 }
                 is Screen.AdherenceGraph -> {
                     AdherenceGraphScreen(onBack = { navigator.handleBackIntent() })
