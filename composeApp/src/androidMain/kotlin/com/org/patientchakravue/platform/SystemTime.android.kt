@@ -1,4 +1,7 @@
 package com.org.patientchakravue.platform
 
-actual fun currentEpochSeconds(): Long = System.currentTimeMillis() / 1000L
-
+/**
+ * Android-specific implementation for getting the current system time as epoch seconds.
+ */
+actual fun currentEpochSeconds(): Long =
+    System.currentTimeMillis() / 1000

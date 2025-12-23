@@ -3,6 +3,7 @@
 ## ---------------------------------------------------
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi.responses import Response, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
@@ -1001,16 +1002,154 @@ async def create_submission(
     return {"message": "Submission created", "submission_id": new_submission_id}
 
 
+# Serve submission image from GridFS by submission id
+@app.get("/submissions/{submission_id}/image")
+async def get_submission_image(submission_id: str):
+    # Find submission
+    sub = None
+    try:
+        sub = await submissions_collection.find_one({"_id": ObjectId(submission_id)})
+    except Exception:
+        sub = await submissions_collection.find_one({"_id": submission_id})
+    if not sub:
+        raise HTTPException(status_code=404, detail="submission not found")
+
+    file_id_str = sub.get("image_file_id")
+    if not file_id_str:
+        raise HTTPException(status_code=404, detail="submission has no image_file_id")
+
+    try:
+        gridout = await gridfs_bucket.open_download_stream(ObjectId(file_id_str))
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"image not found: {e}")
+
+    content = await gridout.read()
+    meta = getattr(gridout, "metadata", {}) or {}
+    ctype = meta.get("contentType") or "image/jpeg"
+    filename = getattr(gridout, "filename", "image.jpg")
+    return Response(content, media_type=ctype, headers={"Content-Disposition": f'inline; filename="{filename}"'})
+
+
+# Serve image directly by GridFS file id
+@app.get("/images/{file_id}")
+async def get_image_by_file_id(file_id: str):
+    try:
+        gridout = await gridfs_bucket.open_download_stream(ObjectId(file_id))
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"image not found: {e}")
+    content = await gridout.read()
+    meta = getattr(gridout, "metadata", {}) or {}
+    ctype = meta.get("contentType") or "image/jpeg"
+    filename = getattr(gridout, "filename", "image.jpg")
+    return Response(content, media_type=ctype, headers={"Content-Disposition": f'inline; filename="{filename}"'})
+
+
+# Conversation thread for a submission: patient report + doctor messages
+@app.get("/submissions/{submission_id}/conversation")
+async def get_submission_conversation(submission_id: str):
+    """
+    Returns a chronological 'chat' view of a submission.
+    1. The Patient's Submission (formatted as the first message).
+    2. All Doctor Notes/Messages linked to this submission.
+    """
+    try:
+        sub_oid = ObjectId(submission_id)
+        # 1. Fetch the Original Submission (The "First Message")
+        submission = await submissions_collection.find_one({"_id": sub_oid})
+        if not submission:
+            raise HTTPException(status_code=404, detail="Submission not found")
+        
+        chat_thread = []
+        
+        # Convert Submission to a "Message" format
+        patient_msg = {
+            "id": str(submission["_id"]),
+            "sender": "patient",
+            "type": "report",  # Special type to render Image + Symptoms
+            "content": submission.get("comments") or "",
+            "image_file_id": submission.get("image_file_id"),
+            "symptoms": {
+                "Pain": submission.get("pain_scale"),
+                "Redness": submission.get("redness"),
+                "Watering": submission.get("watering"),
+                "Vision": submission.get("vision_blur"),
+                "Discharge": submission.get("discharge"),
+            },
+            "timestamp": submission.get("timestamp") or submission.get("created_at"),
+        }
+        chat_thread.append(serialize_doc(patient_msg))
+
+        # 2. Fetch Linked Replies (Doctor Messages)
+        # Compatibility: match messages that reference either submission_id or submission_ref_id
+        query = {"$or": [{"submission_id": submission_id}, {"submission_ref_id": submission_id}]}
+        cursor = messages_collection.find(query).sort("timestamp", 1)
+        async for doc in cursor:
+            doctor_msg = {
+                "id": str(doc.get("_id")),
+                "sender": doc.get("sender", "doctor"),
+                "type": "text",
+                "content": doc.get("note_text"),
+                "timestamp": doc.get("timestamp") or doc.get("created_at"),
+            }
+            chat_thread.append(serialize_doc(doctor_msg))
+
+        return chat_thread
+
+    except Exception as e:
+        print(f"Error fetching conversation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/submissions/{submission_id}/reply")
+async def simulate_doctor_reply(submission_id: str, text: str = Form(...)):
+    """
+    TEST ENDPOINT: Simulate a doctor sending a reply to a specific report.
+    This guarantees the 'submission_id' link is created correctly.
+    """
+    # 1. Verify Submission exists
+    try:
+        sub = await submissions_collection.find_one({"_id": ObjectId(submission_id)})
+    except Exception:
+        sub = await submissions_collection.find_one({"_id": submission_id})
+        
+    if not sub:
+        raise HTTPException(status_code=404, detail="Submission not found")
+
+    # 2. Create the Reply Message
+    reply_doc = {
+        "patient_id": sub.get("patient_id"),
+        "doctor_id": sub.get("doctor_id"),
+        "sender": "doctor",       # Marks this as coming from the doctor
+        "note_text": text,
+        "submission_id": str(sub.get("_id")) if sub.get("_id") else submission_id,  # ensure string id
+        "timestamp": datetime.utcnow(),
+    }
+    
+    result = await messages_collection.insert_one(reply_doc)
+    
+    return {
+        "status": "replied", 
+        "message_id": str(result.inserted_id),
+        "text": text,
+    }
+
+
 @app.get("/patients/{patient_id}/messages")
 async def get_messages_for_patient(patient_id: str):
-    """Return messages for a patient, enriched with linked submission details.
+    """Return messages for a patient, enriched with submission details.
 
-    If a message contains a `submission_id` (string), this endpoint joins the
-    corresponding document from `patient_submissions` and returns it under
-    `submission_details` so clients can show the original photo and symptom values.
+    Compatibility: normalize `submission_ref_id` to `submission_id` so
+    downstream always sees a consistent id to click through.
     """
     pipeline = [
         {"$match": {"patient_id": patient_id}},
+        # Normalize field name: prefer submission_id, else submission_ref_id
+        {
+            "$addFields": {
+                "submission_id": {"$ifNull": ["$submission_id", "$submission_ref_id"]}
+            }
+        },
+        # Convert normalized submission_id to ObjectId for lookup
         {
             "$addFields": {
                 "sub_oid": {
@@ -1022,6 +1161,7 @@ async def get_messages_for_patient(patient_id: str):
                 }
             }
         },
+        # Join with patient_submissions
         {
             "$lookup": {
                 "from": "patient_submissions",

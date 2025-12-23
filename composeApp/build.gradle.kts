@@ -38,6 +38,8 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp) // Android Engine
             implementation(libs.kotlinx.coroutines.android)
+            implementation("com.google.firebase:firebase-messaging-ktx:24.1.2")
+
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin) // iOS Engine
@@ -54,7 +56,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
             implementation(libs.ktor.client.logging)
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime")
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
+
 
             // 1. Networking (Replaces 'http')
             implementation(libs.ktor.client.core)

@@ -213,5 +213,18 @@ class ApiRepository {
             false
         }
     }
+    
+    suspend fun getNextDose(patientId: String): DoseItem? {
+        return try {
+            val response = NetworkClient.client.get("$baseUrl/patients/$patientId/doses/next")
+            if (response.status == HttpStatusCode.OK) {
+                response.body<DoseItem>()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 }
-
