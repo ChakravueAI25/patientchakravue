@@ -227,4 +227,74 @@ class ApiRepository {
             null
         }
     }
+
+    // Tumbling E Vision Test submission
+    suspend fun submitVisionTest(
+        patientId: String,
+        patientName: String,
+        eyeSide: String,
+        finalAcuity: String,
+        details: List<com.org.patientchakravue.model.LevelResult>
+    ): Boolean {
+        return try {
+            // Map medical results to backend structure
+            val logMARLevels = details.map { levelResult ->
+                when (levelResult.levelName) {
+                    "6/6" -> 0.0
+                    "6/9" -> 0.18
+                    "6/12" -> 0.3
+                    "6/18" -> 0.48
+                    "6/24" -> 0.6
+                    "6/36" -> 0.78
+                    "6/60" -> 1.0
+                    else -> 1.0
+                }
+            }
+
+            val sessions = details.map { levelResult ->
+                com.org.patientchakravue.model.VisionTestSession(
+                    level = levelResult.levelName,
+                    correct = levelResult.passed,
+                    score = "${levelResult.correct}/${levelResult.total}"
+                )
+            }
+
+            val requestBody = com.org.patientchakravue.model.VisionTestRequest(
+                patientId = patientId,
+                patientName = patientName,
+                timestamp = kotlinx.datetime.Clock.System.now().toString(),
+                testEye = eyeSide,
+                finalAcuity = finalAcuity,
+                logMARLevels = logMARLevels,
+                sessions = sessions
+            )
+
+            val response = NetworkClient.client.post("$baseUrl/vision-tests") {
+                contentType(ContentType.Application.Json)
+                setBody(requestBody)
+            }
+            response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    // Adherence Graph Data
+    suspend fun getGraphData(patientId: String, viewMode: String): com.org.patientchakravue.model.GraphData? {
+        return try {
+            val response = NetworkClient.client.get("$baseUrl/adherence/graph") {
+                parameter("patient_id", patientId)
+                parameter("view_mode", viewMode)
+            }
+            if (response.status == HttpStatusCode.OK) {
+                response.body<com.org.patientchakravue.model.GraphData>()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 }

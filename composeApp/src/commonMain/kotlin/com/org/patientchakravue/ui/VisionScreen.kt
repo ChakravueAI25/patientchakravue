@@ -172,13 +172,25 @@ fun HistoryItemCard(record: VisionTestRecord) {
         ) {
             // Icon based on type
             val icon = if (record.testType.contains("Amsler")) Icons.Default.GridOn else Icons.Default.Visibility
-            Icon(icon, null, tint = Color.Gray)
+            val iconColor = if (record.testType.contains("Amsler")) Color(0xFF1976D2) else Color(0xFF7B1FA2)
+            Icon(icon, null, tint = iconColor)
 
             Spacer(Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(record.testType, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Text("Eye: ${record.eyeSide}", fontSize = 14.sp, color = Color.Gray)
+
+                // Show finalAcuity for Tumbling E tests
+                if (!record.finalAcuity.isNullOrBlank()) {
+                    Text(
+                        "Result: ${record.finalAcuity}",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF2E7D32)
+                    )
+                }
+
                 if (!record.notes.isNullOrBlank()) {
                     Text("Note: ${record.notes}", fontSize = 12.sp, color = Color.DarkGray, maxLines = 1)
                 }

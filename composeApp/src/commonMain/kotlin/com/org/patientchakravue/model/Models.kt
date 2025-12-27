@@ -112,10 +112,59 @@ data class DoseItem(
 @Serializable
 data class VisionTestRecord(
     val id: String,
-    @SerialName("test_type") val testType: String, // "Amsler Grid"
+    @SerialName("test_type") val testType: String, // "Amsler Grid" or "Tumbling E"
     @SerialName("eye_side") val eyeSide: String,   // "Left", "Right"
     @SerialName("timestamp") val timestamp: String,
     @SerialName("image_file_id") val imageId: String? = null,
-    val notes: String? = null
+    val notes: String? = null,
+    // Tumbling E specific fields
+    @SerialName("final_acuity") val finalAcuity: String? = null
+)
+
+// --- Vision Test Models (Tumbling E) ---
+@Serializable
+data class LevelResult(
+    val levelName: String, // "6/60"
+    val correct: Int,
+    val total: Int,
+    val passed: Boolean
+)
+
+@Serializable
+data class VisionTestResult(
+    val patientId: String,
+    val patientName: String,
+    val eyeSide: String, // "Right" or "Left"
+    val finalAcuity: String, // e.g., "6/12"
+    val finalLogMAR: Double, // e.g., 0.3
+    val levelsAttempted: List<LevelResult>
+)
+
+// --- Vision Test Request Models (for API submission) ---
+@Serializable
+data class VisionTestSession(
+    val level: String,
+    val correct: Boolean,
+    val score: String
+)
+
+@Serializable
+data class VisionTestRequest(
+    @SerialName("patient_id") val patientId: String,
+    @SerialName("patient_name") val patientName: String,
+    val timestamp: String,
+    @SerialName("test_eye") val testEye: String,
+    @SerialName("final_acuity") val finalAcuity: String,
+    @SerialName("logMAR_levels") val logMARLevels: List<Double>,
+    val sessions: List<VisionTestSession>
+)
+
+// --- Adherence Graph Data Model ---
+@Serializable
+data class GraphData(
+    val title: String,
+    @SerialName("x_axis") val xAxis: List<String>,
+    @SerialName("y_axis") val yAxis: List<Int>,
+    @SerialName("view_mode") val viewMode: String
 )
 
