@@ -154,7 +154,7 @@ class ApiRepository {
 
     suspend fun markDoseTaken(patientId: String, doseId: String): Boolean {
         return try {
-            val response = NetworkClient.client.post("$baseUrl/patients/$patientId/doses/$doseId/taken")
+            val response = NetworkClient.client.post("$baseUrl/patients/$patientId/doses/$doseId/take")
             response.status == HttpStatusCode.OK || response.status == HttpStatusCode.Created
         } catch (e: Exception) {
             e.printStackTrace()

@@ -25,14 +25,18 @@ data class Patient(
     val bloodType: String? = null,
     val registrationId: String? = null,
     val emergencyContactName: String? = null,
-    val emergencyContactPhone: String? = null
+    val emergencyContactPhone: String? = null,
+    @SerialName("recent_encounter") val recentEncounter: JsonElement? = null,
+    @SerialName("created_at") val createdAt: String? = null
 ) {
     val id: String get() = mongoId
 }
 
 @Serializable
 data class Visit(
-    val stages: Stages? = null
+    val stages: Stages? = null,
+    val date: String? = null,
+    @SerialName("created_at") val createdAt: String? = null
 )
 
 @Serializable
@@ -97,7 +101,7 @@ data class ChatMessage(
 
 @Serializable
 data class DoseItem(
-    val id: String,
+    @SerialName("_id") val id: String,
     val medicine_name: String,
     val dose_label: String,
     val scheduled_time: String,
