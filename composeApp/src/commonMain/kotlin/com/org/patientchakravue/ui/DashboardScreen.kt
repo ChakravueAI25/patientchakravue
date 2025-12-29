@@ -192,25 +192,47 @@ fun DashboardScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
+                                        // 1. Status Checkmark
                                         Icon(
                                             if (dose.taken) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                                             contentDescription = null,
                                             tint = if (dose.taken) Color(0xFF4CAF50) else Color.Gray,
-                                            modifier = Modifier.size(20.dp)
+                                            modifier = Modifier.size(24.dp)
                                         )
                                         Spacer(Modifier.width(12.dp))
+
+                                        // 2. NEW: Medicine Image/Icon
+                                        Surface(
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = Color(0xFFE3F2FD), // Light blue background
+                                            modifier = Modifier.size(48.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(
+                                                    Icons.Default.Medication,
+                                                    contentDescription = "Medicine",
+                                                    tint = Color(0xFF1976D2),
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(Modifier.width(12.dp))
+
+                                        // 3. Medicine Details
                                         Column(modifier = Modifier.weight(1f)) {
-                                            Text(dose.medicine_name, fontWeight = FontWeight.Medium, fontSize = 15.sp)
+                                            Text(dose.medicine_name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                                             Text(
                                                 "${dose.dose_label} · ${dose.scheduled_time}",
-                                                fontSize = 12.sp,
+                                                fontSize = 13.sp,
                                                 color = Color.Gray
                                             )
                                         }
                                     }
 
-                                    Spacer(Modifier.height(8.dp))
+                                    Spacer(Modifier.height(12.dp))
 
+                                    // Mark Taken Button
                                     Button(
                                         onClick = {
                                             scope.launch {
@@ -226,7 +248,8 @@ fun DashboardScreen(
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = if (dose.taken) Color(0xFF4CAF50) else Color(0xFF1976D2),
                                             disabledContainerColor = Color(0xFFE0E0E0)
-                                        )
+                                        ),
+                                        shape = RoundedCornerShape(8.dp)
                                     ) {
                                         Icon(
                                             if (dose.taken) Icons.Default.Check else Icons.Default.Medication,
@@ -234,15 +257,15 @@ fun DashboardScreen(
                                             modifier = Modifier.size(18.dp)
                                         )
                                         Spacer(Modifier.width(8.dp))
-                                        Text(if (dose.taken) "Taken ✓" else "Mark as Taken")
+                                        Text(if (dose.taken) "Taken" else "Mark as Taken")
                                     }
                                 }
 
                                 if (dose != todayDoses.last()) {
                                     HorizontalDivider(
-                                        modifier = Modifier.padding(vertical = 8.dp),
+                                        modifier = Modifier.padding(vertical = 12.dp),
                                         thickness = 0.5.dp,
-                                        color = Color.LightGray
+                                        color = Color.LightGray.copy(alpha = 0.5f)
                                     )
                                 }
                             }
