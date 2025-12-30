@@ -29,6 +29,9 @@ fun NotificationsScreen(
     var notes by remember { mutableStateOf<List<DoctorNote>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
+    // Get current language to trigger recomposition when it changes
+    val currentLang = LocalLanguageManager.current.currentLanguage
+
     // Fetch notifications on screen launch
     LaunchedEffect(Unit) {
         notes = api.getMessages(patient.id)
@@ -42,13 +45,13 @@ fun NotificationsScreen(
             .padding(16.dp)
     ) {
         Text(
-            text = "Hospital Updates",
+            text = localizedString("notifications_title"),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1A3B5D)
         )
         Text(
-            text = "View messages and notes from your doctor",
+            text = localizedString("notifications_subtitle"),
             fontSize = 14.sp,
             color = Color.Gray
         )
@@ -63,7 +66,7 @@ fun NotificationsScreen(
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.Info, null, tint = Color.LightGray, modifier = Modifier.size(48.dp))
-                    Text("No new notifications from the hospital.", color = Color.Gray)
+                    Text(localizedString("no_notifications"), color = Color.Gray)
                 }
             }
         } else {
@@ -98,7 +101,7 @@ fun NotificationItem(note: DoctorNote, onClick: () -> Unit) {
             Icon(
                 Icons.AutoMirrored.Filled.Message,
                 contentDescription = null,
-                tint = Color(0xFF6750A4), // Material 3 purple - matches dashboard theme
+                tint = Color(0xFF6750A4),
                 modifier = Modifier.size(24.dp)
             )
             Spacer(Modifier.width(12.dp))
@@ -119,4 +122,3 @@ fun NotificationItem(note: DoctorNote, onClick: () -> Unit) {
         }
     }
 }
-

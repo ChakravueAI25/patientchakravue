@@ -30,6 +30,9 @@ fun AdherenceGraphScreen(onBack: () -> Unit) {
     val api = remember { ApiRepository() }
     val patient = sessionManager.getPatient()
 
+    // Get current language to trigger recomposition when it changes
+    val currentLang = LocalLanguageManager.current.currentLanguage
+
     // State
     var selectedView by remember { mutableStateOf("day") } // day, week, medicine
     var graphData by remember { mutableStateOf<GraphData?>(null) }
@@ -53,7 +56,7 @@ fun AdherenceGraphScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Adherence Analysis") },
+                title = { Text(localizedString("adherence_title")) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
@@ -71,12 +74,12 @@ fun AdherenceGraphScreen(onBack: () -> Unit) {
                 .padding(16.dp)
         ) {
             // 1. View Selectors
-            Text("View By", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text(localizedString("view_by"), fontWeight = FontWeight.Bold, fontSize = 16.sp)
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ViewFilterChip("Day", selectedView == "day") { selectedView = "day" }
-                ViewFilterChip("Week", selectedView == "week") { selectedView = "week" }
-                ViewFilterChip("Medicine", selectedView == "medicine") { selectedView = "medicine" }
+                ViewFilterChip(localizedString("view_day"), selectedView == "day") { selectedView = "day" }
+                ViewFilterChip(localizedString("view_week"), selectedView == "week") { selectedView = "week" }
+                ViewFilterChip(localizedString("view_medicine"), selectedView == "medicine") { selectedView = "medicine" }
             }
 
             Spacer(Modifier.height(24.dp))
@@ -110,7 +113,7 @@ fun AdherenceGraphScreen(onBack: () -> Unit) {
                             )
                         }
                     } else {
-                        Text("No data available", modifier = Modifier.align(Alignment.Center), color = Color.Gray)
+                        Text(localizedString("no_data"), modifier = Modifier.align(Alignment.Center), color = Color.Gray)
                     }
                 }
             }
@@ -125,14 +128,14 @@ fun AdherenceGraphScreen(onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(Modifier.padding(16.dp)) {
-                        Text("Summary", fontWeight = FontWeight.Bold)
-                        Text("Total doses taken in this view: $totalTaken")
+                        Text(localizedString("summary_title"), fontWeight = FontWeight.Bold)
+                        Text("${localizedString("summary_total")} $totalTaken")
                         if (selectedView == "day") {
-                            Text("This shows your intake pattern for today.", fontSize = 12.sp, color = Color.Gray)
+                            Text(localizedString("desc_day"), fontSize = 12.sp, color = Color.Gray)
                         } else if (selectedView == "week") {
-                            Text("Consistency over the last 7 days.", fontSize = 12.sp, color = Color.Gray)
+                            Text(localizedString("desc_week"), fontSize = 12.sp, color = Color.Gray)
                         } else {
-                            Text("Breakdown by medicine type.", fontSize = 12.sp, color = Color.Gray)
+                            Text(localizedString("desc_medicine"), fontSize = 12.sp, color = Color.Gray)
                         }
                     }
                 }

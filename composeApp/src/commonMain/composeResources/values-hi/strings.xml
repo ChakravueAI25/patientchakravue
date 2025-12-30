@@ -1,0 +1,123 @@
+<resources>
+    <string name="app_name">रोगी चक्रव्यूह</string>
+    <string name="error_connection">कनेक्शन त्रुटि</string>
+    <string name="loading">लोड हो रहा है...</string>
+
+    <string name="login_title">रोगी लॉगिन</string>
+    <string name="email_label">ईमेल</string>
+    <string name="password_label">पासवर्ड</string>
+    <string name="login_button">लॉगिन</string>
+    <string name="login_error_empty">सभी फ़ील्ड भरें</string>
+    <string name="login_success">वापसी पर स्वागत है!</string>
+    <string name="login_error_invalid">अमान्य क्रेडेंशियल</string>
+
+    <string name="dashboard_title">डैशबोर्ड</string>
+    <string name="section_medicines">दवाइयाँ</string>
+    <string name="doses_taken_today">आज ली गई खुराक</string>
+    <string name="section_prescription">पर्चा (प्रिस्क्रिप्शन)</string>
+    <string name="doctor_label">डॉक्टर</string>
+    <string name="next_appointment">अगली नियुक्ति:</string>
+    <string name="not_scheduled">तय नहीं है</string>
+    <string name="no_doses_today">आज के लिए कोई खुराक निर्धारित नहीं है।</string>
+    <string name="check_back_tomorrow">कल वापस चेक करें!</string>
+    <string name="btn_mark_taken">लिया हुआ मार्क करें</string>
+    <string name="btn_taken">लिया हुआ</string>
+
+    <string name="daily_checkin_title">दैनिक नेत्र जांच</string>
+    <string name="daily_checkin_subtitle">हमें बताएं कि आज आपकी आंख कैसी है</string>
+    <string name="symptom_blurred_vision">धुंधली दृष्टि</string>
+    <string name="symptom_pain">दर्द</string>
+    <string name="symptom_redness">लालिमा</string>
+    <string name="symptom_watering">पानी आना</string>
+    <string name="symptom_itching">खुजली / जलन</string>
+    <string name="symptom_discharge">रिसाव (Discharge)</string>
+    <string name="add_photo_btn">आंख की फोटो जोड़ें (अनुशंसित)</string>
+    <string name="photo_added_btn">फोटो जोड़ी गई ✓</string>
+    <string name="comment_hint">कुछ भी असामान्य बताएं...</string>
+    <string name="error_no_photo">कृपया अपनी आंख की एक फोटो जोड़ें</string>
+    <string name="submit_success">रिपोर्ट सफलतापूर्वक जमा हो गई!</string>
+    <string name="submit_failure">जमा करने में विफल। अपना इंटरनेट चेक करें।</string>
+    <string name="submit_btn">जमा करें</string>
+
+    <string name="level_none">कुछ नहीं</string>
+    <string name="level_mild">हल्का</string>
+    <string name="level_moderate">मध्यम</string>
+    <string name="level_severe">गंभीर</string>
+
+    <string name="vision_title">दृष्टि परीक्षण</string>
+    <string name="vision_subtitle">शुरू करने के लिए एक परीक्षण चुनें</string>
+    <string name="test_amsler">एम्सलर\nग्रिड</string>
+    <string name="test_tumbling">टंबलिंग ई\nटेस्ट</string>
+    <string name="recent_results">हाल के परिणाम</string>
+    <string name="no_history">कोई पिछला इतिहास नहीं मिला।</string>
+    <string name="eye_label">आंख: %1$s</string>
+    <string name="result_label">परिणाम: %1$s</string>
+
+    <string name="amsler_title">एम्सलर ग्रिड टेस्ट</string>
+    <string name="instructions_title">निर्देश</string>
+    <string name="amsler_inst_1">1. फोन को 12 इंच (30 सेमी) दूर रखें।</string>
+    <string name="amsler_inst_2">2. एक आंख को ढक लें।</string>
+    <string name="amsler_inst_3">3. केंद्र में काले बिंदु पर ध्यान केंद्रित करें।</string>
+    <string name="amsler_inst_4">4. यदि रेखाएं लहरदार, धुंधली या गायब दिखती हैं, तो उन्हें अगली स्क्रीन पर चिह्नित करें।</string>
+    <string name="select_eye">परीक्षण के लिए आंख चुनें:</string>
+    <string name="eye_right">दाहिनी आंख</string>
+    <string name="eye_left">बाईं आंख</string>
+    <string name="start_test_btn">टेस्ट शुरू करें</string>
+    <string name="mark_distortions">विकृतियों को चिह्नित करें (%1$s आंख)</string>
+    <string name="draw_hint">उन क्षेत्रों पर ड्रा करें जो लहरदार या धुंधले दिखते हैं।</string>
+    <string name="clear_btn">साफ़ करें</string>
+
+    <string name="acuity_title">विजुअल एक्युटी (3 मी)</string>
+    <string name="tumbling_inst_1">1. फोन को ठीक 3 मीटर दूर रखें।</string>
+    <string name="tumbling_inst_2">2. उस आंख को ढकें जिसका परीक्षण नहीं हो रहा है।</string>
+    <string name="tumbling_inst_3">3. \'E\' की दिशा को पहचानें।</string>
+    <string name="tumbling_inst_4">4. जिस दिशा में \'E\' इशारा कर रहा है, उस ओर स्वाइप करें।</string>
+    <string name="swipe_hint">जिस दिशा में \'E\' है, उस ओर स्वाइप करें</string>
+    <string name="test_complete">टेस्ट पूरा हुआ</string>
+    <string name="tested_eye_label">परीक्षण की गई आंख: %1$s</string>
+    <string name="visual_acuity_label">विजुअल एक्युटी</string>
+    <string name="save_record_btn">रिकॉर्ड में सहेजें</string>
+    <string name="retake_btn">फिर से टेस्ट करें</string>
+
+    <string name="adherence_title">अनुपालन विश्लेषण</string>
+    <string name="view_by">देखें द्वारा</string>
+    <string name="view_day">दिन</string>
+    <string name="view_week">सप्ताह</string>
+    <string name="view_medicine">दवा</string>
+    <string name="summary_title">सारांश</string>
+    <string name="summary_total">इस दृश्य में ली गई कुल खुराक: %1$d</string>
+    <string name="desc_day">यह आज के लिए आपकी खुराक का पैटर्न दिखाता है।</string>
+    <string name="desc_week">पिछले 7 दिनों में निरंतरता।</string>
+    <string name="desc_medicine">दवा के प्रकार के अनुसार विवरण।</string>
+    <string name="no_data">कोई डेटा उपलब्ध नहीं है</string>
+
+    <string name="profile_title">प्रोफ़ाइल</string>
+    <string name="basic_info">मूल जानकारी</string>
+    <string name="contact_info">संपर्क जानकारी</string>
+    <string name="emergency_contact">आपातकालीन संपर्क</string>
+    <string name="system_info">सिस्टम जानकारी</string>
+    <string name="logout_btn">लॉग आउट</string>
+    <string name="notifications_title">अस्पताल अपडेट</string>
+    <string name="notifications_subtitle">अपने डॉक्टर के संदेश और नोट्स देखें</string>
+    <string name="no_notifications">अस्पताल से कोई नई सूचना नहीं है।</string>
+
+    <string name="label_name">पूरा नाम</string>
+    <string name="label_age">उम्र</string>
+    <string name="label_sex">लिंग</string>
+    <string name="label_blood">ब्लड ग्रुप</string>
+    <string name="label_phone">फ़ोन नंबर</string>
+    <string name="label_email">ईमेल पता</string>
+    <string name="label_address">पता</string>
+    <string name="label_patient_id">रोगी आईडी</string>
+    <string name="label_registered">पंजीकृत तिथि</string>
+
+    <string name="report_detail_title">रिपोर्ट विवरण</string>
+    <string name="doctor_advice">डॉक्टर की सलाह</string>
+    <string name="submitted_symptoms">जमा किए गए लक्षण</string>
+    <string name="your_comments">आपकी टिप्पणियाँ:</string>
+    <string name="dr_online">ऑनलाइन</string>
+    <string name="message_placeholder">संदेश</string>
+    <string name="report_summary">रिपोर्ट सारांश</string>
+    <string name="results_saved">परिणाम सहेजे गए!</string>
+    <string name="submission_failed">जमा करने में विफल।</string>
+</resources>

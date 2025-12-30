@@ -37,6 +37,9 @@ fun ChatScreen(
     var isLoading by remember { mutableStateOf(true) }
     val listState = rememberLazyListState()
 
+    // Get current language to trigger recomposition when it changes
+    val currentLang = LocalLanguageManager.current.currentLanguage
+
     // AUTO-REFRESH: Poll every 3 seconds to see new Doctor replies
     LaunchedEffect(submissionId) {
         while (isActive) {
@@ -70,7 +73,7 @@ fun ChatScreen(
                         Spacer(Modifier.width(10.dp))
                         Column {
                             Text("Dr. Chakra", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                            Text("Online", fontSize = 12.sp, color = Color.Green)
+                            Text(localizedString("dr_online"), fontSize = 12.sp, color = Color.Green)
                         }
                     }
                 },
@@ -155,7 +158,7 @@ fun ReportBubble(msg: ChatMessage) {
 
                 // 2. Symptoms List
                 if (msg.symptoms != null) {
-                    Text("Report Summary", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF075E54))
+                    Text(localizedString("report_summary"), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF075E54))
                     HorizontalDivider(Modifier.padding(vertical = 4.dp), thickness = 0.5.dp, color = Color.Black.copy(alpha = 0.1f))
 
                     msg.symptoms.entries.filter { it.value > 0 }.forEach { (key, value) ->
@@ -237,7 +240,7 @@ fun ChatInputArea() {
         TextField(
             value = "",
             onValueChange = {},
-            placeholder = { Text("Message", fontSize = 14.sp) },
+            placeholder = { Text(localizedString("message_placeholder"), fontSize = 14.sp) },
             modifier = Modifier.weight(1f).height(50.dp),
             shape = RoundedCornerShape(24.dp),
             colors = TextFieldDefaults.colors(

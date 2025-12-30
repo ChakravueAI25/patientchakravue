@@ -39,6 +39,9 @@ fun DashboardScreen(
     var isLoading by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
 
+    // Get current language to trigger recomposition when it changes
+    val currentLang = LocalLanguageManager.current.currentLanguage
+
     // Calculate next appointment (last visit + 15 days)
     val nextAppointment = remember(patient) {
         calculateNextAppointment(patient)
@@ -75,6 +78,8 @@ fun DashboardScreen(
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f)
                     )
+                    // Language Switcher Icon
+                    LanguageSwitcherIcon(tint = Color(0xFF1A3B5D))
                     IconButton(onClick = onNavigateToAdherence) {
                         Icon(Icons.AutoMirrored.Filled.ShowChart, null)
                     }
@@ -86,7 +91,7 @@ fun DashboardScreen(
 
             /* ---------- MEDICINES / PIE ---------- */
             item {
-                Text("MEDICINES", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(localizedString("section_medicines"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Spacer(Modifier.height(12.dp))
 
                 val taken = todayDoses.count { it.taken }
@@ -110,7 +115,7 @@ fun DashboardScreen(
                     Spacer(Modifier.width(24.dp))
                     Column {
                         Text("$taken/$total", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50))
-                        Text("Doses Taken Today", fontSize = 14.sp, color = Color.Gray)
+                        Text(localizedString("doses_taken_today"), fontSize = 14.sp, color = Color.Gray)
                     }
                 }
             }
@@ -121,7 +126,7 @@ fun DashboardScreen(
 
             /* ---------- PRESCRIPTION ---------- */
             item {
-                Text("PRESCRIPTION", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(localizedString("section_prescription"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Spacer(Modifier.height(8.dp))
             }
 
@@ -132,7 +137,7 @@ fun DashboardScreen(
                 ) {
                     Column(Modifier.padding(16.dp)) {
 
-                        Text("Doctor", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(localizedString("doctor_label"), fontWeight = FontWeight.Bold, fontSize = 16.sp)
 
                         // Next Appointment Section
                         Row(
@@ -147,12 +152,12 @@ fun DashboardScreen(
                             )
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                "Next Appointment: ",
+                                localizedString("next_appointment") + " ",
                                 color = Color.Gray,
                                 fontSize = 13.sp
                             )
                             Text(
-                                nextAppointment ?: "Not scheduled",
+                                nextAppointment ?: localizedString("not_scheduled"),
                                 color = Color(0xFF1976D2),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium
@@ -177,8 +182,8 @@ fun DashboardScreen(
                                     modifier = Modifier.size(48.dp)
                                 )
                                 Spacer(Modifier.height(8.dp))
-                                Text("No doses scheduled for today.", color = Color.Gray)
-                                Text("Check back tomorrow!", fontSize = 12.sp, color = Color.LightGray)
+                                Text(localizedString("no_doses_today"), color = Color.Gray)
+                                Text(localizedString("check_back_tomorrow"), fontSize = 12.sp, color = Color.LightGray)
                             }
                         } else {
                             todayDoses.forEach { dose ->
@@ -257,7 +262,7 @@ fun DashboardScreen(
                                             modifier = Modifier.size(18.dp)
                                         )
                                         Spacer(Modifier.width(8.dp))
-                                        Text(if (dose.taken) "Taken" else "Mark as Taken")
+                                        Text(if (dose.taken) localizedString("btn_taken") else localizedString("btn_mark_taken"))
                                     }
                                 }
 

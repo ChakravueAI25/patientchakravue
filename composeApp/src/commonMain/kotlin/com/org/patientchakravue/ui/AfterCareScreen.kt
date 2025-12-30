@@ -32,6 +32,14 @@ fun AfterCareScreen(
     val scope = rememberCoroutineScope()
     val api = remember { ApiRepository() }
 
+    // Get current language to trigger recomposition when it changes
+    val currentLang = LocalLanguageManager.current.currentLanguage
+
+    // Pre-capture localized strings for use in non-composable lambda contexts
+    val errorNoPhotoMsg = localizedString("error_no_photo")
+    val submitSuccessMsg = localizedString("submit_success")
+    val submitFailureMsg = localizedString("submit_failure")
+
     // State for Symptom Values (Mapped to 0, 3, 6, 10)
     var blurredVision by remember { mutableIntStateOf(0) }
     var pain by remember { mutableIntStateOf(0) }
@@ -62,21 +70,21 @@ fun AfterCareScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(Modifier.height(16.dp))
-        Text("Daily Eye Check-In", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
-        Text("Tell us how your eye feels today", color = Color.Gray, fontSize = 14.sp)
+        Text(localizedString("daily_checkin_title"), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
+        Text(localizedString("daily_checkin_subtitle"), color = Color.Gray, fontSize = 14.sp)
         Spacer(Modifier.height(24.dp))
 
         // 1. Blurred Vision (Moved to top as requested)
-        SymptomRow("Blurred Vision", Icons.Outlined.Visibility, blurredVision) { blurredVision = it }
+        SymptomRow(localizedString("symptom_blurred_vision"), Icons.Outlined.Visibility, blurredVision) { blurredVision = it }
 
         // 2. Original Symptoms
-        SymptomRow("Pain", Icons.Filled.Favorite, pain) { pain = it }
-        SymptomRow("Redness", Icons.Filled.RemoveRedEye, redness) { redness = it }
-        SymptomRow("Watering", Icons.Filled.WaterDrop, watering) { watering = it }
-        SymptomRow("Itching/Irritation", Icons.Filled.PanToolAlt, itching) { itching = it }
+        SymptomRow(localizedString("symptom_pain"), Icons.Filled.Favorite, pain) { pain = it }
+        SymptomRow(localizedString("symptom_redness"), Icons.Filled.RemoveRedEye, redness) { redness = it }
+        SymptomRow(localizedString("symptom_watering"), Icons.Filled.WaterDrop, watering) { watering = it }
+        SymptomRow(localizedString("symptom_itching"), Icons.Filled.PanToolAlt, itching) { itching = it }
 
         // 3. Discharge (Added to the list)
-        SymptomRow("Discharge", Icons.Filled.Opacity, discharge) { discharge = it }
+        SymptomRow(localizedString("symptom_discharge"), Icons.Filled.Opacity, discharge) { discharge = it }
 
         Spacer(Modifier.height(16.dp))
 
@@ -87,7 +95,7 @@ fun AfterCareScreen(
         ) {
             Icon(Icons.Default.PhotoCamera, null)
             Spacer(Modifier.width(8.dp))
-            Text(if (imageBytes == null) "Add Eye Photo (Recommended)" else "Photo Added ✓")
+            Text(if (imageBytes == null) localizedString("add_photo_btn") else localizedString("photo_added_btn"))
         }
 
         Spacer(Modifier.height(16.dp))
@@ -95,7 +103,7 @@ fun AfterCareScreen(
         OutlinedTextField(
             value = comments,
             onValueChange = { comments = it },
-            label = { Text("Describe anything unusual...") },
+            label = { Text(localizedString("comment_hint")) },
             modifier = Modifier.fillMaxWidth().height(120.dp)
         )
 
@@ -104,7 +112,7 @@ fun AfterCareScreen(
         Button(
             onClick = {
                 if (imageBytes == null) {
-                    showSnackbar("Please add a photo of your eye")
+                    showSnackbar(errorNoPhotoMsg)
                     return@Button
                 }
                 isSubmitting = true
@@ -123,10 +131,10 @@ fun AfterCareScreen(
                     )
                     val success = api.submitReport(imageBytes!!, fields)
                     if (success) {
-                        showSnackbar("Report submitted successfully!")
+                        showSnackbar(submitSuccessMsg)
                         onBack()
                     } else {
-                        showSnackbar("Failed to submit. Check your internet connection.")
+                        showSnackbar(submitFailureMsg)
                     }
                     isSubmitting = false
                 }
@@ -136,7 +144,7 @@ fun AfterCareScreen(
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDAA520))
         ) {
             if (isSubmitting) CircularProgressIndicator(color = Color.White)
-            else Text("SUBMIT", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            else Text(localizedString("submit_btn"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
         }
 
         // Extra space at the bottom to ensure submit button is visible above bottom nav
@@ -147,7 +155,12 @@ fun AfterCareScreen(
 @Composable
 fun SymptomRow(label: String, icon: ImageVector, selectedValue: Int, onValueChange: (Int) -> Unit) {
     // Mapping: None=0, Mild=3, Moderate=6, Severe=10
-    val levels = listOf("None" to 0, "Mild" to 3, "Moderate" to 6, "Severe" to 10)
+    val levels = listOf(
+        localizedString("level_none") to 0,
+        localizedString("level_mild") to 3,
+        localizedString("level_moderate") to 6,
+        localizedString("level_severe") to 10
+    )
 
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {

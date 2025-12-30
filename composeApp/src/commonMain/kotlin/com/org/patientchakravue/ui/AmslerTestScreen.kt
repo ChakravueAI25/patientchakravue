@@ -39,10 +39,13 @@ fun AmslerTestScreen(
     var currentStep by remember { mutableStateOf(AmslerStep.INSTRUCTIONS) }
     var selectedEye by remember { mutableStateOf("Left") }
 
+    // Get current language to trigger recomposition when it changes
+    val currentLang = LocalLanguageManager.current.currentLanguage
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Amsler Grid Test") },
+                title = { Text(localizedString("amsler_title")) },
                 navigationIcon = {
                     IconButton(onClick = {
                         if (currentStep == AmslerStep.DRAWING) currentStep = AmslerStep.INSTRUCTIONS
@@ -88,7 +91,7 @@ fun AmslerInstructions(onNext: (String) -> Unit) {
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Instructions", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text(localizedString("instructions_title"), fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(16.dp))
 
         // Static Grid Preview
@@ -108,27 +111,27 @@ fun AmslerInstructions(onNext: (String) -> Unit) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(Modifier.padding(16.dp)) {
-                InstructionItem("1. Hold phone 12 inches (30cm) away.")
-                InstructionItem("2. Cover one eye.")
-                InstructionItem("3. Focus on the center black dot.")
-                InstructionItem("4. If lines look wavy, blurred, or missing, mark them on the next screen.")
+                InstructionItem(localizedString("amsler_inst_1"))
+                InstructionItem(localizedString("amsler_inst_2"))
+                InstructionItem(localizedString("amsler_inst_3"))
+                InstructionItem(localizedString("amsler_inst_4"))
             }
         }
 
         Spacer(Modifier.height(20.dp))
 
-        Text("Select Eye to Test:", fontWeight = FontWeight.SemiBold)
+        Text(localizedString("select_eye"), fontWeight = FontWeight.SemiBold)
         Row(Modifier.padding(vertical = 8.dp)) {
             FilterChip(
                 selected = selectedEye == "Right",
                 onClick = { selectedEye = "Right" },
-                label = { Text("Right Eye") },
+                label = { Text(localizedString("eye_right")) },
                 modifier = Modifier.padding(end = 8.dp)
             )
             FilterChip(
                 selected = selectedEye == "Left",
                 onClick = { selectedEye = "Left" },
-                label = { Text("Left Eye") }
+                label = { Text(localizedString("eye_left")) }
             )
         }
 
@@ -138,7 +141,7 @@ fun AmslerInstructions(onNext: (String) -> Unit) {
             onClick = { onNext(selectedEye) },
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
-            Text("Start Test")
+            Text(localizedString("start_test_btn"))
         }
 
         Spacer(Modifier.height(16.dp))
@@ -167,8 +170,8 @@ fun AmslerCanvasDrawing(
     var currentPath by remember { mutableStateOf<Path?>(null) }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Mark Distortions ($eyeSide Eye)", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Text("Draw over areas that look wavy or blurry.", color = Color.Gray, fontSize = 14.sp)
+        Text("${localizedString("mark_distortions")} ($eyeSide)", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(localizedString("draw_hint"), color = Color.Gray, fontSize = 14.sp)
 
         Spacer(Modifier.height(16.dp))
 
@@ -227,7 +230,7 @@ fun AmslerCanvasDrawing(
             OutlinedButton(onClick = { paths.clear() }) {
                 Icon(Icons.Default.Refresh, null)
                 Spacer(Modifier.width(4.dp))
-                Text("Clear")
+                Text(localizedString("clear_btn"))
             }
 
             Button(
@@ -255,7 +258,7 @@ fun AmslerCanvasDrawing(
                 } else {
                     Icon(Icons.Default.Check, null)
                     Spacer(Modifier.width(4.dp))
-                    Text("Submit")
+                    Text(localizedString("submit_btn"))
                 }
             }
         }

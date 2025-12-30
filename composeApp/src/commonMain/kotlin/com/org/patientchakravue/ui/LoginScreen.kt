@@ -34,6 +34,9 @@ fun LoginScreen(
     val sessionManager = remember { SessionManager() }
     val api = remember { ApiRepository() }
 
+    // Get current language to trigger recomposition when it changes
+    val currentLang = LocalLanguageManager.current.currentLanguage
+
     // State variables
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -62,6 +65,16 @@ fun LoginScreen(
                 .background(Color.Black.copy(alpha = 0.2f))
         )
 
+        // 2. LANGUAGE SWITCHER - TOP RIGHT CORNER
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 44.dp, end = 16.dp) // Extra top padding for status bar area
+        ) {
+            // Using White tint to stand out against dark background
+            LanguageSwitcherIcon(tint = Color.White)
+        }
+
         // 2. TRANSLUCENT LOGIN BOX
         Card(
             modifier = Modifier
@@ -78,7 +91,7 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Patient Login",
+                    text = localizedString("login_title"),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = ashColor,
@@ -89,7 +102,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email") },
+                    label = { Text(localizedString("email_label")) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = ashColor,
                         unfocusedBorderColor = ashColor.copy(alpha = 0.7f),
@@ -109,7 +122,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Password") },
+                    label = { Text(localizedString("password_label")) },
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
@@ -136,10 +149,17 @@ fun LoginScreen(
                 if (isLoading) {
                     CircularProgressIndicator(color = ashColor)
                 } else {
+                    // Store localized strings outside lambda to avoid issues
+                    val loginErrorEmpty = localizedString("login_error_empty")
+                    val loginSuccess = localizedString("login_success")
+                    val loginErrorInvalid = localizedString("login_error_invalid")
+                    val errorConnection = localizedString("error_connection")
+                    val loginButtonText = localizedString("login_button")
+
                     Button(
                         onClick = {
                             if (email.isBlank() || password.isBlank()) {
-                                showSnackbar("Fill all fields")
+                                showSnackbar(loginErrorEmpty)
                                 return@Button
                             }
 
@@ -149,13 +169,13 @@ fun LoginScreen(
                                     val patient = api.login(email.trim(), password.trim())
                                     if (patient != null) {
                                         sessionManager.savePatient(patient)
-                                        showSnackbar("Welcome back!")
+                                        showSnackbar(loginSuccess)
                                         onLoginSuccess()
                                     } else {
-                                        showSnackbar("Invalid credentials")
+                                        showSnackbar(loginErrorInvalid)
                                     }
                                 } catch (e: Exception) {
-                                    showSnackbar("Connection Error")
+                                    showSnackbar(errorConnection)
                                 } finally {
                                     isLoading = false
                                 }
@@ -169,7 +189,7 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        Text("LOGIN", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(loginButtonText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

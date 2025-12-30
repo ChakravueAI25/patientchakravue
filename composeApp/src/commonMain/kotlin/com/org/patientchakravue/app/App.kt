@@ -17,6 +17,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun App() {
     MaterialTheme {
+        // Wrap entire app with localization provider for language switching
+        AppLocalizationProvider {
         val sessionManager = remember { SessionManager() }
         val snackbarHostState = remember { SnackbarHostState() }
         val scope = rememberCoroutineScope()
@@ -177,6 +179,7 @@ fun App() {
                 }
             }
         }
+        } // End AppLocalizationProvider
     }
 }
 

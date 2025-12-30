@@ -28,6 +28,9 @@ fun ProfileScreen(
     val scope = rememberCoroutineScope()
     val apiRepository = remember { ApiRepository() }
 
+    // Get current language to trigger recomposition when it changes
+    val currentLang = LocalLanguageManager.current.currentLanguage
+
     LaunchedEffect(patientId) {
         if (patientId != null) {
             isLoading = true
@@ -43,7 +46,7 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Profile") },
+                title = { Text(localizedString("profile_title")) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -70,12 +73,12 @@ fun ProfileScreen(
                 // Basic Information
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Basic Information", style = MaterialTheme.typography.titleMedium)
+                        Text(localizedString("basic_info"), style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(8.dp))
-                        ProfileRow("Full Name", patient?.name)
-                        ProfileRow("Age", patient?.age)
-                        ProfileRow("Sex", patient?.sex)
-                        ProfileRow("Blood Group", patient?.bloodType)
+                        ProfileRow(localizedString("label_name"), patient?.name)
+                        ProfileRow(localizedString("label_age"), patient?.age)
+                        ProfileRow(localizedString("label_sex"), patient?.sex)
+                        ProfileRow(localizedString("label_blood"), patient?.bloodType)
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -83,11 +86,11 @@ fun ProfileScreen(
                 // Contact Information
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Contact Information", style = MaterialTheme.typography.titleMedium)
+                        Text(localizedString("contact_info"), style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(8.dp))
-                        ProfileRow("Phone Number", patient?.phone)
-                        ProfileRow("Email Address", patient?.email)
-                        ProfileRow("Address", patient?.address)
+                        ProfileRow(localizedString("label_phone"), patient?.phone)
+                        ProfileRow(localizedString("label_email"), patient?.email)
+                        ProfileRow(localizedString("label_address"), patient?.address)
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -96,10 +99,10 @@ fun ProfileScreen(
                 if (!patient?.emergencyContactName.isNullOrBlank()) {
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Emergency Contact", style = MaterialTheme.typography.titleMedium)
+                            Text(localizedString("emergency_contact"), style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(8.dp))
-                            ProfileRow("Name", patient?.emergencyContactName)
-                            ProfileRow("Phone", patient?.emergencyContactPhone)
+                            ProfileRow(localizedString("label_name"), patient?.emergencyContactName)
+                            ProfileRow(localizedString("label_phone"), patient?.emergencyContactPhone)
                         }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
@@ -108,10 +111,10 @@ fun ProfileScreen(
                 // System Information
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("System Information", style = MaterialTheme.typography.titleMedium)
+                        Text(localizedString("system_info"), style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(8.dp))
-                        ProfileRow("Patient ID", patient?.id)
-                        ProfileRow("Registered On", patient?.registrationId) // Assuming registrationId is the registration date.
+                        ProfileRow(localizedString("label_patient_id"), patient?.id)
+                        ProfileRow(localizedString("label_registered"), patient?.registrationId) // Assuming registrationId is the registration date.
                     }
                 }
 
@@ -124,7 +127,7 @@ fun ProfileScreen(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Logout")
+                    Text(localizedString("logout_btn"))
                 }
             }
         } else {

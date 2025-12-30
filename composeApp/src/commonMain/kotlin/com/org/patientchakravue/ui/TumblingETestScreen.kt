@@ -60,6 +60,13 @@ fun TumblingETestScreen(
 ) {
     var gameState by remember { mutableStateOf(TestState.INSTRUCTIONS) }
 
+    // Get current language to trigger recomposition when it changes
+    val currentLang = LocalLanguageManager.current.currentLanguage
+
+    // Pre-capture localized strings for use in non-composable lambda contexts
+    val resultsSavedMsg = localizedString("results_saved")
+    val submissionFailedMsg = localizedString("submission_failed")
+
     // --- MEDICAL LOGIC STATE ---
     var currentLevelIndex by remember { mutableIntStateOf(0) } // Index in MEDICAL_LEVELS
     var trialsInCurrentLevel by remember { mutableIntStateOf(0) } // 0 to 5
@@ -78,7 +85,7 @@ fun TumblingETestScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Visual Acuity (3m)") },
+                title = { Text(localizedString("acuity_title")) },
                 navigationIcon = {
                     IconButton(onClick = {
                         when (gameState) {
@@ -191,10 +198,10 @@ fun TumblingETestScreen(
                                 )
                                 isSubmitting = false
                                 if (success) {
-                                    showSnackbar("Results saved!")
+                                    showSnackbar(resultsSavedMsg)
                                     onBack()
                                 } else {
-                                    showSnackbar("Submission failed.")
+                                    showSnackbar(submissionFailedMsg)
                                 }
                             }
                         }
@@ -221,7 +228,7 @@ fun TumblingEInstructionScreen(onStart: (String) -> Unit) {
     ) {
         Icon(Icons.Default.Info, null, modifier = Modifier.size(64.dp), tint = Color(0xFF1976D2))
         Spacer(Modifier.height(24.dp))
-        Text("Visual Acuity Test", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text(localizedString("visual_acuity_test"), fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(16.dp))
 
         Card(
@@ -229,32 +236,32 @@ fun TumblingEInstructionScreen(onStart: (String) -> Unit) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(Modifier.padding(16.dp)) {
-                Text("1. Place phone exactly 3 meters away.", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(localizedString("tumbling_inst_1"), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
-                Text("2. Cover the EYE NOT being tested.", fontSize = 16.sp)
+                Text(localizedString("tumbling_inst_2"), fontSize = 16.sp)
                 Spacer(Modifier.height(8.dp))
-                Text("3. Identify the direction of the E.", fontSize = 16.sp)
+                Text(localizedString("tumbling_inst_3"), fontSize = 16.sp)
                 Spacer(Modifier.height(8.dp))
-                Text("4. Swipe in the direction the E is pointing.", fontSize = 16.sp)
+                Text(localizedString("tumbling_inst_4"), fontSize = 16.sp)
             }
         }
 
         Spacer(Modifier.height(24.dp))
 
         // Eye Selector
-        Text("Select Eye to Test:", fontWeight = FontWeight.SemiBold)
+        Text(localizedString("select_eye"), fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(8.dp))
         Row {
             FilterChip(
                 selected = selectedEye == "Right",
                 onClick = { selectedEye = "Right" },
-                label = { Text("Right Eye") },
+                label = { Text(localizedString("eye_right")) },
                 modifier = Modifier.padding(end = 8.dp)
             )
             FilterChip(
                 selected = selectedEye == "Left",
                 onClick = { selectedEye = "Left" },
-                label = { Text("Left Eye") }
+                label = { Text(localizedString("eye_left")) }
             )
         }
 
@@ -264,7 +271,7 @@ fun TumblingEInstructionScreen(onStart: (String) -> Unit) {
             modifier = Modifier.fillMaxWidth().height(56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2))
         ) {
-            Text("Start Test", fontSize = 18.sp)
+            Text(localizedString("start_test_btn"), fontSize = 18.sp)
         }
     }
 }
@@ -340,7 +347,7 @@ fun TumblingEGameScreen(
 
         Spacer(Modifier.weight(1f))
 
-        Text("Swipe in the direction the 'E' is pointing", color = Color.LightGray)
+        Text(localizedString("swipe_hint"), color = Color.LightGray)
         Spacer(Modifier.height(48.dp))
     }
 }
@@ -363,16 +370,16 @@ fun TumblingEResultScreen(
     ) {
         Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(80.dp), tint = Color(0xFF4CAF50))
         Spacer(Modifier.height(24.dp))
-        Text("Test Complete", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Text(localizedString("test_complete"), fontSize = 28.sp, fontWeight = FontWeight.Bold)
 
         Card(
             modifier = Modifier.padding(vertical = 24.dp).fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFAFA))
         ) {
             Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Tested Eye: $eye", fontSize = 16.sp, color = Color.Gray)
+                Text("${localizedString("tested_eye")} $eye", fontSize = 16.sp, color = Color.Gray)
                 Spacer(Modifier.height(8.dp))
-                Text("Visual Acuity", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                Text(localizedString("visual_acuity_label"), fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                 Text(finalResult, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1976D2))
             }
         }
@@ -388,7 +395,7 @@ fun TumblingEResultScreen(
             if (isSubmitting) {
                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
             } else {
-                Text("Save to Record", fontSize = 18.sp)
+                Text(localizedString("save_record_btn"), fontSize = 18.sp)
             }
         }
 
@@ -397,7 +404,7 @@ fun TumblingEResultScreen(
         TextButton(onClick = onRetry, enabled = !isSubmitting) {
             Icon(Icons.Default.Refresh, null)
             Spacer(Modifier.width(8.dp))
-            Text("Retake Test")
+            Text(localizedString("retake_btn"))
         }
     }
 }

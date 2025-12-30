@@ -33,6 +33,9 @@ fun VisionScreen(
     var history by remember { mutableStateOf<List<VisionTestRecord>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
+    // Get current language to trigger recomposition when it changes
+    val currentLang = LocalLanguageManager.current.currentLanguage
+
     // Fetch History on Load
     LaunchedEffect(Unit) {
         history = api.getVisionHistory(patient.id)
@@ -46,13 +49,13 @@ fun VisionScreen(
             .padding(16.dp)
     ) {
         Text(
-            "Vision Tests",
+            localizedString("vision_title"),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1A3B5D)
         )
         Text(
-            "Select a test to begin",
+            localizedString("vision_subtitle"),
             color = Color.Gray,
             fontSize = 14.sp
         )
@@ -65,7 +68,7 @@ fun VisionScreen(
         ) {
             // Amsler Grid Button
             VisionTestCard(
-                title = "Amsler\nGrid",
+                title = localizedString("test_amsler"),
                 icon = Icons.Default.GridOn,
                 color = Color(0xFFE3F2FD), // Light Blue
                 iconColor = Color(0xFF1976D2),
@@ -75,7 +78,7 @@ fun VisionScreen(
 
             // Tumbling E Button
             VisionTestCard(
-                title = "Tumbling E\nTest",
+                title = localizedString("test_tumbling"),
                 icon = Icons.Default.Visibility,
                 color = Color(0xFFF3E5F5), // Light Purple
                 iconColor = Color(0xFF7B1FA2),
@@ -91,7 +94,7 @@ fun VisionScreen(
             Icon(Icons.Default.History, null, tint = Color.Gray, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
             Text(
-                "Recent Results",
+                localizedString("recent_results"),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF1A3B5D)
@@ -110,7 +113,7 @@ fun VisionScreen(
                     .padding(32.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No test history found.", color = Color.Gray)
+                Text(localizedString("no_history"), color = Color.Gray)
             }
         } else {
             LazyColumn(
