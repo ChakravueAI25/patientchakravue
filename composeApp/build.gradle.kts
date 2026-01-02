@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.googleGmsGoogleServices)
 }
 
 kotlin {
@@ -112,6 +113,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.firebase.messaging)
     debugImplementation(compose.uiTooling)
 }
 

@@ -297,4 +297,22 @@ class ApiRepository {
             null
         }
     }
+
+    // FCM Token Registration for Push Notifications
+    suspend fun registerFcmToken(patientId: String, token: String): Boolean {
+        return try {
+            val response = NetworkClient.client.post("$baseUrl/patients/$patientId/fcm-token") {
+                contentType(ContentType.Application.Json)
+                setBody(mapOf(
+                    "patient_id" to patientId,
+                    "token" to token,
+                    "platform" to "android"
+                ))
+            }
+            response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
 }

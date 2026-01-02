@@ -26,7 +26,9 @@ coil3 = "3.0.3"
 # --- UTILS (Replaces intl) ---
 datetime = "0.4.1"
 peekaboo = "0.5.2"
-firebaseMessagingKtx = "25.0.1" # Latest stable for K2/Kotlin 2.x
+firebaseMessagingKtx = "25.0.1"
+googleGmsGoogleServices = "4.4.4"
+firebaseMessaging = "25.0.1" # Latest stable for K2/Kotlin 2.x
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -65,6 +67,7 @@ peekaboo-image-picker = { module = "io.github.onseok:peekaboo-image-picker", ver
 # Extended Icons (for Eye, Water, etc.)
 compose-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version = "1.7.3" }
 firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messaging-ktx", version.ref = "firebaseMessagingKtx" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebaseMessaging" }
 
 
 [plugins]
@@ -74,3 +77,4 @@ composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMul
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+googleGmsGoogleServices = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
