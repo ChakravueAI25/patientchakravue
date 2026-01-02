@@ -7,3 +7,13 @@ class IOSPlatform: Platform {
 }
 
 actual fun getPlatform(): Platform = IOSPlatform()
+
+/**
+ * iOS implementation: No-op for now.
+ * iOS uses APNS which would be configured separately.
+ */
+actual fun registerFcmTokenAfterLogin(patientId: String) {
+    // iOS push notifications would be handled via APNS
+    // This is a placeholder for future iOS push notification implementation
+    println("iOS FCM registration placeholder for patient: $patientId")
+}

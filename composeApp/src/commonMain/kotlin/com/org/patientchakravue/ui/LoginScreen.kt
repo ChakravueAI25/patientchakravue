@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.data.SessionManager
+import com.org.patientchakravue.platform.registerFcmTokenAfterLogin
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import patientchakravue.composeapp.generated.resources.Login_bg
@@ -168,7 +169,12 @@ fun LoginScreen(
                                 try {
                                     val patient = api.login(email.trim(), password.trim())
                                     if (patient != null) {
+                                        // 1. Save session first
                                         sessionManager.savePatient(patient)
+
+                                        // 2. Register FCM token AFTER login (ensures backend has token)
+                                        registerFcmTokenAfterLogin(patient.id)
+
                                         showSnackbar(loginSuccess)
                                         onLoginSuccess()
                                     } else {

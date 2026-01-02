@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "793772656637",
+    "project_id": "flutter-pushnotification-6b34a",
+    "storage_bucket": "flutter-pushnotification-6b34a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:793772656637:android:ed010c173fd471b846bb94",
+        "android_client_info": {
+          "package_name": "com.example.docchakravue"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEtBZ6II5y2vt7y-6o-hBi3WJMMV9H3k8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:793772656637:android:7dc79fa058f9ff5446bb94",
+        "android_client_info": {
+          "package_name": "com.example.paitentscrakra"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEtBZ6II5y2vt7y-6o-hBi3WJMMV9H3k8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:793772656637:android:67cf0bef27473d5246bb94",
+        "android_client_info": {
+          "package_name": "com.org.patientchakravue"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEtBZ6II5y2vt7y-6o-hBi3WJMMV9H3k8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

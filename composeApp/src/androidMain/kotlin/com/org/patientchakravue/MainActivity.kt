@@ -1,13 +1,21 @@
 package com.org.patientchakravue
 
-import android.os.Bundle
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.pm.PackageManager
 import android.graphics.Color
+import android.media.RingtoneManager
+import android.os.Build
+import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.firebase.messaging.FirebaseMessaging
@@ -19,6 +27,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
+    // Runtime permission launcher for Android 13+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        Log.d("FCM", "Notification permission granted: $isGranted")
+    }
+
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -31,11 +47,87 @@ class MainActivity : ComponentActivity() {
         window.statusBarColor = Color.WHITE
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = true
 
-        // Initialize FCM token registration
+        // STEP 1: Create ALL notification channels ONCE at app startup
+        createNotificationChannels()
+
+        // STEP 2: Request notification permission for Android 13+
+        requestNotificationPermission()
+
+        // STEP 3: Initialize FCM token registration
         initializeFirebaseMessaging()
 
         setContent {
             App()
+        }
+    }
+
+    /**
+     * Creates ALL notification channels at startup.
+     * This ensures channels exist BEFORE any notification is sent.
+     * Required for Android 8.0 (API 26) and above.
+     */
+    private fun createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val manager = getSystemService(NotificationManager::class.java)
+
+            // 1. Medicine Reminders Channel (HIGH importance for visibility)
+            val medicineChannel = NotificationChannel(
+                "medicine_channel",
+                "Medicine Reminders",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Medicine dose reminders"
+                enableVibration(true)
+                setShowBadge(true)
+            }
+
+            // 2. Incoming Calls Channel (HIGH importance with ringtone)
+            val callChannel = NotificationChannel(
+                "call_channel_id",
+                "Incoming Calls",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Incoming doctor video calls"
+                enableVibration(true)
+                setSound(
+                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
+                    null
+                )
+            }
+
+            // 3. Default/General Channel
+            val generalChannel = NotificationChannel(
+                "default_channel_id",
+                "General Notifications",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "General app notifications"
+            }
+
+            manager.createNotificationChannels(
+                listOf(medicineChannel, callChannel, generalChannel)
+            )
+            Log.d("FCM", "Notification channels created")
+        }
+    }
+
+    /**
+     * Request POST_NOTIFICATIONS permission for Android 13+ (API 33+)
+     */
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    Log.d("FCM", "Notification permission already granted")
+                }
+                else -> {
+                    // Request permission
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
         }
     }
 
@@ -60,6 +152,21 @@ class MainActivity : ComponentActivity() {
                 CoroutineScope(Dispatchers.IO).launch {
                     val success = ApiRepository().registerFcmToken(patient.id, token)
                     Log.d("FCM", "Token registration ${if (success) "successful" else "failed"}")
+                }
+            }
+        }
+    }
+
+    companion object {
+        /**
+         * Static helper to register FCM token after login.
+         * Call this from LoginScreen after successful authentication.
+         */
+        fun registerFcmTokenAfterLogin(patientId: String) {
+            FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+                CoroutineScope(Dispatchers.IO).launch {
+                    val success = ApiRepository().registerFcmToken(patientId, token)
+                    Log.d("FCM", "Post-login token registration ${if (success) "successful" else "failed"}")
                 }
             }
         }
