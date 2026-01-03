@@ -36,17 +36,39 @@ data class Patient(
 data class Visit(
     val stages: Stages? = null,
     val date: String? = null,
-    @SerialName("created_at") val createdAt: String? = null
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("visitDate") val visitDate: String? = null,
+    @SerialName("stageCompletedAt") val stageCompletedAt: String? = null
 )
 
 @Serializable
 data class Stages(
-    val doctor: DoctorStage? = null
+    val doctor: DoctorStage? = null,
+    val reception: ReceptionStage? = null
 )
 
 @Serializable
 data class DoctorStage(
-    val data: DoctorData? = null
+    val data: DoctorData? = null,
+    @SerialName("stageCompletedAt") val stageCompletedAt: String? = null
+)
+
+@Serializable
+data class ReceptionStage(
+    val data: ReceptionData? = null,
+    @SerialName("stageCompletedAt") val stageCompletedAt: String? = null
+)
+
+@Serializable
+data class ReceptionData(
+    val patientDetails: PatientDetails? = null
+)
+
+@Serializable
+data class PatientDetails(
+    val name: String? = null,
+    val email: String? = null,
+    val phone: String? = null
 )
 
 @Serializable

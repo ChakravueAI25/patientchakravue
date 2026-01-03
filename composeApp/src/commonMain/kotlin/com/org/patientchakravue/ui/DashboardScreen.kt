@@ -24,7 +24,9 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun DashboardScreen(
@@ -288,36 +290,85 @@ fun DashboardScreen(
 }
 
 /**
- * Calculate next appointment date as last visit date + 15 days
+ * Calculate next appointment date based on surgery milestones:
+ * Surgery + 2 days, Surgery + 10 days, Surgery + 15 days.
  */
 private fun calculateNextAppointment(patient: Patient): String? {
     return try {
-        // Try to get date from last visit
+        // 1. Identify the Surgery Date (Start Date) - Try multiple sources
+        var surgeryDateStr: String? = null
+
+        // Try visits list first (most reliable - latest visit is surgery date)
         val visits = patient.visits
         if (!visits.isNullOrEmpty()) {
+            // Get the latest visit
             val lastVisit = visits.lastOrNull()
-            val dateStr = lastVisit?.date ?: lastVisit?.createdAt
-
-            if (dateStr != null) {
-                // Parse the date (handle ISO format like "2025-12-15T10:30:00")
-                val datePart = dateStr.substringBefore("T").takeIf { it.isNotEmpty() } ?: dateStr.take(10)
-                val localDate = LocalDate.parse(datePart)
-                val nextDate = localDate.plus(15, DateTimeUnit.DAY)
-                return formatDate(nextDate)
+            if (lastVisit != null) {
+                // Try multiple date field names as backend uses different ones
+                // Priority: nested stage dates first, then root-level visit dates
+                surgeryDateStr = lastVisit.stages?.doctor?.stageCompletedAt?.takeIf { it.isNotBlank() }
+                    ?: lastVisit.stages?.reception?.stageCompletedAt?.takeIf { it.isNotBlank() }
+                    ?: lastVisit.visitDate?.takeIf { it.isNotBlank() }
+                    ?: lastVisit.date?.takeIf { it.isNotBlank() }
+                    ?: lastVisit.stageCompletedAt?.takeIf { it.isNotBlank() }
+                    ?: lastVisit.createdAt?.takeIf { it.isNotBlank() }
             }
         }
 
-        // Fallback: Try createdAt from patient
-        val createdAt = patient.createdAt
-        if (createdAt != null) {
-            val datePart = createdAt.substringBefore("T").takeIf { it.isNotEmpty() } ?: createdAt.take(10)
-            val localDate = LocalDate.parse(datePart)
-            val nextDate = localDate.plus(15, DateTimeUnit.DAY)
-            return formatDate(nextDate)
+        // Fallback to patient's createdAt if no visit date found
+        if (surgeryDateStr.isNullOrBlank()) {
+            surgeryDateStr = patient.createdAt?.takeIf { it.isNotBlank() }
         }
 
+        println("[DEBUG] Surgery date string: $surgeryDateStr")
+        println("[DEBUG] Patient visits count: ${visits?.size ?: 0}")
+        if (!visits.isNullOrEmpty()) {
+            val lastVisit = visits.lastOrNull()
+            println("[DEBUG] Last visit - stages?.doctor?.stageCompletedAt: ${lastVisit?.stages?.doctor?.stageCompletedAt}")
+            println("[DEBUG] Last visit - stages?.reception?.stageCompletedAt: ${lastVisit?.stages?.reception?.stageCompletedAt}")
+            println("[DEBUG] Last visit - date: ${lastVisit?.date}, visitDate: ${lastVisit?.visitDate}, createdAt: ${lastVisit?.createdAt}")
+        }
+
+        if (!surgeryDateStr.isNullOrBlank()) {
+            // Parse the ISO date string - handle various formats
+            val datePart = when {
+                surgeryDateStr.contains("T") -> surgeryDateStr.substringBefore("T")
+                surgeryDateStr.length >= 10 -> surgeryDateStr.take(10)
+                else -> surgeryDateStr
+            }
+
+            println("[DEBUG] Parsed date part: $datePart")
+
+            val surgeryDate = LocalDate.parse(datePart)
+            println("[DEBUG] Surgery LocalDate: $surgeryDate")
+
+            // 2. Get Current Date to find the "Next" upcoming visit
+            val today = Instant.fromEpochSeconds(currentEpochSeconds())
+                .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            println("[DEBUG] Today's date: $today")
+
+            // 3. Define the Milestones (2, 10, 15 days)
+            val milestones = listOf(2, 10, 15)
+
+            // 4. Find the first milestone that hasn't passed yet
+            for (days in milestones) {
+                val scheduledDate = surgeryDate.plus(days, DateTimeUnit.DAY)
+                println("[DEBUG] Checking milestone $days days: $scheduledDate")
+                if (scheduledDate >= today) {
+                    val result = formatDate(scheduledDate)
+                    println("[DEBUG] Next appointment: $result")
+                    return result
+                }
+            }
+
+            // If all milestones passed, show the final one or a "Follow-up Completed" message
+            return "Follow-up Completed"
+        }
+
+        println("[DEBUG] No surgery date found, returning null")
         null
     } catch (e: Exception) {
+        println("[DEBUG] Error calculating appointment: ${e.message}")
         e.printStackTrace()
         null
     }
