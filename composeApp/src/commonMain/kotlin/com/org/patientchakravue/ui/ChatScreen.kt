@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,11 +28,12 @@ import kotlinx.coroutines.isActive
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-    submissionId: String,
+    doctorName: String,
+    submissionIds: List<String>,
     onBack: () -> Unit
 ) {
     val api = remember { ApiRepository() }
-    var messages by remember { mutableStateOf<List<ChatMessage>>(emptyList()) }
+    var allMessages by remember { mutableStateOf<List<ChatMessage>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     val listState = rememberLazyListState()
 
@@ -41,15 +41,26 @@ fun ChatScreen(
     val currentLang = LocalLanguageManager.current.currentLanguage
 
     // AUTO-REFRESH: Poll every 3 seconds to see new Doctor replies
-    LaunchedEffect(submissionId) {
+    // Fetch conversations for ALL submissionIds and merge them
+    LaunchedEffect(submissionIds) {
         while (isActive) {
-            val newMessages = api.getConversation(submissionId)
+            val allConversations = mutableListOf<ChatMessage>()
+
+            // Fetch conversation for each submission
+            for (subId in submissionIds) {
+                val messages = api.getConversation(subId)
+                allConversations.addAll(messages)
+            }
+
+            // Sort all messages by timestamp
+            val sortedMessages = allConversations.sortedBy { it.timestamp ?: "" }
+
             // If we have new messages, update and scroll
-            if (newMessages.size != messages.size || isLoading) {
-                messages = newMessages
+            if (sortedMessages.size != allMessages.size || isLoading) {
+                allMessages = sortedMessages
                 isLoading = false
-                if (messages.isNotEmpty()) {
-                    listState.animateScrollToItem(messages.size - 1)
+                if (allMessages.isNotEmpty()) {
+                    listState.animateScrollToItem(allMessages.size - 1)
                 }
             }
             delay(3000)
@@ -63,16 +74,20 @@ fun ChatScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
                             shape = CircleShape,
-                            color = Color.LightGray,
+                            color = Color(0xFF1976D2),
                             modifier = Modifier.size(40.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text("Dr", fontWeight = FontWeight.Bold, color = Color.White)
+                                Text(
+                                    doctorName.take(2).uppercase(),
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
                             }
                         }
                         Spacer(Modifier.width(10.dp))
                         Column {
-                            Text("Dr. Chakra", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                            Text(doctorName, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                             Text(localizedString("dr_online"), fontSize = 12.sp, color = Color.Green)
                         }
                     }
@@ -92,6 +107,14 @@ fun ChatScreen(
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
+        } else if (allMessages.isEmpty()) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Text(
+                    "No conversations yet",
+                    color = Color.Gray,
+                    fontSize = 16.sp
+                )
+            }
         } else {
             LazyColumn(
                 state = listState,
@@ -102,12 +125,12 @@ fun ChatScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 12.dp)
             ) {
-                items(messages) { msg ->
+                items(allMessages) { msg ->
                     if (msg.sender == "patient") {
                         if (msg.type == "report") {
                             ReportBubble(msg)
                         } else {
-                            // Future: Standard patient text messages
+                            // Standard patient text messages
                             TextBubble(msg, isUser = true)
                         }
                     } else {
@@ -222,11 +245,6 @@ fun TextBubble(msg: ChatMessage, isUser: Boolean) {
             }
         }
     }
-}
-
-@Composable
-fun ChatInputArea() {
-    // Removed input UI as chat is read-only in patient app
 }
 
 // Helper to format ISO timestamp (Simple version)

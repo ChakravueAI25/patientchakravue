@@ -15,5 +15,6 @@ sealed class Screen {
     data object TumblingE : Screen()
     // New route for feedback detail
     data class FeedbackDetail(val note: DoctorNote) : Screen()
-    data class Chat(val submissionId: String) : Screen()
+    // Updated Chat to accept doctorId and all submissionIds for aggregated view
+    data class Chat(val doctorId: String, val doctorName: String, val submissionIds: List<String>) : Screen()
 }

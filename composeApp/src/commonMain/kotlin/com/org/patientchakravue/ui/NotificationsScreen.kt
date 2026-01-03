@@ -1,6 +1,6 @@
 package com.org.patientchakravue.ui
 
-gitimport androidx.compose.foundation.background
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,7 +26,7 @@ import com.org.patientchakravue.model.Patient
 @Composable
 fun NotificationsScreen(
     patient: Patient,
-    onNavigateToChat: (String) -> Unit, // Navigate using doctorId
+    onNavigateToChat: (doctorId: String, doctorName: String, submissionIds: List<String>) -> Unit, // Navigate with full doctor thread data
     bottomBar: @Composable () -> Unit
 ) {
     val api = remember { ApiRepository() }
@@ -107,9 +107,12 @@ fun NotificationsScreen(
                         DoctorThreadItem(
                             thread = thread,
                             onClick = {
-                                // Navigate to chat using the first submissionId
-                                // The ChatScreen will load all conversations
-                                thread.submissionIds.firstOrNull()?.let { onNavigateToChat(it) }
+                                // Navigate to chat with doctorId, name, and ALL submissionIds
+                                onNavigateToChat(
+                                    thread.doctorId,
+                                    thread.doctorName,
+                                    thread.submissionIds
+                                )
                             }
                         )
                     }

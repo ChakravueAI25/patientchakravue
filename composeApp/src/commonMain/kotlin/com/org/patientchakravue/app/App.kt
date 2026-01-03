@@ -145,8 +145,8 @@ fun App() {
                     if (patient != null) {
                         NotificationsScreen(
                             patient = patient,
-                            onNavigateToChat = { submissionId ->
-                                navigator.navigateTo(Screen.Chat(submissionId))
+                            onNavigateToChat = { doctorId, doctorName, submissionIds ->
+                                navigator.navigateTo(Screen.Chat(doctorId, doctorName, submissionIds))
                             },
                             bottomBar = { BottomNavigationBar(navigator) }
                         )
@@ -166,7 +166,8 @@ fun App() {
 
                     if (subId.isNotEmpty()) {
                         ChatScreen(
-                            submissionId = subId,
+                            doctorName = screen.note.doctorName ?: "Dr. Chakra",
+                            submissionIds = listOf(subId),
                             onBack = { navigator.handleBackIntent() }
                         )
                     } else {
@@ -178,8 +179,10 @@ fun App() {
                     }
                 }
                 is Screen.Chat -> {
+                    val chatScreen = navigator.currentScreen as Screen.Chat
                     ChatScreen(
-                        submissionId = navigator.currentScreen.let { (it as Screen.Chat).submissionId },
+                        doctorName = chatScreen.doctorName,
+                        submissionIds = chatScreen.submissionIds,
                         onBack = { navigator.handleBackIntent() }
                     )
                 }
