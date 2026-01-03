@@ -80,7 +80,6 @@ E:\patientchakravue\
 │       │           ├── 📄 AdherenceGraphScreen.kt   # Medicine adherence charts
 │       │           ├── 📄 AfterCareScreen.kt        # Post-surgery care form
 │       │           ├── 📄 AmslerTestScreen.kt       # Amsler Grid vision test
-│       │           ├── 📄 BottomNavBar.kt           # Bottom navigation
 │       │           ├── 📄 ChatScreen.kt             # Doctor-Patient chat
 │       │           ├── 📄 DashboardScreen.kt        # Main dashboard
 │       │           ├── 📄 FeedbackDetailScreen.kt   # Feedback details

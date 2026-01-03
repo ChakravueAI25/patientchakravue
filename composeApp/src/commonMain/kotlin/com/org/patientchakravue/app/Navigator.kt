@@ -9,10 +9,13 @@ class Navigator(initialScreen: Screen) {
         private set
 
     private val backStack = mutableListOf<Screen>()
+    private val rootStack = mutableListOf<Screen>()
 
     fun navigateTo(screen: Screen, clearBackStack: Boolean = false) {
         if (clearBackStack) {
             backStack.clear()
+            rootStack.clear()
+            rootStack.add(screen)
         } else {
             backStack.add(currentScreen)
         }
@@ -26,5 +29,18 @@ class Navigator(initialScreen: Screen) {
             currentScreen = backStack.removeLast()
         }
     }
-}
 
+    fun returnToRootOrDashboard() {
+        when {
+            backStack.isNotEmpty() -> {
+                currentScreen = backStack.removeLast()
+            }
+            rootStack.isNotEmpty() -> {
+                currentScreen = rootStack.last()
+            }
+            else -> {
+                navigateTo(Screen.Dashboard, clearBackStack = true)
+            }
+        }
+    }
+}

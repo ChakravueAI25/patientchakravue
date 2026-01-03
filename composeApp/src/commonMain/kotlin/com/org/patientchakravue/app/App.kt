@@ -1,5 +1,9 @@
 package com.org.patientchakravue.app
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
@@ -7,9 +11,13 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.RemoveRedEye
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.org.patientchakravue.data.SessionManager
 import com.org.patientchakravue.ui.*
 import kotlinx.coroutines.launch
@@ -186,6 +194,11 @@ fun App() {
                         onBack = { navigator.handleBackIntent() }
                     )
                 }
+                 is Screen.VideoCallRequest -> {
+                    VideoCallRequestScreen(
+                        onBack = { navigator.goBack() }
+                    )
+                }
             }
         }
         } // End AppLocalizationProvider
@@ -194,30 +207,47 @@ fun App() {
 
 @Composable
 fun BottomNavigationBar(navigator: Navigator) {
-    NavigationBar {
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Dashboard, contentDescription = "Dashboard") },
-            label = { Text("Dashboard") },
-            selected = navigator.currentScreen == Screen.Dashboard,
-            onClick = { navigator.navigateTo(Screen.Dashboard) }
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "AfterCare") },
-            label = { Text("AfterCare") },
-            selected = navigator.currentScreen == Screen.AfterCare,
-            onClick = { navigator.navigateTo(Screen.AfterCare) }
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.RemoveRedEye, contentDescription = "Vision") },
-            label = { Text("Vision") },
-            selected = navigator.currentScreen == Screen.Vision,
-            onClick = { navigator.navigateTo(Screen.Vision) }
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Notifications, contentDescription = "Notifications") },
-            label = { Text("Notifications") },
-            selected = navigator.currentScreen == Screen.Notifications,
-            onClick = { navigator.navigateTo(Screen.Notifications) }
-        )
+    Box {
+        NavigationBar {
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Dashboard, null) },
+                label = { Text("Dashboard") },
+                selected = navigator.currentScreen == Screen.Dashboard,
+                onClick = { navigator.navigateTo(Screen.Dashboard, clearBackStack = true) }
+            )
+
+            NavigationBarItem(
+                icon = { Icon(Icons.AutoMirrored.Filled.List, null) },
+                label = { Text("AfterCare") },
+                selected = navigator.currentScreen == Screen.AfterCare,
+                onClick = { navigator.navigateTo(Screen.AfterCare, clearBackStack = true) }
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.RemoveRedEye, null) },
+                label = { Text("Vision") },
+                selected = navigator.currentScreen == Screen.Vision,
+                onClick = { navigator.navigateTo(Screen.Vision, clearBackStack = true) }
+            )
+
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Notifications, null) },
+                label = { Text("Notifications") },
+                selected = navigator.currentScreen == Screen.Notifications,
+                onClick = { navigator.navigateTo(Screen.Notifications, clearBackStack = true) }
+            )
+        }
+
+        FloatingActionButton(
+            onClick = { navigator.navigateTo(Screen.VideoCallRequest) },
+            containerColor = Color(0xFF4CAF50),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .offset(y = (-28).dp)
+        ) {
+            Icon(Icons.Default.Videocam, null, tint = Color.White)
+        }
     }
 }

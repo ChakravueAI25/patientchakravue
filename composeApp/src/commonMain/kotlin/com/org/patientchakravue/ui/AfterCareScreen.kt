@@ -141,7 +141,7 @@ fun AfterCareScreen(
             },
             enabled = !isSubmitting,
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDAA520))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
         ) {
             if (isSubmitting) CircularProgressIndicator(color = Color.White)
             else Text(localizedString("submit_btn"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
