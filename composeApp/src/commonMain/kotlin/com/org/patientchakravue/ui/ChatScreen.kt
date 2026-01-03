@@ -85,10 +85,6 @@ fun ChatScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF0F2F5))
             )
         },
-        bottomBar = {
-            // Placeholder Input Area (Visual only for now)
-            ChatInputArea()
-        },
         containerColor = Color(0xFFEFE7DE) // WhatsApp-like beige background
     ) { padding ->
 
@@ -230,36 +226,7 @@ fun TextBubble(msg: ChatMessage, isUser: Boolean) {
 
 @Composable
 fun ChatInputArea() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFF0F2F5))
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        TextField(
-            value = "",
-            onValueChange = {},
-            placeholder = { Text(localizedString("message_placeholder"), fontSize = 14.sp) },
-            modifier = Modifier.weight(1f).height(50.dp),
-            shape = RoundedCornerShape(24.dp),
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent
-            )
-        )
-        Spacer(Modifier.width(8.dp))
-        FloatingActionButton(
-            onClick = {},
-            containerColor = Color(0xFF075E54), // WhatsApp Dark Green
-            contentColor = Color.White,
-            modifier = Modifier.size(48.dp),
-            shape = CircleShape
-        ) {
-            Icon(Icons.AutoMirrored.Filled.Send, null, modifier = Modifier.size(20.dp))
-        }
-    }
+    // Removed input UI as chat is read-only in patient app
 }
 
 // Helper to format ISO timestamp (Simple version)
@@ -272,4 +239,3 @@ fun formatTimestamp(iso: String?): String {
         ""
     }
 }
-

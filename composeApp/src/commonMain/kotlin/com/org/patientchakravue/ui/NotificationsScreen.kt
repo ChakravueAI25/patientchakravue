@@ -1,84 +1,118 @@
 package com.org.patientchakravue.ui
 
+gitimport androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Message
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.model.DoctorNote
+import com.org.patientchakravue.model.DoctorThread
 import com.org.patientchakravue.model.Patient
 
 @Composable
 fun NotificationsScreen(
     patient: Patient,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
-    onNoteClick: (DoctorNote) -> Unit
+    onNavigateToChat: (String) -> Unit, // Navigate using doctorId
+    bottomBar: @Composable () -> Unit
 ) {
     val api = remember { ApiRepository() }
-    var notes by remember { mutableStateOf<List<DoctorNote>>(emptyList()) }
+    var messages by remember { mutableStateOf<List<DoctorNote>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
-    // Get current language to trigger recomposition when it changes
-    val currentLang = LocalLanguageManager.current.currentLanguage
-
-    // Fetch notifications on screen launch
     LaunchedEffect(Unit) {
-        notes = api.getMessages(patient.id)
+        messages = api.getMessages(patient.id)
         isLoading = false
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(contentPadding)
-            .padding(16.dp)
-    ) {
-        Text(
-            text = localizedString("notifications_title"),
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A3B5D)
-        )
-        Text(
-            text = localizedString("notifications_subtitle"),
-            fontSize = 14.sp,
-            color = Color.Gray
-        )
-
-        Spacer(Modifier.height(20.dp))
-
+    Scaffold(bottomBar = bottomBar) { padding ->
         if (isLoading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-        } else if (notes.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Info, null, tint = Color.LightGray, modifier = Modifier.size(48.dp))
-                    Text(localizedString("no_notifications"), color = Color.Gray)
-                }
-            }
         } else {
+            // Group messages by doctor_id to show unique doctor threads
+            val doctorThreads = remember(messages) {
+                messages
+                    .filter { it.submissionId != null }
+                    .groupBy { it.doctorId ?: patient.doctorId ?: "unknown" }
+                    .map { (doctorId, notes) ->
+                        // Get the latest message from this doctor conversation
+                        val latestNote = notes.maxByOrNull { it.timestamp ?: "" }
+                        // Collect all unique submission IDs for this doctor
+                        val submissionIds = notes.mapNotNull { it.submissionId }.distinct()
+
+                        DoctorThread(
+                            doctorId = doctorId,
+                            doctorName = latestNote?.doctorName ?: latestNote?.sender ?: "Dr. Chakra",
+                            latestMessage = latestNote?.noteText ?: "View conversation...",
+                            latestTimestamp = latestNote?.timestamp ?: "",
+                            submissionIds = submissionIds,
+                            unreadCount = 0
+                        )
+                    }
+                    .sortedByDescending { it.latestTimestamp }
+            }
+
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.padding(padding).fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 8.dp)
             ) {
-                items(notes) { note ->
-                    NotificationItem(
-                        note = note,
-                        onClick = { onNoteClick(note) }
-                    )
+                item {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        Text(
+                            localizedString("hospital_updates"),
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1A3B5D)
+                        )
+                        Text(
+                            localizedString("view_messages"),
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                if (doctorThreads.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(48.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                localizedString("no_messages"),
+                                color = Color.Gray,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+                } else {
+                    items(doctorThreads) { thread ->
+                        DoctorThreadItem(
+                            thread = thread,
+                            onClick = {
+                                // Navigate to chat using the first submissionId
+                                // The ChatScreen will load all conversations
+                                thread.submissionIds.firstOrNull()?.let { onNavigateToChat(it) }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -86,39 +120,103 @@ fun NotificationsScreen(
 }
 
 @Composable
-fun NotificationItem(note: DoctorNote, onClick: () -> Unit) {
+fun DoctorThreadItem(
+    thread: DoctorThread,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.Top
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            // Doctor Avatar
+            Surface(
+                shape = CircleShape,
+                color = Color(0xFF1976D2),
+                modifier = Modifier.size(50.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = thread.doctorName.take(2).uppercase(),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+            }
+
+            Spacer(Modifier.width(16.dp))
+
+            // Doctor Info
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = thread.doctorName,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color(0xFF1A3B5D)
+                    )
+                    Text(
+                        text = formatTime(thread.latestTimestamp),
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    text = thread.latestMessage,
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                // Submission count indicator
+                if (thread.submissionIds.size > 1) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "${thread.submissionIds.size} reports",
+                        fontSize = 12.sp,
+                        color = Color(0xFF1976D2)
+                    )
+                }
+            }
+
+            // Chat icon
             Icon(
-                Icons.AutoMirrored.Filled.Message,
-                contentDescription = null,
-                tint = Color(0xFF6750A4),
+                Icons.AutoMirrored.Filled.Chat,
+                contentDescription = "Chat",
+                tint = Color(0xFF1976D2),
                 modifier = Modifier.size(24.dp)
             )
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = note.noteText ?: "System Message",
-                    fontSize = 16.sp,
-                    lineHeight = 22.sp,
-                    color = Color.Black
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = note.timestamp ?: "Just now",
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-            }
         }
+    }
+}
+
+// Helper function to format timestamp to readable time
+private fun formatTime(timestamp: String?): String {
+    if (timestamp.isNullOrBlank()) return ""
+    return try {
+        // Extract date part (YYYY-MM-DD)
+        val datePart = timestamp.substring(0, 10)
+        val timePart = timestamp.substring(11, 16)
+        "$datePart $timePart"
+    } catch (e: Exception) {
+        timestamp.take(16)
     }
 }

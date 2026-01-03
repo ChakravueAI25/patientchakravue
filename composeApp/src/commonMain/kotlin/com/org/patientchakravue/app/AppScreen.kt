@@ -15,4 +15,5 @@ sealed class Screen {
     data object TumblingE : Screen()
     // New route for feedback detail
     data class FeedbackDetail(val note: DoctorNote) : Screen()
+    data class Chat(val submissionId: String) : Screen()
 }

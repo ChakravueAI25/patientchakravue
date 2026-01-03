@@ -85,7 +85,20 @@ data class DoctorNote(
     @SerialName("note_text") val noteText: String? = null,
     val timestamp: String? = null,
     @SerialName("submission_id") val submissionId: String? = null,
-    @SerialName("submission_details") val details: SubmissionDetails? = null
+    @SerialName("submission_details") val details: SubmissionDetails? = null,
+    val sender: String? = null,
+    @SerialName("doctor_id") val doctorId: String? = null,
+    @SerialName("doctor_name") val doctorName: String? = null
+)
+
+// Represents a grouped doctor for the notifications list
+data class DoctorThread(
+    val doctorId: String,
+    val doctorName: String,
+    val latestMessage: String,
+    val latestTimestamp: String,
+    val submissionIds: List<String>,
+    val unreadCount: Int = 0
 )
 
 @Serializable
@@ -167,4 +180,3 @@ data class GraphData(
     @SerialName("y_axis") val yAxis: List<Int>,
     @SerialName("view_mode") val viewMode: String
 )
-

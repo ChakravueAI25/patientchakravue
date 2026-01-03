@@ -58,6 +58,15 @@ async def log_all_requests(request, call_next):
         print(f"[REQUEST_ERROR] {request.method} {request.url.path} -> {e}")
         raise
 
+# Basic root and health endpoints to avoid 404 noise and provide status
+@app.get("/")
+async def root():
+    return {
+        "status": "ok",
+        "service": "patient-api",
+        "time": datetime.utcnow().isoformat(),
+    }
+
 # Using async Motor client
 mongo_url = os.environ.get("MONGO_URL") or os.getenv("MONGO_URL") or "mongodb://localhost:27017/"
 client = AsyncIOMotorClient(mongo_url)
@@ -229,24 +238,25 @@ def _expose_compat_fields(patient: Dict[str, Any]) -> Dict[str, Any]:
         p["emergencyContactName"] = ec.get("name")
         p["emergencyContactPhone"] = ec.get("phone")
 
-    # prescription alias: prefer doctor.prescription, fallback to drugHistory.currentMeds, then top-level
+    # prescription alias: use robust finder to get latest items (scans visits, root, and drug history)
     try:
+        # Note: _find_latest_prescription_items is defined later in the file but available at runtime
+        latest_items = _find_latest_prescription_items(p)
+        p["prescription"] = {"items": latest_items} if latest_items else {}
+        p["medicines"] = latest_items or []
+    except Exception as e:
+        # Fallback to legacy logic if robust finder fails or is not yet available
         doc_section = p.get("doctor") or {}
         presc_candidate = None
         if isinstance(doc_section, dict):
             presc_candidate = doc_section.get("prescription")
         if not presc_candidate:
-            # fallback to drugHistory.currentMeds
             dh = p.get("drugHistory") or {}
             if isinstance(dh, dict):
-                presc_candidate = dh.get("currentMeds") or dh.get("currentMeds") or dh.get("previousMeds")
+                presc_candidate = dh.get("currentMeds") or dh.get("previousMeds")
         if not presc_candidate:
             presc_candidate = p.get("prescription")
-        # set both keys so older clients keep working
         p["prescription"] = presc_candidate or {}
-        p["medicines"] = p["prescription"]
-    except Exception:
-        p["prescription"] = p.get("prescription", {})
         p["medicines"] = p["prescription"]
 
     # history summary: small convenient object
@@ -573,13 +583,23 @@ def _parse_duration_days(duration_str: str, default_days: int = 7) -> int:
 def _parse_times_per_day_from_text(text: str) -> int:
     """
     Extract frequency from any text string.
-    Maps: "2 times", "twice", "BD" -> 2
+    Maps: "8 times", "2 times", "twice", "BD" -> int
     """
     t = str(text).lower()
-    if "4 times" in t or "four times" in t or "qid" in t: return 4
-    if "3 times" in t or "thrice" in t or "tid" in t or "tds" in t: return 3
-    if "2 times" in t or "twice" in t or "bd" in t or "bid" in t: return 2
-    if "1 time" in t or "once" in t or "od" in t or "daily" in t: return 1
+
+    # Check for specific medical abbreviations first
+    if "qid" in t: return 4
+    if "tid" in t or "tds" in t or "thrice" in t: return 3
+    if "bid" in t or "bd" in t or "twice" in t: return 2
+    if "od" in t or "once" in t or "daily" in t: return 1
+
+    # Generic regex to catch "X times" or just "X"
+    # Matches "8 times", "8times", "8x"
+    import re
+    match = re.search(r'(\d+)\s*(times|x)', t)
+    if match:
+        return int(match.group(1))
+
     return 1 # Default fallback
 
 # Schedule common medicine times (IST)
@@ -639,7 +659,22 @@ def _find_latest_prescription_items(patient_doc: dict) -> list:
                 items.append({"name": med, "frequency": "daily", "duration": ""})
             elif isinstance(med, dict):
                 items.append(med)
-        return items
+
+    # 4. Try patientDetails.medicines (New Schema)
+    pd_meds = patient_doc.get("patientDetails", {}).get("medicines", [])
+    if isinstance(pd_meds, list) and pd_meds:
+        for med in pd_meds:
+            if isinstance(med, dict):
+                items.append(med)
+            elif isinstance(med, str):
+                items.append({"name": med, "frequency": "daily", "duration": ""})
+
+    # 5. Try medicalHistory.drugHistory
+    mh_dh = patient_doc.get("medicalHistory", {}).get("drugHistory", [])
+    if isinstance(mh_dh, list) and mh_dh:
+        for med in mh_dh:
+            if isinstance(med, dict):
+                items.append(med)
 
     return items
 
@@ -1429,7 +1464,28 @@ async def schedule_patient_medicine_notifications(patient_id: str):
 
         # Parse logic
         times_per_day = _parse_times_per_day_from_text(freq_str)
-        times_list = _DAYSCHEDULES.get(times_per_day, _DAYSCHEDULES[1])
+
+        # LOGIC CHANGE START
+        if times_per_day in _DAYSCHEDULES:
+            times_list = _DAYSCHEDULES[times_per_day]
+        else:
+            # Dynamic generation for high frequency (e.g. 8 times)
+            # Spread them out between 6:00 AM and 10:00 PM (16 hours)
+            start_hour = 6
+            end_hour = 22
+            window = end_hour - start_hour
+
+            # Prevent division by zero
+            step = window / max(1, (times_per_day - 1)) if times_per_day > 1 else 0
+
+            times_list = []
+            for i in range(times_per_day):
+                h = int(start_hour + (i * step))
+                # clamp hour to 23 max just in case
+                h = min(h, 23)
+                times_list.append(time(h, 0, tzinfo=IST))
+        # LOGIC CHANGE END
+
         duration_days = _parse_duration_days(dur_str, default_days=7)
 
         # Generate DateTimes
@@ -1495,17 +1551,14 @@ async def get_today_doses(patient_id: str):
     cursor = medicine_doses_collection.find({"patient_id": patient_id, "date": today_ist}).sort("scheduled_iso", 1)
     doses = [serialize_doc(d) async for d in cursor]
 
-    if doses:
-        return doses
-
-    # 2. Lazy Create (If no doses exist for today yet)
+    # 2. Sync/Lazy Create (Always check for new medicines in prescription)
     try:
         p = await patients_collection.find_one({"_id": ObjectId(patient_id)})
     except:
         p = await patients_collection.find_one({"_id": patient_id})
 
     if not p:
-        return []
+        return doses # Return what we have if patient not found
 
     items = _find_latest_prescription_items(p)
 
@@ -1518,9 +1571,10 @@ async def get_today_doses(patient_id: str):
                 items.append({"name": text, "frequency": text, "duration": ""})
 
     if not items:
-        return []
+        return doses
 
-    # Generate only TODAY'S slots
+    # Generate/Update TODAY'S slots (using upsert to avoid duplicates)
+    new_doses_added = False
     for item in items:
         med_name = item.get("name") or item.get("drug") or item.get("medicine") or "Medicine"
         freq_str = str(item.get("frequency") or item.get("name") or "")
@@ -1732,6 +1786,7 @@ async def create_vision_test(payload: Dict[str, Any]):
         'timestamp': payload.get('timestamp') or datetime.utcnow().isoformat(),
         'logMAR_levels': payload.get('logMAR_levels') or [],
         'sessions': payload.get('sessions') or [],
+        'final_acuity': payload.get('final_acuity'),
         'created_at': datetime.utcnow().isoformat(),
     }
     result = await visiontests_collection.insert_one(doc)
@@ -1782,22 +1837,49 @@ async def submit_amsler_test(
 @app.get("/vision/patient/{patient_id}")
 async def get_vision_history(patient_id: str):
     """
-    Fetches history of vision tests (Amsler, etc.) for the Vision Screen list.
+    Fetches history of vision tests (Amsler AND Tumbling E) for the Vision Screen list.
+    Merges both into a unified format with common fields.
     """
     history: List[Dict[str, Any]] = []
 
     # 1. Fetch Amsler Tests
-    cursor = amsler_collection.find({"patient_id": patient_id}).sort("timestamp", -1)
-    async for doc in cursor:
-        doc["id"] = str(doc.get("_id"))
-        doc["test_type"] = "Amsler Grid"  # Ensure type is clear
-        history.append(serialize_doc(doc))
+    amsler_cursor = amsler_collection.find({"patient_id": patient_id}).sort("timestamp", -1)
+    async for doc in amsler_cursor:
+        # Convert to unified format
+        unified = {
+            "id": str(doc.get("_id")),
+            "test_type": "Amsler Grid",
+            "timestamp": doc.get("timestamp"),
+            "patient_id": doc.get("patient_id"),
+            "eye_side": doc.get("eye_side", "Both"),
+            "notes": doc.get("notes", ""),
+            "image_file_id": doc.get("image_file_id"),
+            "final_acuity": None,
+        }
+        history.append(serialize_doc(unified))
 
-    # 2. (Optional) In the future, merge other vision tests here.
+    # 2. Fetch Tumbling E Tests (visiontests_collection)
+    vision_cursor = visiontests_collection.find({"patient_id": patient_id}).sort("timestamp", -1)
+    async for doc in vision_cursor:
+        # Convert to unified format
+        unified = {
+            "id": str(doc.get("_id")),
+            "test_type": "Tumbling E",
+            "timestamp": doc.get("timestamp"),
+            "patient_id": doc.get("patient_id"),
+            "patient_name": doc.get("patient_name"),
+            "eye_side": "Both",
+            "notes": "",
+            "final_acuity": doc.get("final_acuity"), # Include final_acuity from Tumbling E
+            "logMAR_levels": doc.get("logMAR_levels", []),
+            "sessions": doc.get("sessions", []),
+        }
+        history.append(serialize_doc(unified))
 
-    # Sort combined list by newest first
+    # 3. Sort combined list by newest first
     try:
-        history.sort(key=lambda x: x.get("timestamp"), reverse=True)
+        # After serialize_doc, timestamp is a string (ISO format)
+        history.sort(key=lambda x: x.get("timestamp") or "", reverse=True)
     except Exception:
         pass
 
@@ -1811,6 +1893,129 @@ async def get_adherence_for_patient(patient_id: str, limit: int = 200):
     async for d in cursor:
         docs.append(serialize_doc(d))
     return {"patient_id": patient_id, "count": len(docs), "adherence": docs}
+
+
+# ============ GRAPH AGGREGATION ENDPOINT ============
+
+@app.get("/adherence/graph")
+async def get_adherence_graph(
+    patient_id: str,
+    view_mode: str,  # "day", "week", "medicine"
+    range_type: str = "week" # "today", "week", "month"
+):
+    """
+    Single Endpoint for All Graphs.
+    Returns: { "x_axis": [...labels], "y_axis": [...counts], "title": "..." }
+    """
+    now = datetime.now(IST)
+    today_str = now.date().isoformat()
+
+    x_axis = []
+    y_axis = []
+    title = ""
+
+    # --- 1. DAY VIEW (Time of Day) ---
+    # Shows today's performance breakdown
+    if view_mode == "day":
+        title = "Today's Intake"
+        # Fixed Categories
+        categories = ["Morning", "Afternoon", "Evening", "Bedtime"]
+        x_axis = categories
+
+        # Initialize counts
+        counts = {cat: 0 for cat in categories}
+
+        # Query doses for TODAY
+        cursor = medicine_doses_collection.find({
+            "patient_id": patient_id,
+            "date": today_str,
+            "taken": True
+        })
+
+        async for dose in cursor:
+            label = dose.get("dose_label", "Morning") # Default to Morning if missing
+            # Normalize labels
+            if "Morning" in label: k = "Morning"
+            elif "Afternoon" in label: k = "Afternoon"
+            elif "Evening" in label: k = "Evening"
+            elif "Night" in label or "Bedtime" in label: k = "Bedtime"
+            else: k = "Morning"
+
+            if k in counts:
+                counts[k] += 1
+
+        y_axis = [counts[c] for c in categories]
+
+    # --- 2. WEEK VIEW (Last 7 Days) ---
+    # Shows total doses taken per day
+    elif view_mode == "week":
+        title = "Weekly Adherence"
+        # Generate last 7 days labels (e.g., "Mon", "Tue")
+        dates = []
+        date_map = {} # "YYYY-MM-DD" -> index
+
+        for i in range(6, -1, -1):
+            d = now - timedelta(days=i)
+            d_str = d.date().isoformat()
+            d_label = WEEKDAY_LABELS[d.weekday()] # Mon, Tue...
+            dates.append(d_str)
+            x_axis.append(d_label)
+            date_map[d_str] = len(x_axis) - 1
+            y_axis.append(0) # Init 0
+
+        # Query taken doses in date range
+        start_date = dates[0]
+        end_date = dates[-1]
+
+        cursor = medicine_doses_collection.find({
+            "patient_id": patient_id,
+            "date": {"$gte": start_date, "$lte": end_date},
+            "taken": True
+        })
+
+        async for dose in cursor:
+            d_str = dose.get("date")
+            if d_str in date_map:
+                idx = date_map[d_str]
+                y_axis[idx] += 1
+
+    # --- 3. MEDICINE VIEW (Performance by Med) ---
+    # Shows total taken count for each medicine (Past 30 days default)
+    elif view_mode == "medicine":
+        title = "Medicine Performance (Last 30 Days)"
+
+        # Query taken doses
+        start_date = (now - timedelta(days=30)).date().isoformat()
+
+        cursor = medicine_doses_collection.find({
+            "patient_id": patient_id,
+            "date": {"$gte": start_date},
+            "taken": True
+        })
+
+        med_counts = {}
+        async for dose in cursor:
+            name = dose.get("medicine_name", "Unknown")
+            # Clean up name (remove dosage info if needed, or keep full)
+            short_name = name.split(" ")[0] # Simple: just first word
+            med_counts[short_name] = med_counts.get(short_name, 0) + 1
+
+        # Sort by count desc
+        sorted_meds = sorted(med_counts.items(), key=lambda item: item[1], reverse=True)
+
+        x_axis = [m[0] for m in sorted_meds]
+        y_axis = [m[1] for m in sorted_meds]
+
+        if not x_axis:
+            x_axis = ["No Data"]
+            y_axis = [0]
+
+    return {
+        "title": title,
+        "x_axis": x_axis,
+        "y_axis": y_axis,
+        "view_mode": view_mode
+    }
 
 # manual send endpoint for existing notification document
 @app.post("/notifications/{notif_id}/send")

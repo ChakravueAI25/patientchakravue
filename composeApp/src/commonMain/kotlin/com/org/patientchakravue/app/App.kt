@@ -145,10 +145,10 @@ fun App() {
                     if (patient != null) {
                         NotificationsScreen(
                             patient = patient,
-                            contentPadding = paddingValues,
-                            onNoteClick = { note ->
-                                navigator.navigateTo(Screen.FeedbackDetail(note))
-                            }
+                            onNavigateToChat = { submissionId ->
+                                navigator.navigateTo(Screen.Chat(submissionId))
+                            },
+                            bottomBar = { BottomNavigationBar(navigator) }
                         )
                     } else {
                         sessionManager.clearSession()
@@ -176,6 +176,12 @@ fun App() {
                             onBack = { navigator.handleBackIntent() }
                         )
                     }
+                }
+                is Screen.Chat -> {
+                    ChatScreen(
+                        submissionId = navigator.currentScreen.let { (it as Screen.Chat).submissionId },
+                        onBack = { navigator.handleBackIntent() }
+                    )
                 }
             }
         }

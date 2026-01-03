@@ -16,6 +16,8 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import io.ktor.client.plugins.logging.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 
 // 1. The Client Setup
 object NetworkClient {
@@ -262,7 +264,7 @@ class ApiRepository {
             val requestBody = com.org.patientchakravue.model.VisionTestRequest(
                 patientId = patientId,
                 patientName = patientName,
-                timestamp = kotlinx.datetime.Clock.System.now().toString(),
+                timestamp = Clock.System.now().toString(),
                 testEye = eyeSide,
                 finalAcuity = finalAcuity,
                 logMARLevels = logMARLevels,

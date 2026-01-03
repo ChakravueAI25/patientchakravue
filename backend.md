@@ -334,7 +334,7 @@ def _email_exists_in_document(doc: Dict[str, Any], email: str) -> bool:
     This is a fallback for when the email is not found in known locations.
     """
     email_lower = email.lower()
-
+    
     def search_recursive(obj):
         """Recursively search through nested structures"""
         if isinstance(obj, dict):
@@ -350,74 +350,74 @@ def _email_exists_in_document(doc: Dict[str, Any], email: str) -> bool:
                 if search_recursive(item):
                     return True
         return False
-
+    
     return search_recursive(doc)
 
 
 def _extract_password_from_user(user: Dict[str, Any]) -> Optional[str]:
     """
     Two-tier password extraction strategy:
-
+    
     TIER 1: Fast - Search known/common password field locations
     TIER 2: Fallback - Search nested arrays (encounters, visits) for password
-
+    
     Key: Skip EMPTY STRINGS explicitly (they are falsy but block OR chain logic)
     This ensures we find passwords in nested locations even if root level has empty strings.
-
+    
     Returns password string if found, None if not found anywhere.
     Robust to future schema changes - will find password in any location.
     """
     if not isinstance(user, dict):
         return None
-
+    
     # Helper: Check if value is a non-empty password
     def is_valid_password(val):
         return isinstance(val, str) and len(val.strip()) > 0
-
+    
     # ========== TIER 1: Fast Path (Known Field Locations) ==========
     print(f"[PASSWORD_EXTRACT] TIER 1: Searching known password field locations")
-
+    
     # Root-level fields
     candidates_tier1 = [
         ("password", user.get("password")),
         ("hashed_password", user.get("hashed_password")),
     ]
-
+    
     # PatientDetails fields (new schema)
     pat_details = user.get("patientDetails") or {}
     if isinstance(pat_details, dict):
         candidates_tier1.append(("patientDetails.password", pat_details.get("password")))
-
+    
     # LastReception fields (nested)
     last_reception = user.get("lastReception") or {}
     if isinstance(last_reception, dict):
         last_rec_pat = last_reception.get("patientDetails") or {}
         if isinstance(last_rec_pat, dict):
             candidates_tier1.append(("lastReception.patientDetails.password", last_rec_pat.get("password")))
-
+    
     # Check TIER 1 candidates (skip empty strings)
     for field_name, pwd_value in candidates_tier1:
         if is_valid_password(pwd_value):
             print(f"[PASSWORD_EXTRACT] ✓ TIER 1 SUCCESS - Found password in: {field_name}")
             return pwd_value
-
+    
     print(f"[PASSWORD_EXTRACT] ✗ TIER 1 FAILED - No valid password in known locations, trying TIER 2...")
-
+    
     # ========== TIER 2: Fallback Path (Nested Arrays) ==========
     print(f"[PASSWORD_EXTRACT] TIER 2: Scanning nested encounters/visits arrays")
-
+    
     # Try encounters array (most recent first)
     encounters = user.get("encounters") or []
     if isinstance(encounters, list) and len(encounters) > 0:
         for idx, encounter in enumerate(encounters):
             if not isinstance(encounter, dict):
                 continue
-
+            
             # Check: encounters[idx].password
             if is_valid_password(encounter.get("password")):
                 print(f"[PASSWORD_EXTRACT] ✓ TIER 2 SUCCESS - Found password in encounters[{idx}].password")
                 return encounter.get("password")
-
+            
             # Check: encounters[idx].details.patientDetails.password
             details = encounter.get("details") or {}
             if isinstance(details, dict):
@@ -425,19 +425,19 @@ def _extract_password_from_user(user: Dict[str, Any]) -> Optional[str]:
                 if isinstance(pat_det, dict) and is_valid_password(pat_det.get("password")):
                     print(f"[PASSWORD_EXTRACT] ✓ TIER 2 SUCCESS - Found password in encounters[{idx}].details.patientDetails.password")
                     return pat_det.get("password")
-
+    
     # Try visits array (most recent first)
     visits = user.get("visits") or []
     if isinstance(visits, list) and len(visits) > 0:
         for idx, visit in enumerate(visits):
             if not isinstance(visit, dict):
                 continue
-
+            
             # Check: visits[idx].password
             if is_valid_password(visit.get("password")):
                 print(f"[PASSWORD_EXTRACT] ✓ TIER 2 SUCCESS - Found password in visits[{idx}].password")
                 return visit.get("password")
-
+            
             # Check: visits[idx].stages.reception.data.patientDetails.password
             stages = visit.get("stages") or {}
             if isinstance(stages, dict):
@@ -449,39 +449,39 @@ def _extract_password_from_user(user: Dict[str, Any]) -> Optional[str]:
                         if isinstance(pat_det, dict) and is_valid_password(pat_det.get("password")):
                             print(f"[PASSWORD_EXTRACT] ✓ TIER 2 SUCCESS - Found password in visits[{idx}].stages.reception.data.patientDetails.password")
                             return pat_det.get("password")
-
+    
     # Ultra-robust recursive search for any password field (handles unknown future formats)
     print(f"[PASSWORD_EXTRACT] TIER 2B: Recursive search for password in any nested location...")
     def find_password_recursive(obj, depth=0, path=""):
         """Recursively search for any non-empty 'password' field"""
         if depth > 15:  # Prevent infinite recursion
             return None
-
+        
         if isinstance(obj, dict):
             # Found a password field?
             if "password" in obj and is_valid_password(obj["password"]):
                 print(f"[PASSWORD_EXTRACT] ✓ TIER 2B SUCCESS - Found password via recursive search at: {path}.password")
                 return obj["password"]
-
+            
             # Search nested dicts
             for key, value in obj.items():
                 result = find_password_recursive(value, depth + 1, f"{path}.{key}" if path else key)
                 if result:
                     return result
-
+        
         elif isinstance(obj, list):
             # Search list items
             for idx, item in enumerate(obj):
                 result = find_password_recursive(item, depth + 1, f"{path}[{idx}]")
                 if result:
                     return result
-
+        
         return None
-
+    
     pwd = find_password_recursive(user)
     if pwd:
         return pwd
-
+    
     print(f"[PASSWORD_EXTRACT] ✗ ALL TIERS FAILED - Password not found anywhere in document")
     return None
 
@@ -491,18 +491,18 @@ async def _find_user_by_email_or_contact(email: str) -> Optional[Dict[str, Any]]
     Two-tier email lookup strategy:
     TIER 1: Fast - Search known/common email field locations using MongoDB query
     TIER 2: Fallback - Recursively scan entire document (if Tier 1 fails)
-
+    
     This ensures robustness even if email is stored in unexpected nested locations.
     """
     email_lower = email.lower()
-
+    
     # ========== TIER 1: Fast Path (Known Field Locations) ==========
     print(f"[FIND_USER] TIER 1: Searching known email field locations for: {email}")
-
+    
     q1 = {"$or": [
         # Root-level fields
-        {"email": {"$regex": f"^{email}$", "$options": "i"}},
-        {"contactInfo.email": {"$regex": f"^{email}$", "$options": "i"}},
+        {"email": {"$regex": f"^{email}$", "$options": "i"}}, 
+        {"contactInfo.email": {"$regex": f"^{email}$", "$options": "i"}}, 
         {"contactInfo.phone": email},
         # New schema root-level fields
         {"patientDetails.email": {"$regex": f"^{email}$", "$options": "i"}},
@@ -514,18 +514,18 @@ async def _find_user_by_email_or_contact(email: str) -> Optional[Dict[str, Any]]
         # Nested in visits array
         {"visits.stages.reception.data.patientDetails.email": {"$regex": f"^{email}$", "$options": "i"}}
     ]}
-
+    
     user = await patients_collection.find_one(q1)
-
+    
     if user:
         print(f"[FIND_USER] ✓ TIER 1 SUCCESS - Found user via known field locations")
         return user
-
+    
     print(f"[FIND_USER] ✗ TIER 1 FAILED - Email not in known locations, trying TIER 2 fallback...")
-
+    
     # ========== TIER 2: Fallback Path (Full Document Scan) ==========
     print(f"[FIND_USER] TIER 2: Scanning all patients for email anywhere in document...")
-
+    
     try:
         cursor = patients_collection.find()
         async for patient in cursor:
@@ -534,7 +534,7 @@ async def _find_user_by_email_or_contact(email: str) -> Optional[Dict[str, Any]]
                 return patient
     except Exception as e:
         print(f"[FIND_USER] TIER 2 ERROR: {e}")
-
+    
     print(f"[FIND_USER] ✗ TIER 2 FAILED - Email not found anywhere in database")
     return None
 
@@ -548,7 +548,7 @@ def _parse_duration_days(duration_str: str, default_days: int = 7) -> int:
     if not duration_str:
         return default_days
     s = str(duration_str).strip().lower()
-
+    
     # numeric check (just "5")
     if s.isdigit():
         return int(s)
@@ -557,17 +557,17 @@ def _parse_duration_days(duration_str: str, default_days: int = 7) -> int:
     m = re.search(r'(\d+)\s*(month|months|mo\b)', s)
     if m:
         return int(m.group(1)) * 30
-
+    
     # weeks -> 7 days
     m = re.search(r'(\d+)\s*(week|weeks|wk|w\b)', s)
     if m:
         return int(m.group(1)) * 7
-
+    
     # days
     m = re.search(r'(\d+)\s*(day|days|d\b)', s)
     if m:
         return int(m.group(1))
-
+    
     # word-based parsing ('one week')
     word_map = {
         "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
@@ -577,7 +577,7 @@ def _parse_duration_days(duration_str: str, default_days: int = 7) -> int:
         if f"{w} month" in s: return n * 30
         if f"{w} week" in s: return n * 7
         if f"{w} day" in s: return n
-
+    
     return default_days
 
 def _parse_times_per_day_from_text(text: str) -> int:
@@ -586,27 +586,27 @@ def _parse_times_per_day_from_text(text: str) -> int:
     Maps: "8 times", "2 times", "twice", "BD" -> int
     """
     t = str(text).lower()
-
+    
     # Check for specific medical abbreviations first
     if "qid" in t: return 4
     if "tid" in t or "tds" in t or "thrice" in t: return 3
     if "bid" in t or "bd" in t or "twice" in t: return 2
     if "od" in t or "once" in t or "daily" in t: return 1
-
+    
     # Generic regex to catch "X times" or just "X"
     # Matches "8 times", "8times", "8x"
     import re
     match = re.search(r'(\d+)\s*(times|x)', t)
     if match:
         return int(match.group(1))
-
+        
     return 1 # Default fallback
 
 # Schedule common medicine times (IST)
 _DAYSCHEDULES = {
-    1: [time(9, 0, tzinfo=IST)],
-    2: [time(9, 0, tzinfo=IST), time(20, 0, tzinfo=IST)],
-    3: [time(9, 0, tzinfo=IST), time(14, 0, tzinfo=IST), time(20, 0, tzinfo=IST)],
+    1: [time(9, 0, tzinfo=IST)], 
+    2: [time(9, 0, tzinfo=IST), time(20, 0, tzinfo=IST)], 
+    3: [time(9, 0, tzinfo=IST), time(14, 0, tzinfo=IST), time(20, 0, tzinfo=IST)], 
     4: [time(9, 0, tzinfo=IST), time(13, 0, tzinfo=IST), time(17, 0, tzinfo=IST), time(21, 0, tzinfo=IST)],
 }
 
@@ -622,26 +622,26 @@ def _find_latest_prescription_items(patient_doc: dict) -> list:
     if isinstance(visits, list) and visits:
         def get_visit_date(v):
             return v.get("visitDate") or v.get("stages", {}).get("doctor", {}).get("stageCompletedAt") or ""
-
+        
         # Sort to find the very last doctor visit
         sorted_visits = sorted(visits, key=get_visit_date, reverse=True)
-
+        
         for visit in sorted_visits:
             try:
                 # Check stages -> doctor -> data -> prescription
                 presc = visit.get("stages", {}).get("doctor", {}).get("data", {}).get("prescription", {})
-
+                
                 # Case A: Structure is {"items": [...]}
                 if isinstance(presc, dict) and presc.get("items"):
                     return presc.get("items")
-
+                
                 # Case B: Key-Value pairs {"Paracetamol": "BD"}
                 if isinstance(presc, dict) and presc:
                     temp_items = []
                     for k, v in presc.items():
-                        if k and v:
+                        if k and v: 
                             temp_items.append({"name": k, "frequency": str(v), "duration": ""})
-                    if temp_items:
+                    if temp_items: 
                         return temp_items
             except Exception:
                 pass
@@ -700,7 +700,7 @@ def _make_send_datetimes_for_duration(times_list: List[time], start_dt_ist: date
                 continue
             results.append(dt_ist.isoformat())
         day = day + timedelta(days=1)
-
+    
     return results
 
 def _dose_label_for_time(t: time) -> str:
@@ -721,7 +721,7 @@ def _dose_label_for_time(t: time) -> str:
 @app.post("/login")
 async def login(request: LoginRequest):
     print(f"[LOGIN] FUNCTION CALLED - email: {request.email}, password: {repr(request.password)}")
-
+    
     if not request.email or not request.password:
         print(f"[LOGIN] ERROR: Email or password is empty")
         raise HTTPException(status_code=400, detail="Email and password are required")
@@ -738,7 +738,7 @@ async def login(request: LoginRequest):
     if not stored_pw:
         print(f"[LOGIN] ERROR: No valid password found in user document after searching all locations")
         raise HTTPException(status_code=401, detail="Invalid email or password")
-
+    
     print(f"[LOGIN] DEBUG - Password extraction successful:")
     print(f"[LOGIN]   - stored_pw type: {type(stored_pw)}")
     print(f"[LOGIN]   - stored_pw length: {len(str(stored_pw)) if stored_pw else 0}")
@@ -756,7 +756,7 @@ async def login(request: LoginRequest):
         is_hash = pwd_context.identify(stored_pw)
         print(f"[LOGIN] DEBUG - Password verification:")
         print(f"[LOGIN]   - is_hash (pwd_context.identify): {is_hash}")
-
+        
         if is_hash:
             print(f"[LOGIN]   - Using bcrypt verification (hash detected)")
             valid = pwd_context.verify(request.password, stored_pw)
@@ -1069,9 +1069,9 @@ async def get_submission_conversation(submission_id: str):
         submission = await submissions_collection.find_one({"_id": sub_oid})
         if not submission:
             raise HTTPException(status_code=404, detail="Submission not found")
-
+        
         chat_thread = []
-
+        
         # Convert Submission to a "Message" format
         patient_msg = {
             "id": str(submission["_id"]),
@@ -1122,7 +1122,7 @@ async def simulate_doctor_reply(submission_id: str, text: str = Form(...)):
         sub = await submissions_collection.find_one({"_id": ObjectId(submission_id)})
     except Exception:
         sub = await submissions_collection.find_one({"_id": submission_id})
-
+        
     if not sub:
         raise HTTPException(status_code=404, detail="Submission not found")
 
@@ -1135,11 +1135,11 @@ async def simulate_doctor_reply(submission_id: str, text: str = Form(...)):
         "submission_id": str(sub.get("_id")) if sub.get("_id") else submission_id,  # ensure string id
         "timestamp": datetime.utcnow(),
     }
-
+    
     result = await messages_collection.insert_one(reply_doc)
-
+    
     return {
-        "status": "replied",
+        "status": "replied", 
         "message_id": str(result.inserted_id),
         "text": text,
     }
@@ -1224,9 +1224,9 @@ async def _send_fcm_to_tokens(title: str, body: str, data: Dict[str, str], token
     """
     if not firebase_admin._apps:
         raise RuntimeError("Firebase admin not initialized")
-
+    
     results_summary = {"success": 0, "failure": 0, "errors": []}
-
+    
     async def _send_batch(batch):
         try:
             def sync_send():
@@ -1238,18 +1238,18 @@ async def _send_fcm_to_tokens(title: str, body: str, data: Dict[str, str], token
                 )
                 # 2. Use the NEW method: send_each_for_multicast
                 return messaging.send_each_for_multicast(message)
-
+            
             # Run the sync function in a thread so it doesn't block the server
             resp = await asyncio.to_thread(sync_send)
-
+            
             results_summary["success"] += resp.success_count
             results_summary["failure"] += resp.failure_count
-
+            
             # 3. Collect errors
             for idx, resp_item in enumerate(resp.responses):
                 if not resp_item.success:
                     results_summary["errors"].append({
-                        "token": batch[idx],
+                        "token": batch[idx], 
                         "error": str(resp_item.exception)
                     })
         except Exception as e:
@@ -1261,7 +1261,7 @@ async def _send_fcm_to_tokens(title: str, body: str, data: Dict[str, str], token
     for i in range(0, len(tokens), batch_size):
         batch = tokens[i:i+batch_size]
         tasks.append(_send_batch(batch))
-
+    
     await asyncio.gather(*tasks)
     return results_summary
 
@@ -1275,7 +1275,7 @@ async def _collect_target_tokens(recipients: Dict[str, Any]) -> List[str]:
     """
     if not recipients:
         return []
-
+    
     # 1. Handle "All"
     if recipients.get("all"):
         cursor = fcm_tokens_collection.find({}, {"token": 1})
@@ -1306,11 +1306,11 @@ async def _collect_target_tokens(recipients: Dict[str, Any]) -> List[str]:
                 {"patientDetails.email": {"$in": email_list}}
             ]
         }, {"_id": 1})
-
+        
         found_ids = []
         async for p in patient_cursor:
             found_ids.append(str(p["_id"]))
-
+            
         if found_ids:
             # Now find tokens for these IDs
             token_cursor = fcm_tokens_collection.find({"patient_id": {"$in": found_ids}}, {"token": 1})
@@ -1432,13 +1432,13 @@ async def schedule_patient_medicine_notifications(patient_id: str):
         p = await patients_collection.find_one({"_id": ObjectId(patient_id)})
     except:
         p = await patients_collection.find_one({"_id": patient_id})
-
+    
     if not p:
         raise HTTPException(status_code=404, detail="patient not found")
 
     # 2. Find Prescription Items using Robust Finder
     items = _find_latest_prescription_items(p)
-
+    
     # Fallback: check simple "medicines" list from Doctor App
     if not items:
         simple_meds = p.get("medicines") or []
@@ -1461,10 +1461,10 @@ async def schedule_patient_medicine_notifications(patient_id: str):
         med_name = item.get("name") or item.get("drug") or item.get("medicine") or "Medicine"
         freq_str = str(item.get("frequency") or "")
         dur_str = str(item.get("duration") or "7 days")
-
+        
         # Parse logic
         times_per_day = _parse_times_per_day_from_text(freq_str)
-
+        
         # LOGIC CHANGE START
         if times_per_day in _DAYSCHEDULES:
             times_list = _DAYSCHEDULES[times_per_day]
@@ -1474,10 +1474,10 @@ async def schedule_patient_medicine_notifications(patient_id: str):
             start_hour = 6
             end_hour = 22
             window = end_hour - start_hour
-
+            
             # Prevent division by zero
             step = window / max(1, (times_per_day - 1)) if times_per_day > 1 else 0
-
+            
             times_list = []
             for i in range(times_per_day):
                 h = int(start_hour + (i * step))
@@ -1485,7 +1485,7 @@ async def schedule_patient_medicine_notifications(patient_id: str):
                 h = min(h, 23)
                 times_list.append(time(h, 0, tzinfo=IST))
         # LOGIC CHANGE END
-
+        
         duration_days = _parse_duration_days(dur_str, default_days=7)
 
         # Generate DateTimes
@@ -1496,7 +1496,7 @@ async def schedule_patient_medicine_notifications(patient_id: str):
             dose_label = _dose_label_for_time(datetime.fromisoformat(send_at).time())
             title = f"Medicine: {med_name}"
             message = f"Time to take your {dose_label} dose ({med_name})."
-
+            
             notif_doc = {
                 "patient_id": patient_id,
                 "title": title,
@@ -1546,7 +1546,7 @@ async def get_today_doses(patient_id: str):
     Return today's dose slots. Lazily creates if missing.
     """
     today_ist = datetime.now(IST).date().isoformat()
-
+    
     # 1. Fetch Existing Doses
     cursor = medicine_doses_collection.find({"patient_id": patient_id, "date": today_ist}).sort("scheduled_iso", 1)
     doses = [serialize_doc(d) async for d in cursor]
@@ -1556,12 +1556,12 @@ async def get_today_doses(patient_id: str):
         p = await patients_collection.find_one({"_id": ObjectId(patient_id)})
     except:
         p = await patients_collection.find_one({"_id": patient_id})
-
+        
     if not p:
         return doses # Return what we have if patient not found
 
     items = _find_latest_prescription_items(p)
-
+    
     # Fallback to simple list
     if not items:
         simple_meds = p.get("medicines") or []
@@ -1577,22 +1577,22 @@ async def get_today_doses(patient_id: str):
     new_doses_added = False
     for item in items:
         med_name = item.get("name") or item.get("drug") or item.get("medicine") or "Medicine"
-        freq_str = str(item.get("frequency") or item.get("name") or "")
-
+        freq_str = str(item.get("frequency") or item.get("name") or "") 
+        
         times_per_day = _parse_times_per_day_from_text(freq_str)
         times_list = _DAYSCHEDULES.get(times_per_day, _DAYSCHEDULES[1])
-
+        
         for t in times_list:
             dt_ist = datetime.combine(datetime.now(IST).date(), t, tzinfo=IST)
             label = _dose_label_for_time(dt_ist.timetz())
-
+            
             dose_filter = {
                 "patient_id": patient_id,
                 "medicine_name": med_name,
                 "date": today_ist,
                 "dose_label": label
             }
-
+            
             dose_doc = {
                 **dose_filter,
                 "scheduled_time": dt_ist.strftime("%H:%M"),
@@ -1601,7 +1601,7 @@ async def get_today_doses(patient_id: str):
                 "notified": False,
                 "created_at": datetime.utcnow().isoformat(),
             }
-
+            
             await medicine_doses_collection.update_one(dose_filter, {"$setOnInsert": dose_doc}, upsert=True)
 
     # Re-fetch
@@ -1909,7 +1909,7 @@ async def get_adherence_graph(
     """
     now = datetime.now(IST)
     today_str = now.date().isoformat()
-
+    
     x_axis = []
     y_axis = []
     title = ""
@@ -1921,17 +1921,17 @@ async def get_adherence_graph(
         # Fixed Categories
         categories = ["Morning", "Afternoon", "Evening", "Bedtime"]
         x_axis = categories
-
+        
         # Initialize counts
         counts = {cat: 0 for cat in categories}
-
+        
         # Query doses for TODAY
         cursor = medicine_doses_collection.find({
             "patient_id": patient_id,
             "date": today_str,
             "taken": True
         })
-
+        
         async for dose in cursor:
             label = dose.get("dose_label", "Morning") # Default to Morning if missing
             # Normalize labels
@@ -1940,10 +1940,10 @@ async def get_adherence_graph(
             elif "Evening" in label: k = "Evening"
             elif "Night" in label or "Bedtime" in label: k = "Bedtime"
             else: k = "Morning"
-
+            
             if k in counts:
                 counts[k] += 1
-
+                
         y_axis = [counts[c] for c in categories]
 
     # --- 2. WEEK VIEW (Last 7 Days) ---
@@ -1953,7 +1953,7 @@ async def get_adherence_graph(
         # Generate last 7 days labels (e.g., "Mon", "Tue")
         dates = []
         date_map = {} # "YYYY-MM-DD" -> index
-
+        
         for i in range(6, -1, -1):
             d = now - timedelta(days=i)
             d_str = d.date().isoformat()
@@ -1962,17 +1962,17 @@ async def get_adherence_graph(
             x_axis.append(d_label)
             date_map[d_str] = len(x_axis) - 1
             y_axis.append(0) # Init 0
-
+            
         # Query taken doses in date range
         start_date = dates[0]
         end_date = dates[-1]
-
+        
         cursor = medicine_doses_collection.find({
             "patient_id": patient_id,
             "date": {"$gte": start_date, "$lte": end_date},
             "taken": True
         })
-
+        
         async for dose in cursor:
             d_str = dose.get("date")
             if d_str in date_map:
@@ -1983,29 +1983,29 @@ async def get_adherence_graph(
     # Shows total taken count for each medicine (Past 30 days default)
     elif view_mode == "medicine":
         title = "Medicine Performance (Last 30 Days)"
-
+        
         # Query taken doses
         start_date = (now - timedelta(days=30)).date().isoformat()
-
+        
         cursor = medicine_doses_collection.find({
             "patient_id": patient_id,
             "date": {"$gte": start_date},
             "taken": True
         })
-
+        
         med_counts = {}
         async for dose in cursor:
             name = dose.get("medicine_name", "Unknown")
             # Clean up name (remove dosage info if needed, or keep full)
             short_name = name.split(" ")[0] # Simple: just first word
             med_counts[short_name] = med_counts.get(short_name, 0) + 1
-
+            
         # Sort by count desc
         sorted_meds = sorted(med_counts.items(), key=lambda item: item[1], reverse=True)
-
+        
         x_axis = [m[0] for m in sorted_meds]
         y_axis = [m[1] for m in sorted_meds]
-
+        
         if not x_axis:
             x_axis = ["No Data"]
             y_axis = [0]
@@ -2082,26 +2082,26 @@ async def debug_find_email(email: str):
     Used to diagnose login failures due to unknown email field locations.
     """
     print(f"[DEBUG_FIND_EMAIL] Searching for: {email}")
-
+    
     # Get all patients and search programmatically
     all_patients = []
     cursor = patients_collection.find()
     async for p in cursor:
         all_patients.append(p)
-
+    
     print(f"[DEBUG_FIND_EMAIL] Total patients in DB: {len(all_patients)}")
-
+    
     found_in = []
     for patient in all_patients:
         # Convert to JSON string and search
         patient_str = str(patient).lower()
         email_lower = email.lower()
-
+        
         if email_lower in patient_str:
             # Found it! Now figure out which field
             patient_id = str(patient.get("_id", "unknown"))
             name = patient.get("name", patient.get("patientDetails", {}).get("name", "Unknown"))
-
+            
             # Check each known field
             locations = []
             if patient.get("email", "").lower() == email_lower:
@@ -2110,14 +2110,14 @@ async def debug_find_email(email: str):
                 locations.append("contactInfo.email")
             if patient.get("patientDetails", {}).get("email", "").lower() == email_lower:
                 locations.append("patientDetails.email")
-
+            
             found_in.append({
                 "patient_id": patient_id,
                 "name": name,
                 "found_in_fields": locations,
                 "full_patient_doc": serialize_doc(patient) if len(all_patients) < 10 else "..."  # Don't return huge docs
             })
-
+    
     return {
         "search_email": email,
         "total_patients_in_db": len(all_patients),
@@ -2180,22 +2180,22 @@ async def notification_dispatcher_loop():
                     await medicine_doses_collection.update_one({"_id": dose.get("_id")}, {"$set": {"notified": True, "notified_at": datetime.utcnow().isoformat()}})
             except Exception as e:
                 print(f"[DISPATCHER] [ERROR] Dose scan error: {e}")
-
+            
             # Find notifications that are due (send_at <= now) and not yet sent
             # Note: send_at is stored as string in ISO format
             due_notifications = await notifications_collection.find({
                 "send_at": {"$lte": now_str},
                 "sent": False
             }).to_list(None)
-
+            
             for notif in due_notifications:
                 try:
                     notif_id = notif["_id"]
                     recipients = notif.get("recipients", {})
-
+                    
                     # Collect FCM tokens for recipients
                     tokens = await _collect_target_tokens(recipients)
-
+                    
                     if tokens:
                         # Send via FCM
                         data_payload = {
@@ -2208,7 +2208,7 @@ async def notification_dispatcher_loop():
                             data_payload,
                             tokens
                         )
-
+                        
                         # Remove bad tokens from database
                         to_remove = []
                         for err in result.get("errors", []):
@@ -2218,7 +2218,7 @@ async def notification_dispatcher_loop():
                                 to_remove.append(token)
                         if to_remove:
                             await fcm_tokens_collection.delete_many({"token": {"$in": to_remove}})
-
+                        
                         # Mark notification as sent
                         await notifications_collection.update_one(
                             {"_id": notif_id},
@@ -2228,14 +2228,14 @@ async def notification_dispatcher_loop():
                                 "delivery": result
                             }}
                         )
-
+                        
                         print(f"[DISPATCHER] [SENT] Notification {notif_id}: {notif.get('title', '')[:50]}")
                     else:
                         print(f"[DISPATCHER] [WARN] No tokens found for notification {notif_id}")
-
+                        
                 except Exception as e:
                     print(f"[DISPATCHER] [ERROR] Error sending notification: {e}")
-
+                    
         except Exception as e:
             print(f"[DISPATCHER] [ERROR] Background task error: {e}")
             await asyncio.sleep(10)
@@ -2346,7 +2346,9 @@ async def adherence_stats_week(patient_id: str, start: Optional[str] = None):
             last = visits[-1]
             doc_stage = (last.get("stages") or {}).get("doctor") or {}
             data = doc_stage.get("data") or {}
-            prescription = data.get("prescription")
+        
+
+    prescription = data.get("prescription")
         if not prescription:
             prescription = patient.get("prescription")
 
@@ -2405,4 +2407,3 @@ async def start_background_tasks():
 async def shutdown_event():
     """Log when app is shutting down"""
     print("[SHUTDOWN] Application shutting down")
-
