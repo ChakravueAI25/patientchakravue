@@ -1,7 +1,6 @@
 package com.org.patientchakravue.app
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -22,11 +21,15 @@ import com.org.patientchakravue.ui.*
 import kotlinx.coroutines.launch
 
 @Composable
-fun App() {
+fun App(initialCallData: Pair<String, String>? = null) {
     MaterialTheme {
         AppLocalizationProvider {
             val sessionManager = remember { SessionManager() }
-            val initialScreen = if (sessionManager.getPatient() != null) Screen.Dashboard else Screen.Login
+            val initialScreen = when {
+                initialCallData != null -> Screen.VideoCall(initialCallData.first, initialCallData.second)
+                sessionManager.getPatient() != null -> Screen.Dashboard
+                else -> Screen.Login
+            }
             val navigator = remember { Navigator(initialScreen) }
             val snackbarHostState = remember { SnackbarHostState() }
             val scope = rememberCoroutineScope()
@@ -136,7 +139,13 @@ fun App() {
                         onBack = { navigator.goBack() }
                     )
                     is Screen.VideoCallRequest -> VideoCallRequestScreen(
-                        onBack = { navigator.goBack() }
+                        onBack = { navigator.goBack() },
+                        onRequestSent = { navigator.goBack() }
+                    )
+                    is Screen.VideoCall -> VideoCallScreen(
+                        channelName = screen.channelName,
+                        doctorId = screen.doctorId,
+                        onCallEnded = { navigator.goBack() }
                     )
                     is Screen.FeedbackDetail -> FeedbackDetailScreen(note = screen.note, onBack = { navigator.goBack() })
                     is Screen.MedicineList -> Text("Medicine List Screen", modifier = Modifier.padding(paddingValues))
@@ -150,22 +159,26 @@ fun App() {
 fun BottomNavigationBar(navigator: Navigator) {
     Box {
         NavigationBar {
+            // Dashboard - Left
             NavigationBarItem(
                 icon = { Icon(Icons.Default.Dashboard, null) },
-                label = { Text("Dashboard") },
+                label = { Text("Home") },
                 selected = navigator.currentScreen == Screen.Dashboard,
                 onClick = { navigator.navigateAsPillar(Screen.Dashboard) }
             )
 
+            // AfterCare - Left-Center
             NavigationBarItem(
                 icon = { Icon(Icons.AutoMirrored.Filled.List, null) },
-                label = { Text("AfterCare") },
+                label = { Text("Care") },
                 selected = navigator.currentScreen == Screen.AfterCare,
                 onClick = { navigator.navigateAsPillar(Screen.AfterCare) }
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            // Empty spacer for center FAB - use Spacer weight instead of disabled item
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(1f))
 
+            // Vision - Right-Center
             NavigationBarItem(
                 icon = { Icon(Icons.Default.RemoveRedEye, null) },
                 label = { Text("Vision") },
@@ -173,14 +186,16 @@ fun BottomNavigationBar(navigator: Navigator) {
                 onClick = { navigator.navigateAsPillar(Screen.Vision) }
             )
 
+            // Notifications - Right
             NavigationBarItem(
                 icon = { Icon(Icons.Default.Notifications, null) },
-                label = { Text("Notifications") },
+                label = { Text("Alerts") },
                 selected = navigator.currentScreen == Screen.Notifications,
                 onClick = { navigator.navigateAsPillar(Screen.Notifications) }
             )
         }
 
+        // Center FAB for Video Call
         FloatingActionButton(
             onClick = { navigator.navigateForward(Screen.VideoCallRequest) },
             containerColor = Color(0xFF4CAF50),
