@@ -80,8 +80,8 @@ fun VisionScreen(
             VisionTestCard(
                 title = localizedString("test_tumbling"),
                 icon = Icons.Default.Visibility,
-                color = Color(0xFFF3E5F5), // Light Purple
-                iconColor = Color(0xFF7B1FA2),
+                color = Color(0xFFE8F5E9), // Light Green
+                iconColor = Color(0xFF4CAF50),
                 modifier = Modifier.weight(1f),
                 onClick = onNavigateToTumblingE
             )
@@ -104,7 +104,7 @@ fun VisionScreen(
 
         if (isLoading) {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = Color(0xFF4CAF50))
             }
         } else if (history.isEmpty()) {
             Box(
@@ -175,7 +175,7 @@ fun HistoryItemCard(record: VisionTestRecord) {
         ) {
             // Icon based on type
             val icon = if (record.testType.contains("Amsler")) Icons.Default.GridOn else Icons.Default.Visibility
-            val iconColor = if (record.testType.contains("Amsler")) Color(0xFF1976D2) else Color(0xFF7B1FA2)
+            val iconColor = if (record.testType.contains("Amsler")) Color(0xFF1976D2) else Color(0xFF4CAF50)
             Icon(icon, null, tint = iconColor)
 
             Spacer(Modifier.width(16.dp))

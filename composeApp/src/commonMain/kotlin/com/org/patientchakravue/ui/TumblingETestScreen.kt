@@ -226,7 +226,7 @@ fun TumblingEInstructionScreen(onStart: (String) -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(Icons.Default.Info, null, modifier = Modifier.size(64.dp), tint = Color(0xFF1976D2))
+        Icon(Icons.Default.Info, null, modifier = Modifier.size(64.dp), tint = Color(0xFF4CAF50))
         Spacer(Modifier.height(24.dp))
         Text(localizedString("visual_acuity_test"), fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(16.dp))
@@ -256,12 +256,20 @@ fun TumblingEInstructionScreen(onStart: (String) -> Unit) {
                 selected = selectedEye == "Right",
                 onClick = { selectedEye = "Right" },
                 label = { Text(localizedString("eye_right")) },
-                modifier = Modifier.padding(end = 8.dp)
+                modifier = Modifier.padding(end = 8.dp),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = Color(0xFF4CAF50),
+                    selectedLabelColor = Color.White
+                )
             )
             FilterChip(
                 selected = selectedEye == "Left",
                 onClick = { selectedEye = "Left" },
-                label = { Text(localizedString("eye_left")) }
+                label = { Text(localizedString("eye_left")) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = Color(0xFF4CAF50),
+                    selectedLabelColor = Color.White
+                )
             )
         }
 
@@ -269,7 +277,7 @@ fun TumblingEInstructionScreen(onStart: (String) -> Unit) {
         Button(
             onClick = { onStart(selectedEye) },
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
         ) {
             Text(localizedString("start_test_btn"), fontSize = 18.sp)
         }
@@ -313,6 +321,7 @@ fun TumblingEGameScreen(
         LinearProgressIndicator(
             progress = { progress },
             modifier = Modifier.fillMaxWidth().height(8.dp),
+            color = Color(0xFF4CAF50)
         )
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -380,7 +389,7 @@ fun TumblingEResultScreen(
                 Text("${localizedString("tested_eye")} $eye", fontSize = 16.sp, color = Color.Gray)
                 Spacer(Modifier.height(8.dp))
                 Text(localizedString("visual_acuity_label"), fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                Text(finalResult, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1976D2))
+                Text(finalResult, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50))
             }
         }
 
@@ -390,7 +399,7 @@ fun TumblingEResultScreen(
             onClick = onSubmit,
             enabled = !isSubmitting,
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
         ) {
             if (isSubmitting) {
                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
@@ -408,4 +417,3 @@ fun TumblingEResultScreen(
         }
     }
 }
-

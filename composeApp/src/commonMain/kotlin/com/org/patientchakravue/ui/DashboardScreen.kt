@@ -83,10 +83,10 @@ fun DashboardScreen(
                     // Language Switcher Icon
                     LanguageSwitcherIcon(tint = Color(0xFF1A3B5D))
                     IconButton(onClick = onNavigateToAdherence) {
-                        Icon(Icons.AutoMirrored.Filled.ShowChart, null)
+                        Icon(Icons.AutoMirrored.Filled.ShowChart, null, tint = Color(0xFF4CAF50))
                     }
                     IconButton(onClick = onNavigateToProfile) {
-                        Icon(Icons.Default.AccountCircle, null)
+                        Icon(Icons.Default.AccountCircle, null, tint = Color.Black)
                     }
                 }
             }
@@ -171,7 +171,7 @@ fun DashboardScreen(
                         Spacer(Modifier.height(12.dp))
 
                         if (isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally), color = Color(0xFF4CAF50))
                         } else if (todayDoses.isEmpty()) {
                             Column(
                                 modifier = Modifier.fillMaxWidth().padding(24.dp),
@@ -253,7 +253,7 @@ fun DashboardScreen(
                                         enabled = enabled,
                                         modifier = Modifier.fillMaxWidth(),
                                         colors = ButtonDefaults.buttonColors(
-                                            containerColor = if (dose.taken) Color(0xFF4CAF50) else Color(0xFF1976D2),
+                                            containerColor = Color(0xFF4CAF50),
                                             disabledContainerColor = Color(0xFFE0E0E0)
                                         ),
                                         shape = RoundedCornerShape(8.dp)

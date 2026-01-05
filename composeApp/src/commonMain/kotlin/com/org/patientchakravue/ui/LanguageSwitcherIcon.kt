@@ -42,7 +42,7 @@ fun LanguageSwitcherIcon(
     var expanded by remember { mutableStateOf(false) }
 
     // Gold/Yellow color for the "A" letter
-    val goldColor = Color(0xFFE6A817)
+    val primaryColor = Color(0xFF4CAF50)
 
     Box(modifier = modifier) {
         // Custom Translation Icon (文 ↔ A with circular arrows)
@@ -80,7 +80,7 @@ fun LanguageSwitcherIcon(
                 centerX = centerX + w * 0.18f,
                 centerY = centerY + h * 0.12f,
                 size = w * 0.28f,
-                color = goldColor,
+                color = primaryColor,
                 strokeWidth = w * 0.055f
             )
         }
@@ -299,4 +299,3 @@ private fun DrawScope.drawLetterA(
         cap = StrokeCap.Round
     )
 }
-

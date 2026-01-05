@@ -148,7 +148,7 @@ fun LoginScreen(
 
                 // Login Button
                 if (isLoading) {
-                    CircularProgressIndicator(color = ashColor)
+                    CircularProgressIndicator(color = Color(0xFF4CAF50))
                 } else {
                     // Store localized strings outside lambda to avoid issues
                     val loginErrorEmpty = localizedString("login_error_empty")
@@ -188,10 +188,9 @@ fun LoginScreen(
                             }
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Transparent,
-                            contentColor = ashColor
+                            containerColor = Color(0xFF4CAF50),
+                            contentColor = Color.White
                         ),
-                        border = BorderStroke(2.dp, ashColor),
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                         shape = MaterialTheme.shapes.medium
                     ) {

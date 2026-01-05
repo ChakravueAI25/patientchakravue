@@ -2,7 +2,6 @@ package com.org.patientchakravue.app
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -25,183 +24,125 @@ import kotlinx.coroutines.launch
 @Composable
 fun App() {
     MaterialTheme {
-        // Wrap entire app with localization provider for language switching
         AppLocalizationProvider {
-        val sessionManager = remember { SessionManager() }
-        val snackbarHostState = remember { SnackbarHostState() }
-        val scope = rememberCoroutineScope()
+            val sessionManager = remember { SessionManager() }
+            val initialScreen = if (sessionManager.getPatient() != null) Screen.Dashboard else Screen.Login
+            val navigator = remember { Navigator(initialScreen) }
+            val snackbarHostState = remember { SnackbarHostState() }
+            val scope = rememberCoroutineScope()
 
-        val initialScreen = if (sessionManager.getPatient() != null) Screen.Dashboard else Screen.Login
-        val navigator = remember { Navigator(initialScreen) }
-
-        val bottomNavScreens = listOf(Screen.Dashboard, Screen.AfterCare, Screen.Vision, Screen.Notifications)
-
-        AppBackHandler {
-            navigator.handleBackIntent()
-        }
-
-        Scaffold(
-            modifier = Modifier.statusBarsPadding(),
-            snackbarHost = { SnackbarHost(snackbarHostState) },
-            bottomBar = {
-                if (navigator.currentScreen in bottomNavScreens) {
-                    BottomNavigationBar(navigator)
-                }
+            // Show back handler on any screen that is NOT a root screen
+            if (navigator.currentScreen !in listOf(Screen.Dashboard, Screen.Login)) {
+                AppBackHandler { navigator.goBack() }
             }
-        ) { paddingValues ->
-            when (navigator.currentScreen) {
-                is Screen.Login -> {
-                    LoginScreen(
-                        onLoginSuccess = {
-                            navigator.navigateTo(Screen.Dashboard, clearBackStack = true)
-                        },
-                        showSnackbar = { msg ->
-                            scope.launch { snackbarHostState.showSnackbar(msg) }
-                        }
-                    )
-                }
-                is Screen.Dashboard -> {
-                    val patient = sessionManager.getPatient()
-                    if (patient != null) {
-                        DashboardScreen(
-                            patient = patient,
-                            onNavigateToProfile = { navigator.navigateTo(Screen.Profile) },
-                            onNavigateToAdherence = { navigator.navigateTo(Screen.AdherenceGraph) },
-                            onNavigateToMedicineList = { navigator.navigateTo(Screen.MedicineList) },
-                            bottomBar = { BottomNavigationBar(navigator) }
-                        )
-                    } else {
-                        sessionManager.clearSession()
-                        navigator.navigateTo(Screen.Login, clearBackStack = true)
+
+            val bottomNavScreens = listOf(Screen.Dashboard, Screen.AfterCare, Screen.Vision, Screen.Notifications)
+
+            Scaffold(
+                modifier = Modifier.statusBarsPadding(),
+                snackbarHost = { SnackbarHost(snackbarHostState) },
+                bottomBar = {
+                    if (navigator.currentScreen in bottomNavScreens) {
+                        BottomNavigationBar(navigator)
                     }
                 }
-                is Screen.Profile -> {
-                    ProfileScreen(
+            ) { paddingValues ->
+                when (val screen = navigator.currentScreen) {
+                    is Screen.Login -> LoginScreen(
+                        onLoginSuccess = { navigator.navigateAsPillar(Screen.Dashboard) },
+                        showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } }
+                    )
+                    is Screen.Dashboard -> {
+                        val patient = sessionManager.getPatient()
+                        if (patient != null) {
+                            DashboardScreen(
+                                patient = patient,
+                                onNavigateToProfile = { navigator.navigateForward(Screen.Profile) },
+                                onNavigateToAdherence = { navigator.navigateForward(Screen.AdherenceGraph) },
+                                onNavigateToMedicineList = { navigator.navigateForward(Screen.MedicineList) },
+                                bottomBar = { BottomNavigationBar(navigator) }
+                            )
+                        } else {
+                            sessionManager.clearSession()
+                            navigator.navigateAsPillar(Screen.Login)
+                        }
+                    }
+                    is Screen.Profile -> ProfileScreen(
                         sessionManager = sessionManager,
-                        onBack = { navigator.handleBackIntent() },
+                        onBack = { navigator.goBack() },
                         onLogout = {
                             sessionManager.clearSession()
-                            navigator.navigateTo(Screen.Login, clearBackStack = true)
+                            navigator.navigateAsPillar(Screen.Login)
                         }
                     )
-                }
-                is Screen.AdherenceGraph -> {
-                    AdherenceGraphScreen(onBack = { navigator.handleBackIntent() })
-                }
-                is Screen.AfterCare -> {
-                    val patient = sessionManager.getPatient()
-                    if (patient != null) {
-                        AfterCareScreen(
-                            patient = patient,
-                            onBack = { navigator.handleBackIntent() },
-                            showSnackbar = { msg ->
-                                scope.launch { snackbarHostState.showSnackbar(msg) }
-                            },
-                            contentPadding = paddingValues
-                        )
-                    } else {
-                        sessionManager.clearSession()
-                        navigator.navigateTo(Screen.Login, clearBackStack = true)
+                    is Screen.AdherenceGraph -> AdherenceGraphScreen(onBack = { navigator.goBack() })
+                    is Screen.AfterCare -> {
+                         val patient = sessionManager.getPatient()
+                         if (patient != null) {
+                            AfterCareScreen(
+                                patient = patient,
+                                onBack = { navigator.goBack() },
+                                showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } },
+                                contentPadding = paddingValues
+                            )
+                         }
                     }
-                }
-                is Screen.Vision -> {
-                    val patient = sessionManager.getPatient()
-                    if (patient != null) {
-                        VisionScreen(
-                            patient = patient,
-                            contentPadding = paddingValues,
-                            onNavigateToAmsler = { navigator.navigateTo(Screen.AmslerGrid) },
-                            onNavigateToTumblingE = { navigator.navigateTo(Screen.TumblingE) }
-                        )
-                    } else {
-                        sessionManager.clearSession()
-                        navigator.navigateTo(Screen.Login, clearBackStack = true)
+                    is Screen.Vision -> {
+                        val patient = sessionManager.getPatient()
+                        if (patient != null) {
+                            VisionScreen(
+                                patient = patient,
+                                contentPadding = paddingValues,
+                                onNavigateToAmsler = { navigator.navigateForward(Screen.AmslerGrid) },
+                                onNavigateToTumblingE = { navigator.navigateForward(Screen.TumblingE) }
+                            )
+                        }
                     }
-                }
-                is Screen.AmslerGrid -> {
-                    val patient = sessionManager.getPatient()
-                    if (patient != null) {
-                        AmslerTestScreen(
-                            patient = patient,
-                            onBack = { navigator.handleBackIntent() },
-                            showSnackbar = { msg ->
-                                scope.launch { snackbarHostState.showSnackbar(msg) }
-                            }
-                        )
-                    } else {
-                        sessionManager.clearSession()
-                        navigator.navigateTo(Screen.Login, clearBackStack = true)
+                    is Screen.AmslerGrid -> {
+                        val patient = sessionManager.getPatient()
+                        if (patient != null) {
+                            AmslerTestScreen(
+                                patient = patient,
+                                onBack = { navigator.goBack() },
+                                showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } }
+                            )
+                        }
                     }
-                }
-                is Screen.TumblingE -> {
-                    val patient = sessionManager.getPatient()
-                    if (patient != null) {
-                        TumblingETestScreen(
-                            patient = patient,
-                            onBack = { navigator.handleBackIntent() },
-                            showSnackbar = { msg ->
-                                scope.launch { snackbarHostState.showSnackbar(msg) }
-                            }
-                        )
-                    } else {
-                        sessionManager.clearSession()
-                        navigator.navigateTo(Screen.Login, clearBackStack = true)
+                    is Screen.TumblingE -> {
+                         val patient = sessionManager.getPatient()
+                         if (patient != null) {
+                            TumblingETestScreen(
+                                patient = patient,
+                                onBack = { navigator.goBack() },
+                                showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } }
+                            )
+                         }
                     }
-                }
-                is Screen.Notifications -> {
-                    val patient = sessionManager.getPatient()
-                    if (patient != null) {
-                        NotificationsScreen(
-                            patient = patient,
-                            onNavigateToChat = { doctorId, doctorName, submissionIds ->
-                                navigator.navigateTo(Screen.Chat(doctorId, doctorName, submissionIds))
-                            },
-                            bottomBar = { BottomNavigationBar(navigator) }
-                        )
-                    } else {
-                        sessionManager.clearSession()
-                        navigator.navigateTo(Screen.Login, clearBackStack = true)
+                    is Screen.Notifications -> {
+                        val patient = sessionManager.getPatient()
+                        if (patient != null) {
+                            NotificationsScreen(
+                                patient = patient,
+                                onNavigateToChat = { doctorId, doctorName, submissionIds ->
+                                    navigator.navigateForward(Screen.Chat(doctorId, doctorName, submissionIds))
+                                },
+                                bottomBar = { BottomNavigationBar(navigator) }
+                            )
+                        }
                     }
-                }
-                is Screen.MedicineList -> {
-                    Text("Medicine List Screen", modifier = Modifier.padding(paddingValues))
-                }
-                is Screen.FeedbackDetail -> {
-                    // Cast the screen state to get the note
-                    val screen = navigator.currentScreen as Screen.FeedbackDetail
-                    // Extract submission ID from the note
-                    val subId = screen.note.submissionId ?: ""
-
-                    if (subId.isNotEmpty()) {
-                        ChatScreen(
-                            doctorName = screen.note.doctorName ?: "Dr. Chakra",
-                            submissionIds = listOf(subId),
-                            onBack = { navigator.handleBackIntent() }
-                        )
-                    } else {
-                        // Fallback for old notes without submission links
-                        FeedbackDetailScreen(
-                            note = screen.note,
-                            onBack = { navigator.handleBackIntent() }
-                        )
-                    }
-                }
-                is Screen.Chat -> {
-                    val chatScreen = navigator.currentScreen as Screen.Chat
-                    ChatScreen(
-                        doctorName = chatScreen.doctorName,
-                        submissionIds = chatScreen.submissionIds,
-                        onBack = { navigator.handleBackIntent() }
-                    )
-                }
-                 is Screen.VideoCallRequest -> {
-                    VideoCallRequestScreen(
+                    is Screen.Chat -> ChatScreen(
+                        doctorName = screen.doctorName,
+                        submissionIds = screen.submissionIds,
                         onBack = { navigator.goBack() }
                     )
+                    is Screen.VideoCallRequest -> VideoCallRequestScreen(
+                        onBack = { navigator.goBack() }
+                    )
+                    is Screen.FeedbackDetail -> FeedbackDetailScreen(note = screen.note, onBack = { navigator.goBack() })
+                    is Screen.MedicineList -> Text("Medicine List Screen", modifier = Modifier.padding(paddingValues))
                 }
             }
         }
-        } // End AppLocalizationProvider
     }
 }
 
@@ -213,14 +154,14 @@ fun BottomNavigationBar(navigator: Navigator) {
                 icon = { Icon(Icons.Default.Dashboard, null) },
                 label = { Text("Dashboard") },
                 selected = navigator.currentScreen == Screen.Dashboard,
-                onClick = { navigator.navigateTo(Screen.Dashboard, clearBackStack = true) }
+                onClick = { navigator.navigateAsPillar(Screen.Dashboard) }
             )
 
             NavigationBarItem(
                 icon = { Icon(Icons.AutoMirrored.Filled.List, null) },
                 label = { Text("AfterCare") },
                 selected = navigator.currentScreen == Screen.AfterCare,
-                onClick = { navigator.navigateTo(Screen.AfterCare, clearBackStack = true) }
+                onClick = { navigator.navigateAsPillar(Screen.AfterCare) }
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -229,19 +170,19 @@ fun BottomNavigationBar(navigator: Navigator) {
                 icon = { Icon(Icons.Default.RemoveRedEye, null) },
                 label = { Text("Vision") },
                 selected = navigator.currentScreen == Screen.Vision,
-                onClick = { navigator.navigateTo(Screen.Vision, clearBackStack = true) }
+                onClick = { navigator.navigateAsPillar(Screen.Vision) }
             )
 
             NavigationBarItem(
                 icon = { Icon(Icons.Default.Notifications, null) },
                 label = { Text("Notifications") },
                 selected = navigator.currentScreen == Screen.Notifications,
-                onClick = { navigator.navigateTo(Screen.Notifications, clearBackStack = true) }
+                onClick = { navigator.navigateAsPillar(Screen.Notifications) }
             )
         }
 
         FloatingActionButton(
-            onClick = { navigator.navigateTo(Screen.VideoCallRequest) },
+            onClick = { navigator.navigateForward(Screen.VideoCallRequest) },
             containerColor = Color(0xFF4CAF50),
             modifier = Modifier
                 .align(Alignment.TopCenter)

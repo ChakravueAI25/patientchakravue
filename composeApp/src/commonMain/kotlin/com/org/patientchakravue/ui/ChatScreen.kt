@@ -88,7 +88,7 @@ fun ChatScreen(
                         Spacer(Modifier.width(10.dp))
                         Column {
                             Text(doctorName, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                            Text(localizedString("dr_online"), fontSize = 12.sp, color = Color.Green)
+                            Text(localizedString("dr_online"), fontSize = 12.sp, color = Color(0xFF4CAF50))
                         }
                     }
                 },
@@ -105,7 +105,7 @@ fun ChatScreen(
 
         if (isLoading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = Color(0xFF4CAF50))
             }
         } else if (allMessages.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -187,7 +187,7 @@ fun ReportBubble(msg: ChatMessage) {
                         ) {
                             Text(key, fontSize = 12.sp, color = Color.DarkGray)
                             // Color code severity
-                            val color = if (value >= 7) Color.Red else if (value >= 4) Color(0xFFD89F2B) else Color.Black
+                            val color = if (value >= 7) Color.Red else if (value >= 4) Color(0xFF4CAF50) else Color.Black
                             Text("$value/10", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = color)
                         }
                     }

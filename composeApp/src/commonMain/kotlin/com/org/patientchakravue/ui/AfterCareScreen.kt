@@ -164,7 +164,7 @@ fun SymptomRow(label: String, icon: ImageVector, selectedValue: Int, onValueChan
 
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, null, tint = Color(0xFFD32F2F), modifier = Modifier.size(24.dp))
+            Icon(icon, null, tint = Color(0xFF1976D2), modifier = Modifier.size(24.dp))
             Spacer(Modifier.width(8.dp))
             Text(label, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
         }
@@ -173,7 +173,11 @@ fun SymptomRow(label: String, icon: ImageVector, selectedValue: Int, onValueChan
                 FilterChip(
                     selected = selectedValue == value,
                     onClick = { onValueChange(value) },
-                    label = { Text(name, fontSize = 11.sp) }
+                    label = { Text(name, fontSize = 11.sp) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Color(0xFF4CAF50),
+                        selectedLabelColor = Color.White
+                    )
                 )
             }
         }

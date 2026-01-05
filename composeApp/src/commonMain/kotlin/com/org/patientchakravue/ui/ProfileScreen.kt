@@ -61,7 +61,7 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = Color(0xFF4CAF50))
             }
         } else if (patient != null) {
             Column(

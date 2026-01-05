@@ -5,42 +5,38 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 class Navigator(initialScreen: Screen) {
+
     var currentScreen by mutableStateOf(initialScreen)
         private set
 
     private val backStack = mutableListOf<Screen>()
-    private val rootStack = mutableListOf<Screen>()
 
-    fun navigateTo(screen: Screen, clearBackStack: Boolean = false) {
-        if (clearBackStack) {
-            backStack.clear()
-            rootStack.clear()
-            rootStack.add(screen)
-        } else {
-            backStack.add(currentScreen)
-        }
+    /**
+     * Used for inner navigation inside a pillar
+     * Example: Vision -> AmslerGrid
+     */
+    fun navigateForward(screen: Screen) {
+        backStack.add(currentScreen)
+        currentScreen = screen
+    }
+
+    /**
+     * Used for bottom navigation clicks
+     * Always resets to Dashboard or a pillar
+     */
+    fun navigateAsPillar(screen: Screen) {
+        backStack.clear()
         currentScreen = screen
     }
 
     fun canGoBack(): Boolean = backStack.isNotEmpty()
 
     fun goBack() {
-        if (canGoBack()) {
-            currentScreen = backStack.removeLast()
-        }
-    }
-
-    fun returnToRootOrDashboard() {
-        when {
-            backStack.isNotEmpty() -> {
-                currentScreen = backStack.removeLast()
-            }
-            rootStack.isNotEmpty() -> {
-                currentScreen = rootStack.last()
-            }
-            else -> {
-                navigateTo(Screen.Dashboard, clearBackStack = true)
-            }
+        if (backStack.isNotEmpty()) {
+            currentScreen = backStack.removeAt(backStack.lastIndex)
+        } else {
+            // fallback safety
+            currentScreen = Screen.Dashboard
         }
     }
 }

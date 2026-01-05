@@ -41,7 +41,7 @@ fun NotificationsScreen(
     Scaffold(bottomBar = bottomBar) { padding ->
         if (isLoading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = Color(0xFF4CAF50))
             }
         } else {
             // Group messages by doctor_id to show unique doctor threads
@@ -204,7 +204,7 @@ fun DoctorThreadItem(
             Icon(
                 Icons.AutoMirrored.Filled.Chat,
                 contentDescription = "Chat",
-                tint = Color(0xFF1976D2),
+                tint = Color(0xFF4CAF50),
                 modifier = Modifier.size(24.dp)
             )
         }

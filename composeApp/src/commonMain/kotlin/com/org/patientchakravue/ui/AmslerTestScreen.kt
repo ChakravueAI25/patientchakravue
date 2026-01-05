@@ -126,12 +126,20 @@ fun AmslerInstructions(onNext: (String) -> Unit) {
                 selected = selectedEye == "Right",
                 onClick = { selectedEye = "Right" },
                 label = { Text(localizedString("eye_right")) },
-                modifier = Modifier.padding(end = 8.dp)
+                modifier = Modifier.padding(end = 8.dp),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = Color(0xFF4CAF50),
+                    selectedLabelColor = Color.White
+                )
             )
             FilterChip(
                 selected = selectedEye == "Left",
                 onClick = { selectedEye = "Left" },
-                label = { Text(localizedString("eye_left")) }
+                label = { Text(localizedString("eye_left")) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = Color(0xFF4CAF50),
+                    selectedLabelColor = Color.White
+                )
             )
         }
 
@@ -139,7 +147,8 @@ fun AmslerInstructions(onNext: (String) -> Unit) {
 
         Button(
             onClick = { onNext(selectedEye) },
-            modifier = Modifier.fillMaxWidth().height(50.dp)
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
         ) {
             Text(localizedString("start_test_btn"))
         }
@@ -251,7 +260,7 @@ fun AmslerCanvasDrawing(
                     }
                 },
                 enabled = !isSubmitting,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
             ) {
                 if (isSubmitting) {
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
@@ -300,4 +309,3 @@ fun AmslerGridVisual() {
         )
     }
 }
-

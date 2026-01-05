@@ -94,7 +94,7 @@ fun AdherenceGraphScreen(onBack: () -> Unit) {
             ) {
                 Box(modifier = Modifier.padding(16.dp).fillMaxSize()) {
                     if (isLoading) {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF4CAF50))
                     } else if (graphData != null) {
                         Column {
                             Text(
@@ -151,7 +151,7 @@ fun ViewFilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
         onClick = onClick,
         label = { Text(label) },
         colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = Color(0xFF1976D2),
+            selectedContainerColor = Color(0xFF4CAF50),
             selectedLabelColor = Color.White
         )
     )
