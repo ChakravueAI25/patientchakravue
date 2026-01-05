@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.data.SessionManager
@@ -125,6 +126,9 @@ fun ProfileScreen(
                         sessionManager.clearSession()
                         onLogout()
                     },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4CAF50)
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(localizedString("logout_btn"))
