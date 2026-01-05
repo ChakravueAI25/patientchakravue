@@ -2,8 +2,10 @@ package com.org.patientchakravue.app
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -17,16 +19,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.org.patientchakravue.data.SessionManager
 import com.org.patientchakravue.ui.*
 import kotlinx.coroutines.launch
 
 @Composable
-fun App() {
+fun App(initialCallData: Pair<String, String>? = null) {
     MaterialTheme {
         AppLocalizationProvider {
             val sessionManager = remember { SessionManager() }
-            val initialScreen = if (sessionManager.getPatient() != null) Screen.Dashboard else Screen.Login
+            val initialScreen = when {
+                initialCallData != null -> Screen.VideoCall(initialCallData.first, initialCallData.second)
+                sessionManager.getPatient() != null -> Screen.Dashboard
+                else -> Screen.Login
+            }
             val navigator = remember { Navigator(initialScreen) }
             val snackbarHostState = remember { SnackbarHostState() }
             val scope = rememberCoroutineScope()
@@ -136,8 +143,19 @@ fun App() {
                         onBack = { navigator.goBack() }
                     )
                     is Screen.VideoCallRequest -> VideoCallRequestScreen(
-                        onBack = { navigator.goBack() }
+                        onBack = { navigator.goBack() },
+                        onStartCall = { channelName, doctorId ->
+                            navigator.navigateForward(Screen.VideoCall(channelName, doctorId))
+                        }
                     )
+                    is Screen.VideoCall -> {
+                        val callScreen = screen as Screen.VideoCall
+                        VideoCallScreen(
+                            channelName = callScreen.channelName,
+                            doctorId = callScreen.doctorId,
+                            onCallEnded = { navigator.goBack() }
+                        )
+                    }
                     is Screen.FeedbackDetail -> FeedbackDetailScreen(note = screen.note, onBack = { navigator.goBack() })
                     is Screen.MedicineList -> Text("Medicine List Screen", modifier = Modifier.padding(paddingValues))
                 }
@@ -149,44 +167,57 @@ fun App() {
 @Composable
 fun BottomNavigationBar(navigator: Navigator) {
     Box {
-        NavigationBar {
+        NavigationBar(
+            modifier = Modifier.height(80.dp)
+        ) {
+            // Dashboard - Left side
             NavigationBarItem(
                 icon = { Icon(Icons.Default.Dashboard, null) },
-                label = { Text("Dashboard") },
+                label = { Text("Dashboard", fontSize = 10.sp, maxLines = 1) },
                 selected = navigator.currentScreen == Screen.Dashboard,
-                onClick = { navigator.navigateAsPillar(Screen.Dashboard) }
+                onClick = { navigator.navigateAsPillar(Screen.Dashboard) },
+                modifier = Modifier.weight(1f)
             )
 
+            // AfterCare - Left of center
             NavigationBarItem(
                 icon = { Icon(Icons.AutoMirrored.Filled.List, null) },
-                label = { Text("AfterCare") },
+                label = { Text("AfterCare", fontSize = 10.sp, maxLines = 1) },
                 selected = navigator.currentScreen == Screen.AfterCare,
-                onClick = { navigator.navigateAsPillar(Screen.AfterCare) }
+                onClick = { navigator.navigateAsPillar(Screen.AfterCare) },
+                modifier = Modifier.weight(1f)
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            // Empty space for FAB in center
+            Box(modifier = Modifier.weight(1f))
 
+            // Vision - Right of center
             NavigationBarItem(
                 icon = { Icon(Icons.Default.RemoveRedEye, null) },
-                label = { Text("Vision") },
+                label = { Text("Vision", fontSize = 10.sp, maxLines = 1) },
                 selected = navigator.currentScreen == Screen.Vision,
-                onClick = { navigator.navigateAsPillar(Screen.Vision) }
+                onClick = { navigator.navigateAsPillar(Screen.Vision) },
+                modifier = Modifier.weight(1f)
             )
 
+            // Notifications - Right side
             NavigationBarItem(
                 icon = { Icon(Icons.Default.Notifications, null) },
-                label = { Text("Notifications") },
+                label = { Text("Notifications", fontSize = 10.sp, maxLines = 1) },
                 selected = navigator.currentScreen == Screen.Notifications,
-                onClick = { navigator.navigateAsPillar(Screen.Notifications) }
+                onClick = { navigator.navigateAsPillar(Screen.Notifications) },
+                modifier = Modifier.weight(1f)
             )
         }
 
+        // Floating Video Call Button in center
         FloatingActionButton(
             onClick = { navigator.navigateForward(Screen.VideoCallRequest) },
             containerColor = Color(0xFF4CAF50),
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .offset(y = (-28).dp)
+                .size(56.dp)
         ) {
             Icon(Icons.Default.Videocam, null, tint = Color.White)
         }

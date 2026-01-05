@@ -56,8 +56,17 @@ class MainActivity : ComponentActivity() {
         // STEP 3: Initialize FCM token registration
         initializeFirebaseMessaging()
 
+        // Check if launched from a call notification
+        val targetScreen = intent.getStringExtra("target_screen")
+        val channelName = intent.getStringExtra("channel_name")
+        val doctorId = intent.getStringExtra("doctor_id")
+
         setContent {
-            App()
+            App(
+                initialCallData = if (targetScreen == "call_screen" && channelName != null) {
+                    Pair(channelName, doctorId ?: "unknown")
+                } else null
+            )
         }
     }
 
@@ -176,5 +185,5 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    App()
+    App(initialCallData = null)
 }

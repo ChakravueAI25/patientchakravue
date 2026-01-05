@@ -18,4 +18,5 @@ sealed class Screen {
     data class Chat(val doctorId: String, val doctorName: String, val submissionIds: List<String>) : Screen() // Added from previous context
     data class FeedbackDetail(val note: DoctorNote) : Screen()
     data object VideoCallRequest : Screen()
+    data class VideoCall(val channelName: String, val doctorId: String) : Screen()
 }

@@ -221,3 +221,10 @@ data class UpcomingAppointmentsResponse(
     @SerialName("next_appointment") val nextAppointment: AppointmentItem? = null
 )
 
+// --- Video Call Models ---
+@Serializable
+data class CallTokenResponse(
+    val token: String,
+    @SerialName("app_id") val appId: String
+)
+

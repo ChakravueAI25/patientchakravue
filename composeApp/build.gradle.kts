@@ -40,6 +40,7 @@ kotlin {
             implementation(libs.ktor.client.okhttp) // Android Engine
             implementation(libs.kotlinx.coroutines.android)
             implementation("com.google.firebase:firebase-messaging-ktx:24.1.2")
+            implementation("io.agora.rtc:full-sdk:4.6.1")
 
         }
         iosMain.dependencies {

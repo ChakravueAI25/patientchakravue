@@ -350,4 +350,21 @@ class ApiRepository {
             false
         }
     }
+
+    // Get Agora Call Token for Video Calling
+    suspend fun getCallToken(channelName: String): com.org.patientchakravue.model.CallTokenResponse? {
+        return try {
+            val response = NetworkClient.client.post("$baseUrl/call/token") {
+                parameter("channel_name", channelName)
+            }
+            if (response.status == HttpStatusCode.OK) {
+                response.body<com.org.patientchakravue.model.CallTokenResponse>()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 }
