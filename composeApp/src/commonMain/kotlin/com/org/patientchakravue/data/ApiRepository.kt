@@ -317,4 +317,37 @@ class ApiRepository {
             false
         }
     }
+
+    // Get Upcoming Appointments for Patient
+    suspend fun getUpcomingAppointments(patientId: String): com.org.patientchakravue.model.UpcomingAppointmentsResponse? {
+        return try {
+            val response = NetworkClient.client.get("$baseUrl/patients/$patientId/upcoming-appointments")
+            if (response.status == HttpStatusCode.OK) {
+                response.body<com.org.patientchakravue.model.UpcomingAppointmentsResponse>()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    // Schedule Follow-up Appointments (called after surgery/registration)
+    suspend fun scheduleFollowUps(patientId: String, surgeryDate: String? = null): Boolean {
+        return try {
+            val url = if (surgeryDate != null) {
+                "$baseUrl/patients/$patientId/schedule-followups?surgery_date=$surgeryDate"
+            } else {
+                "$baseUrl/patients/$patientId/schedule-followups"
+            }
+            val response = NetworkClient.client.post(url) {
+                contentType(ContentType.Application.Json)
+            }
+            response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
 }

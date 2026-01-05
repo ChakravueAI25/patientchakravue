@@ -202,3 +202,22 @@ data class GraphData(
     @SerialName("y_axis") val yAxis: List<Int>,
     @SerialName("view_mode") val viewMode: String
 )
+
+// --- Appointment Models ---
+@Serializable
+data class AppointmentItem(
+    val id: String,
+    val title: String? = null,
+    val message: String? = null,
+    @SerialName("scheduled_date") val scheduledDate: String? = null,
+    val milestone: String? = null,
+    val completed: Boolean = false
+)
+
+@Serializable
+data class UpcomingAppointmentsResponse(
+    @SerialName("patient_id") val patientId: String,
+    val appointments: List<AppointmentItem> = emptyList(),
+    @SerialName("next_appointment") val nextAppointment: AppointmentItem? = null
+)
+

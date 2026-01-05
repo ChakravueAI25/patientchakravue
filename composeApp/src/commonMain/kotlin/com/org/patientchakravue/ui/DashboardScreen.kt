@@ -290,8 +290,29 @@ fun DashboardScreen(
 }
 
 /**
+ * Format appointment date from ISO string to readable format like "Jan 10, 2026"
+ */
+private fun formatAppointmentDate(isoDate: String?): String? {
+    if (isoDate.isNullOrBlank()) return null
+    return try {
+        // Parse the ISO date string - handle various formats
+        val datePart = when {
+            isoDate.contains("T") -> isoDate.substringBefore("T")
+            isoDate.length >= 10 -> isoDate.take(10)
+            else -> isoDate
+        }
+        val date = LocalDate.parse(datePart)
+        formatDate(date)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+/**
  * Calculate next appointment date based on surgery milestones:
  * Surgery + 2 days, Surgery + 10 days, Surgery + 15 days.
+ * This is a FALLBACK when backend has no scheduled appointments.
  */
 private fun calculateNextAppointment(patient: Patient): String? {
     return try {
