@@ -42,7 +42,7 @@ object NetworkClient {
 class ApiRepository {
     // PUBLIC BASE URL for use by UI components (e.g., image loading)
     companion object {
-        const val BASE_URL = "https://grovelingly-stey-armani.ngrok-free.dev"
+        const val BASE_URL = "https://patient.chakravue.co.in"
     }
 
     private val baseUrl = BASE_URL
