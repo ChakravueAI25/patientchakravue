@@ -41,6 +41,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
             implementation("com.google.firebase:firebase-messaging-ktx:24.1.2")
             implementation("io.agora.rtc:full-sdk:4.6.1")
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.0")
 
         }
         iosMain.dependencies {

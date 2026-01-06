@@ -16,7 +16,8 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import io.ktor.client.plugins.logging.*
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 
 // 1. The Client Setup
@@ -231,6 +232,7 @@ class ApiRepository {
     }
 
     // Tumbling E Vision Test submission
+    @OptIn(ExperimentalTime::class)
     suspend fun submitVisionTest(
         patientId: String,
         patientName: String,
