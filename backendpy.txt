@@ -912,6 +912,74 @@ async def initiate_call(payload: CallInitiateRequest):
     return {"status": "calling", "channel": payload.channel_name}
 
 
+# --------------- Video Call Request Model ---------------
+class VideoCallRequestPayload(BaseModel):
+    patient_id: str
+    reason: str
+
+
+# Video Call Request endpoint - Patient requests a video call from their doctor
+@app.post("/video-call/request", status_code=201)
+async def request_video_call(payload: VideoCallRequestPayload):
+    """
+    Patient requests a video call from their doctor.
+    Stores the request and can optionally notify the doctor.
+    """
+    # Find the patient to get their details and assigned doctor
+    patient = await patients_collection.find_one({"_id": payload.patient_id})
+    if not patient:
+        # Try with ObjectId
+        try:
+            patient = await patients_collection.find_one({"_id": ObjectId(payload.patient_id)})
+        except:
+            pass
+
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    # Get patient name and doctor info
+    patient_name = patient.get("name") or patient.get("patientDetails", {}).get("name", "Unknown")
+    doctor_id = patient.get("doctor_id") or patient.get("assignedDoctor", {}).get("id")
+
+    # Create video call request record
+    video_call_request = {
+        "patient_id": payload.patient_id,
+        "patient_name": patient_name,
+        "doctor_id": doctor_id,
+        "reason": payload.reason,
+        "status": "pending",  # pending, accepted, rejected, completed
+        "created_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.utcnow().isoformat()
+    }
+
+    # Store in a video_call_requests collection
+    video_call_requests_collection = db["video_call_requests"]
+    result = await video_call_requests_collection.insert_one(video_call_request)
+
+    # Optionally send notification to doctor (if doctor backend URL is configured)
+    if DOCTOR_BACKEND_URL:
+        try:
+            async with httpx.AsyncClient() as client:
+                await client.post(
+                    f"{DOCTOR_BACKEND_URL}/notifications/video-call-request",
+                    json={
+                        "patient_id": payload.patient_id,
+                        "patient_name": patient_name,
+                        "reason": payload.reason,
+                        "request_id": str(result.inserted_id)
+                    },
+                    timeout=10.0
+                )
+        except Exception as e:
+            print(f"[VIDEO_CALL_REQUEST] Failed to notify doctor backend: {e}")
+
+    return {
+        "status": "success",
+        "message": "Video call request submitted successfully",
+        "request_id": str(result.inserted_id)
+    }
+
+
 @app.post('/patients', status_code=201)
 async def create_patient(payload: Dict[str, Any]):
     """Create a new patient document.

@@ -9,6 +9,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.org.patientchakravue.data.ApiRepository
+import com.org.patientchakravue.data.SessionManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -23,6 +25,9 @@ fun VideoCallRequestScreen(
     var requestSent by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val sessionManager = remember { SessionManager() }
+    val apiRepository = remember { ApiRepository() }
+    val patient = sessionManager.getPatient()
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -64,15 +69,25 @@ fun VideoCallRequestScreen(
                         }
                         return@Button
                     }
+                    if (patient == null) {
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Please login to send a video call request")
+                        }
+                        return@Button
+                    }
                     isLoading = true
                     scope.launch {
-                        // Simulate sending request to backend
-                        delay(1500)
+                        // Send video call request to backend
+                        val success = apiRepository.sendVideoCallRequest(patient.id, reason)
                         isLoading = false
-                        requestSent = true
-                        snackbarHostState.showSnackbar("Video call request sent to your doctor!")
-                        delay(1000)
-                        onRequestSent()
+                        if (success) {
+                            requestSent = true
+                            snackbarHostState.showSnackbar("Video call request sent to your doctor!")
+                            delay(1000)
+                            onRequestSent()
+                        } else {
+                            snackbarHostState.showSnackbar("Failed to send request. Please try again.")
+                        }
                     }
                 },
                 modifier = Modifier

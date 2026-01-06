@@ -367,4 +367,21 @@ class ApiRepository {
             null
         }
     }
+
+    // Send Video Call Request to Doctor
+    suspend fun sendVideoCallRequest(patientId: String, reason: String): Boolean {
+        return try {
+            val response = NetworkClient.client.post("$baseUrl/video-call/request") {
+                contentType(ContentType.Application.Json)
+                setBody(mapOf(
+                    "patient_id" to patientId,
+                    "reason" to reason
+                ))
+            }
+            response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
 }
