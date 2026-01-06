@@ -217,19 +217,41 @@ fun SimpleBarChart(
                 )
             }
 
-            // X-Axis Label (bottom)
+            // X-Axis Label (bottom) - Split into two lines if exceeds 10 characters
             val label = xAxisLabels.getOrElse(index) { "" }
-            val labelLayoutResult = textMeasurer.measure(
-                text = label,
+            val maxChars = 10
+            val (line1, line2) = if (label.length > maxChars) {
+                label.take(maxChars) to label.drop(maxChars)
+            } else {
+                label to ""
+            }
+
+            val line1LayoutResult = textMeasurer.measure(
+                text = line1,
                 style = TextStyle(fontSize = 10.sp, color = Color.DarkGray)
             )
             drawText(
-                textLayoutResult = labelLayoutResult,
+                textLayoutResult = line1LayoutResult,
                 topLeft = Offset(
-                    x + barWidth / 2 - labelLayoutResult.size.width / 2,
+                    x + barWidth / 2 - line1LayoutResult.size.width / 2,
                     h - bottomPadding + 8
                 )
             )
+
+            // Draw second line if label was split
+            if (line2.isNotEmpty()) {
+                val line2LayoutResult = textMeasurer.measure(
+                    text = line2,
+                    style = TextStyle(fontSize = 10.sp, color = Color.DarkGray)
+                )
+                drawText(
+                    textLayoutResult = line2LayoutResult,
+                    topLeft = Offset(
+                        x + barWidth / 2 - line2LayoutResult.size.width / 2,
+                        h - bottomPadding + 8 + line1LayoutResult.size.height + 2
+                    )
+                )
+            }
         }
 
         // Base Line

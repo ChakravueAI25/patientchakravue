@@ -17,7 +17,7 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import io.ktor.client.plugins.logging.*
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+
 
 // 1. The Client Setup
 object NetworkClient {

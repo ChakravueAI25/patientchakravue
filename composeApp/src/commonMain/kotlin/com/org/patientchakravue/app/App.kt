@@ -22,7 +22,7 @@ import com.org.patientchakravue.ui.*
 import kotlinx.coroutines.launch
 
 @Composable
-fun App() {
+fun App(initialCallData: Pair<String, String>? = null) {
     MaterialTheme {
         AppLocalizationProvider {
             val sessionManager = remember { SessionManager() }
@@ -137,6 +137,11 @@ fun App() {
                     )
                     is Screen.VideoCallRequest -> VideoCallRequestScreen(
                         onBack = { navigator.goBack() }
+                    )
+                    is Screen.VideoCall -> VideoCallScreen(
+                        channelName = screen.channelName,
+                        doctorId = screen.doctorId,
+                        onCallEnded = { navigator.goBack() }
                     )
                     is Screen.FeedbackDetail -> FeedbackDetailScreen(note = screen.note, onBack = { navigator.goBack() })
                     is Screen.MedicineList -> Text("Medicine List Screen", modifier = Modifier.padding(paddingValues))
