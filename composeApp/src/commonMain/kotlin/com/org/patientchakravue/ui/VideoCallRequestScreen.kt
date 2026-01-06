@@ -3,24 +3,29 @@ package com.org.patientchakravue.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoCallRequestScreen(
     onBack: () -> Unit,
-    onStartCall: (channelName: String, doctorId: String) -> Unit = { _, _ -> }
+    onRequestSent: () -> Unit = {}
 ) {
     var reason by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    var requestSent by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Request Video Call") },
@@ -53,10 +58,22 @@ fun VideoCallRequestScreen(
 
             Button(
                 onClick = {
-                    // Generate a unique channel name based on timestamp
-                    val channelName = "patient_call_${System.currentTimeMillis()}"
-                    val doctorId = "default_doctor" // This would come from your backend in a real scenario
-                    onStartCall(channelName, doctorId)
+                    if (reason.isBlank()) {
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Please enter a reason for the call request")
+                        }
+                        return@Button
+                    }
+                    isLoading = true
+                    scope.launch {
+                        // Simulate sending request to backend
+                        delay(1500)
+                        isLoading = false
+                        requestSent = true
+                        snackbarHostState.showSnackbar("Video call request sent to your doctor!")
+                        delay(1000)
+                        onRequestSent()
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -64,24 +81,26 @@ fun VideoCallRequestScreen(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF4CAF50)
                 ),
-                enabled = !isLoading
+                enabled = !isLoading && !requestSent
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
                         color = Color.White,
                         modifier = Modifier.size(24.dp)
                     )
+                } else if (requestSent) {
+                    Text("Request Sent ✓")
                 } else {
-                    Icon(Icons.Default.Videocam, null)
+                    Icon(Icons.AutoMirrored.Filled.Send, null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Start Video Call")
+                    Text("Send Video Call Request")
                 }
             }
 
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = "Note: Make sure you have a stable internet connection and your camera/microphone permissions are enabled.",
+                text = "Note: Your doctor will receive your request and may call you back when available.",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray
             )
