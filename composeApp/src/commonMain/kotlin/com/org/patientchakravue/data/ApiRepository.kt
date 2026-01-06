@@ -42,7 +42,7 @@ object NetworkClient {
 class ApiRepository {
     // PUBLIC BASE URL for use by UI components (e.g., image loading)
     companion object {
-        const val BASE_URL = "https://patient.chakravue.co.in"
+        const val BASE_URL = "https://grovelingly-stey-armani.ngrok-free.dev"
     }
 
     private val baseUrl = BASE_URL
@@ -382,6 +382,19 @@ class ApiRepository {
         } catch (e: Exception) {
             e.printStackTrace()
             false
+        }
+    }
+
+    // Download Case Sheet PDF
+    suspend fun downloadCaseSheet(patientId: String): ByteArray? {
+        return try {
+            val response = NetworkClient.client.get("$baseUrl/patients/$patientId/case-sheet")
+            if (response.status == HttpStatusCode.OK) {
+                response.body<ByteArray>()
+            } else null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 }

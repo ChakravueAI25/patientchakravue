@@ -17,3 +17,14 @@ actual fun registerFcmTokenAfterLogin(patientId: String) {
     // This is a placeholder for future iOS push notification implementation
     println("iOS FCM registration placeholder for patient: $patientId")
 }
+
+/**
+ * iOS implementation: Save PDF and notify user.
+ * This is a placeholder - iOS file handling would need native implementation.
+ */
+actual fun saveAndNotifyDownload(fileName: String, data: ByteArray) {
+    // iOS file saving would require native implementation using NSFileManager
+    // and local notifications using UNUserNotificationCenter
+    println("iOS saveAndNotifyDownload placeholder for file: $fileName")
+}
+

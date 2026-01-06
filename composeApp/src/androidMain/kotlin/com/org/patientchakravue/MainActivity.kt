@@ -22,6 +22,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.org.patientchakravue.app.App
 import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.data.SessionManager
+import com.org.patientchakravue.platform.androidContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,6 +40,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        // Initialize androidContext for platform-specific functions (like PDF download)
+        androidContext = applicationContext
 
         // Make content draw behind system bars but use safe insets in Compose (WindowInsets.safeDrawing)
         WindowCompat.setDecorFitsSystemWindows(window, false)

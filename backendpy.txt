@@ -24,6 +24,14 @@ from dotenv import load_dotenv
 from agora_token_builder import RtcTokenBuilder
 import time as time_module
 import random
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from io import BytesIO
+
+
 # Agora credentials (prefer env vars, fallback to placeholders)
 AGORA_APP_ID = os.environ.get("AGORA_APP_ID") or "18201a6aca7044c6982cdd8fa6e38993"  # <--- PASTE YOUR ID HERE
 AGORA_APP_CERTIFICATE = os.environ.get("AGORA_APP_CERTIFICATE") or "589ed7705d32450baff17ed100208833" # <--- PASTE CERT HERE
@@ -804,6 +812,169 @@ async def get_patient(patient_id: str):
         raise HTTPException(status_code=404, detail="Patient not found")
     p_safe = _expose_compat_fields(serialize_doc(p))
     return p_safe
+
+
+def get_nested(data, *keys):
+    """Safe nested getter: returns None if any key missing."""
+    for k in keys:
+        if isinstance(data, dict):
+            data = data.get(k)
+        else:
+            return None
+    return data
+
+
+def find_field(data, field_name, preferred_path=None):
+    """
+    Tries preferred_path first (list of keys), then patientDetails, then scans visits.
+    Returns string or 'N/A' when missing.
+    """
+    # Preferred path lookup
+    if preferred_path:
+        val = data
+        for key in preferred_path:
+            if isinstance(val, dict):
+                val = val.get(key)
+            else:
+                val = None
+                break
+        if val and str(val).strip():
+            return str(val)
+
+    # patientDetails
+    pd = data.get("patientDetails", {}) if isinstance(data, dict) else {}
+    if pd.get(field_name):
+        return str(pd.get(field_name))
+
+    # scan visits (most recent first)
+    visits = data.get("visits") or []
+    for visit in reversed(visits):
+        # check common stages
+        for stage in ("reception", "opd", "doctor"):
+            try:
+                stage_pd = visit.get("stages", {}).get(stage, {}).get("data", {}).get("patientDetails", {})
+                if stage_pd and stage_pd.get(field_name):
+                    return str(stage_pd.get(field_name))
+            except Exception:
+                continue
+
+    # fallback to top-level key
+    if isinstance(data, dict) and data.get(field_name):
+        return str(data.get(field_name))
+
+    return "N/A"
+
+
+@app.get("/patients/{patient_id}/case-sheet")
+async def generate_case_sheet(patient_id: str):
+    # Fetch patient
+    try:
+        q = {"_id": ObjectId(patient_id)}
+    except Exception:
+        q = {"_id": patient_id}
+    p = await patients_collection.find_one(q)
+    if not p:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    latest_visit = p.get("visits", [])[-1] if p.get("visits") else {}
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    # Header / logo
+    try:
+        logo = Image("hospital_logo.png", width=1.2*inch, height=0.4*inch)
+        logo.hAlign = 'LEFT'
+        elements.append(logo)
+    except Exception:
+        elements.append(Paragraph("<font size=16 color='#E31E24'><b>SPARK</b></font>", styles['Normal']))
+
+    header_text = """
+    <font size=12><b>SPARK EYE & DENTAL HOSPITAL</b></font><br/>
+    <font size=8>Spark Eye Care Hospital Pvt Ltd<br/>1st Floor Vijetha Sanjeevani Apartments, Opp Gandhi Hospital, Metro Pillar no 1034<br/>Musheerabad, Secunderabad, Telangana-500080. Tel: 040 29300266</font>
+    """
+    elements.append(Paragraph(header_text, styles['Normal']))
+    elements.append(Spacer(1, 10))
+    elements.append(Table([[""]], colWidths=[530], rowHeights=[2], style=[('BACKGROUND', (0,0), (-1,-1), colors.dodgerblue)]))
+    elements.append(Spacer(1, 10))
+
+    # Patient info
+    pd = p.get('patientDetails', {})
+    name = find_field(p, 'name')
+    reg_id = find_field(p, 'registrationId')
+    age = find_field(p, 'age')
+    sex = find_field(p, 'sex')
+    phone = find_field(p, 'phone')
+    address = find_field(p, 'address')
+
+    info_data = [
+        [Paragraph(f"<b>Reg. Date:</b> {latest_visit.get('visitDate', p.get('lastUpdated', '') )[:10]}", styles['Normal']),
+         Paragraph(f"<b>Patient ID:</b> {reg_id}", styles['Normal'])],
+        [Paragraph(f"<b>Patient Name:</b> {name}", styles['Normal']),
+         Paragraph(f"<b>Age/Sex:</b> {age} / {sex}", styles['Normal'])],
+        [Paragraph(f"<b>Contact No:</b> {phone}", styles['Normal']),
+         Paragraph(f"<b>Address:</b> {address}", styles['Normal'])]
+    ]
+
+    info_table = Table(info_data, colWidths=[265, 265])
+    info_table.setStyle(TableStyle([
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('LEFTPADDING', (0, 0), (-1, -1), 10),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 15))
+
+    # Clinical findings (Optometry)
+    elements.append(Paragraph("<b>Clinical Findings (Optometry):</b>", styles['Heading4']))
+    vision = get_nested(latest_visit, 'stages', 'opd', 'data', 'optometry', 'vision') or {}
+    unaided_r = get_nested(vision, 'unaided', 'rightEye') or 'N/A'
+    unaided_l = get_nested(vision, 'unaided', 'leftEye') or 'N/A'
+
+    vision_data = [
+        ["Vision Type", "Right Eye (OD)", "Left Eye (OS)"],
+        ["Unaided VA", unaided_r, unaided_l]
+    ]
+    vt = Table(vision_data, colWidths=[150, 190, 190])
+    vt.setStyle(TableStyle([
+        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+    ]))
+    elements.append(vt)
+    elements.append(Spacer(1, 15))
+
+    # Prescription
+    elements.append(Paragraph("<b>Rx (Prescribed Medications)</b>", styles['Heading3']))
+    presc_items = get_nested(latest_visit, 'stages', 'doctor', 'data', 'prescription', 'items') or p.get('prescription', {}).get('items', [])
+    if presc_items:
+        rx_data = [["Medicine Name", "Dosage/Freq", "Duration"]]
+        for item in presc_items:
+            rx_data.append([
+                Paragraph(f"<b>{item.get('name','')}</b><br/><font size=8>{item.get('instructions','')}</font>", styles['Normal']),
+                f"{item.get('dosage','')} / {item.get('frequency','')}",
+                item.get('duration','')
+            ])
+        rx_table = Table(rx_data, colWidths=[250, 160, 120])
+        rx_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('BOTTOMPADDING', (0,0), (-1,0), 10),
+        ]))
+        elements.append(rx_table)
+    else:
+        elements.append(Paragraph("No medications prescribed in this session.", styles['Normal']))
+
+    elements.append(Spacer(1, 40))
+    elements.append(Paragraph("<font size=8 color='grey'>This is a digital record generated by PatientChakraVue. Signature not required.</font>", styles['Normal']))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return StreamingResponse(buffer, media_type='application/pdf', headers={"Content-Disposition": f"attachment; filename=EMR_{pd.get('name','Patient')}.pdf"})
 
 # --------------- Agora Call Endpoints ---------------
 # Generate a temporary RTC token for a given channel/uid

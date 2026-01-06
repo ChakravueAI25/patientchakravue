@@ -2,18 +2,23 @@ package com.org.patientchakravue.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.data.SessionManager
 import com.org.patientchakravue.model.Patient
+import com.org.patientchakravue.platform.saveAndNotifyDownload
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,6 +31,7 @@ fun ProfileScreen(
     val patientId = sessionManager.getPatient()?.id
     var patient by remember { mutableStateOf<Patient?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    var isDownloading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val apiRepository = remember { ApiRepository() }
 
@@ -116,6 +122,59 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         ProfileRow(localizedString("label_patient_id"), patient?.id)
                         ProfileRow(localizedString("label_registered"), patient?.registrationId) // Assuming registrationId is the registration date.
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                // --- HOSPITAL CARD ---
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)), // Light Blue Theme
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "SPARK EYE & DENTAL HOSPITAL",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = Color(0xFF1976D2)
+                            )
+                            Text(
+                                "Dr. Ajay Chakravarthy",
+                                fontSize = 14.sp,
+                                color = Color.DarkGray
+                            )
+                        }
+
+                        // Download Button
+                        if (isDownloading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color(0xFF1976D2)
+                            )
+                        } else {
+                            IconButton(onClick = {
+                                isDownloading = true
+                                scope.launch {
+                                    val pdfData = apiRepository.downloadCaseSheet(patientId ?: "")
+                                    if (pdfData != null) {
+                                        saveAndNotifyDownload("CaseSheet_Spark.pdf", pdfData)
+                                    }
+                                    isDownloading = false
+                                }
+                            }) {
+                                Icon(
+                                    Icons.Default.Download,
+                                    contentDescription = "Download Case Sheet",
+                                    tint = Color(0xFF1976D2)
+                                )
+                            }
+                        }
                     }
                 }
 
