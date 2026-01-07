@@ -13,4 +13,3 @@ expect fun VideoCallScreen(
     doctorId: String,
     onCallEnded: () -> Unit
 )
-

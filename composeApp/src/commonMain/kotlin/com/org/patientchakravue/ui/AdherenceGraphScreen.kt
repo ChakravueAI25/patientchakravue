@@ -30,8 +30,8 @@ fun AdherenceGraphScreen(onBack: () -> Unit) {
     val api = remember { ApiRepository() }
     val patient = sessionManager.getPatient()
 
-    // Get current language to trigger recomposition when it changes
-    val currentLang = LocalLanguageManager.current.currentLanguage
+    // Trigger recomposition on language change
+    LocalLanguageManager.current.currentLanguage
 
     // State
     var selectedView by remember { mutableStateOf("day") } // day, week, medicine
@@ -62,10 +62,12 @@ fun AdherenceGraphScreen(onBack: () -> Unit) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF5F5F5))
+                // Keep the top bar transparent so the app's global gradient shows through
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
-        containerColor = Color(0xFFFAFAFA)
+        // Use transparent scaffold background so global AppTheme gradient is visible
+        containerColor = Color.Transparent
     ) { padding ->
         Column(
             modifier = Modifier

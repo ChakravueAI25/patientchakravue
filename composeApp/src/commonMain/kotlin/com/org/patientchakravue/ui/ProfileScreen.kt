@@ -36,7 +36,8 @@ fun ProfileScreen(
     val apiRepository = remember { ApiRepository() }
 
     // Get current language to trigger recomposition when it changes
-    val currentLang = LocalLanguageManager.current.currentLanguage
+    // Trigger recomposition on language change
+    LocalLanguageManager.current.currentLanguage
 
     LaunchedEffect(patientId) {
         if (patientId != null) {
@@ -78,7 +79,10 @@ fun ProfileScreen(
                     .verticalScroll(rememberScrollState())
             ) {
                 // Basic Information
-                Card(modifier = Modifier.fillMaxWidth()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(localizedString("basic_info"), style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(8.dp))
@@ -91,7 +95,10 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Contact Information
-                Card(modifier = Modifier.fillMaxWidth()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(localizedString("contact_info"), style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(8.dp))
@@ -104,7 +111,10 @@ fun ProfileScreen(
 
                 // Emergency Contact
                 if (!patient?.emergencyContactName.isNullOrBlank()) {
-                    Card(modifier = Modifier.fillMaxWidth()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(localizedString("emergency_contact"), style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(8.dp))
@@ -116,7 +126,10 @@ fun ProfileScreen(
                 }
 
                 // System Information
-                Card(modifier = Modifier.fillMaxWidth()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(localizedString("system_info"), style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(8.dp))
@@ -130,7 +143,7 @@ fun ProfileScreen(
                 // --- HOSPITAL CARD ---
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)), // Light Blue Theme
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(

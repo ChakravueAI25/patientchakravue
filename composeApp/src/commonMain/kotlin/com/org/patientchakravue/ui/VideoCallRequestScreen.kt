@@ -18,7 +18,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun VideoCallRequestScreen(
     onBack: () -> Unit,
-    onRequestSent: () -> Unit = {}
+    onRequestSent: () -> Unit = {},
+    contentPadding: PaddingValues = PaddingValues()
 ) {
     var reason by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -44,6 +45,7 @@ fun VideoCallRequestScreen(
     ) { padding ->
         Column(
             modifier = Modifier
+                .padding(contentPadding)
                 .padding(padding)
                 .padding(16.dp)
                 .fillMaxSize(),

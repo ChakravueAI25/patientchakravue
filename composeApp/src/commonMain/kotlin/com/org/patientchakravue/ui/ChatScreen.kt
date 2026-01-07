@@ -24,6 +24,13 @@ import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.model.ChatMessage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.toSize
+import androidx.compose.ui.platform.LocalDensity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,13 +39,17 @@ fun ChatScreen(
     submissionIds: List<String>,
     onBack: () -> Unit
 ) {
+    // Calculate status bar height to draw a matching-colored area behind it (only on this screen)
+    val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val statusBarColor = Color(0xFFF0F2F5)
+
     val api = remember { ApiRepository() }
     var allMessages by remember { mutableStateOf<List<ChatMessage>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     val listState = rememberLazyListState()
 
-    // Get current language to trigger recomposition when it changes
-    val currentLang = LocalLanguageManager.current.currentLanguage
+    // Trigger recomposition when language changes
+    LocalLanguageManager.current.currentLanguage
 
     // AUTO-REFRESH: Poll every 3 seconds to see new Doctor replies
     // Fetch conversations for ALL submissionIds and merge them
@@ -97,11 +108,18 @@ fun ChatScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF0F2F5))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = statusBarColor)
             )
         },
         containerColor = Color(0xFFEFE7DE) // WhatsApp-like beige background
     ) { padding ->
+
+        // Draw the status bar background color area so the top blends with the system status bar
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .height(statusBarTopPadding)
+            .background(statusBarColor)
+        )
 
         if (isLoading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -253,7 +271,7 @@ fun formatTimestamp(iso: String?): String {
     // Take HH:MM from ISO string "2025-12-20T09:47:55..." -> Index 11 to 16
     return try {
         iso.substring(11, 16)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         ""
     }
 }

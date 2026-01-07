@@ -39,4 +39,3 @@ actual fun VideoCallScreen(
         }
     }
 }
-

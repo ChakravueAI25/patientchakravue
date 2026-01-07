@@ -11,8 +11,8 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,6 +42,7 @@ fun DashboardScreen(
     val scope = rememberCoroutineScope()
 
     // Get current language to trigger recomposition when it changes
+    @Suppress("UNUSED_VARIABLE")
     val currentLang = LocalLanguageManager.current.currentLanguage
 
     // Calculate next appointment (last visit + 15 days)
@@ -60,230 +61,234 @@ fun DashboardScreen(
         DoseRefreshBus.events.collect { refreshData() }
     }
 
-    Scaffold(bottomBar = bottomBar) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-        ) {
+    AppBackground {
+        Scaffold(
+            bottomBar = bottomBar,
+            containerColor = Color.Transparent
+        ) { padding ->
+            LazyColumn(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+            ) {
 
-            /* ---------- HEADER ---------- */
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        patient.name ?: "Patient",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.weight(1f)
-                    )
-                    // Language Switcher Icon
-                    LanguageSwitcherIcon(tint = Color(0xFF1A3B5D))
-                    IconButton(onClick = onNavigateToAdherence) {
-                        Icon(Icons.AutoMirrored.Filled.ShowChart, null, tint = Color(0xFF4CAF50))
-                    }
-                    IconButton(onClick = onNavigateToProfile) {
-                        Icon(Icons.Default.AccountCircle, null, tint = Color.Black)
-                    }
-                }
-            }
-
-            /* ---------- MEDICINES / PIE ---------- */
-            item {
-                Text(localizedString("section_medicines"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Spacer(Modifier.height(12.dp))
-
-                val taken = todayDoses.count { it.taken }
-                val total = todayDoses.size
-                val progress = if (total > 0) taken.toFloat() / total else 0f
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(
-                            progress = { progress },
-                            strokeWidth = 12.dp,
-                            modifier = Modifier.size(130.dp),
-                            color = Color(0xFF4CAF50), // Green color
-                            trackColor = Color(0xFFE0E0E0)
+                /* ---------- HEADER ---------- */
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            patient.name ?: "Patient",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
                         )
-                        Icon(Icons.Default.LocalPharmacy, null, modifier = Modifier.size(40.dp), tint = Color(0xFF4CAF50))
-                    }
-                    Spacer(Modifier.width(24.dp))
-                    Column {
-                        Text("$taken/$total", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50))
-                        Text(localizedString("doses_taken_today"), fontSize = 14.sp, color = Color.Gray)
+                        // Language Switcher Icon
+                        LanguageSwitcherIcon(tint = Color(0xFF1A3B5D))
+                        IconButton(onClick = onNavigateToAdherence) {
+                            Icon(Icons.AutoMirrored.Filled.ShowChart, null, tint = Color(0xFF4CAF50))
+                        }
+                        IconButton(onClick = onNavigateToProfile) {
+                            Icon(Icons.Default.AccountCircle, null, tint = Color.Black)
+                        }
                     }
                 }
-            }
 
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-            }
+                /* ---------- MEDICINES / PIE ---------- */
+                item {
+                    Text(localizedString("section_medicines"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Spacer(Modifier.height(12.dp))
 
-            /* ---------- PRESCRIPTION ---------- */
-            item {
-                Text(localizedString("section_prescription"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Spacer(Modifier.height(8.dp))
-            }
+                    val taken = todayDoses.count { it.taken }
+                    val total = todayDoses.size
+                    val progress = if (total > 0) taken.toFloat() / total else 0f
 
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-
-                        Text(localizedString("doctor_label"), fontWeight = FontWeight.Bold, fontSize = 16.sp)
-
-                        // Next Appointment Section
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Event,
-                                contentDescription = null,
-                                tint = Color(0xFF1976D2),
-                                modifier = Modifier.size(18.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(
+                                progress = { progress },
+                                strokeWidth = 12.dp,
+                                modifier = Modifier.size(130.dp),
+                                color = Color(0xFF4CAF50), // Green color
+                                trackColor = Color.White
                             )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                localizedString("next_appointment") + " ",
-                                color = Color.Gray,
-                                fontSize = 13.sp
-                            )
-                            Text(
-                                nextAppointment ?: localizedString("not_scheduled"),
-                                color = Color(0xFF1976D2),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium
-                            )
+                            Icon(Icons.Default.LocalPharmacy, null, modifier = Modifier.size(40.dp), tint = Color(0xFF4CAF50))
                         }
+                        Spacer(Modifier.width(24.dp))
+                        Column {
+                            Text("$taken/$total", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50))
+                            Text(localizedString("doses_taken_today"), fontSize = 14.sp, color = Color.Gray)
+                        }
+                    }
+                }
 
-                        Spacer(Modifier.height(16.dp))
-                        HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray)
-                        Spacer(Modifier.height(12.dp))
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
 
-                        if (isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally), color = Color(0xFF4CAF50))
-                        } else if (todayDoses.isEmpty()) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth().padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
+                /* ---------- PRESCRIPTION ---------- */
+                item {
+                    Text(localizedString("section_prescription"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Spacer(Modifier.height(8.dp))
+                }
+
+                item {
+                    PrescriptionCard(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+
+                            Text(localizedString("doctor_label"), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+
+                            // Next Appointment Section
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(vertical = 4.dp)
                             ) {
                                 Icon(
-                                    Icons.Default.CheckCircle,
+                                    Icons.Default.Event,
                                     contentDescription = null,
-                                    tint = Color.LightGray,
-                                    modifier = Modifier.size(48.dp)
+                                    tint = Color(0xFF1976D2),
+                                    modifier = Modifier.size(18.dp)
                                 )
-                                Spacer(Modifier.height(8.dp))
-                                Text(localizedString("no_doses_today"), color = Color.Gray)
-                                Text(localizedString("check_back_tomorrow"), fontSize = 12.sp, color = Color.LightGray)
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    localizedString("next_appointment") + " ",
+                                    color = Color.Gray,
+                                    fontSize = 13.sp
+                                )
+                                Text(
+                                    nextAppointment ?: localizedString("not_scheduled"),
+                                    color = Color(0xFF1976D2),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
                             }
-                        } else {
-                            todayDoses.forEach { dose ->
-                                val enabled =
-                                    !dose.taken &&
-                                            Instant.parse(dose.scheduled_iso).epochSeconds <= currentEpochSeconds()
 
-                                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                            Spacer(Modifier.height(16.dp))
+                            HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray)
+                            Spacer(Modifier.height(12.dp))
 
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        // 1. Status Checkmark
-                                        Icon(
-                                            if (dose.taken) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                                            contentDescription = null,
-                                            tint = if (dose.taken) Color(0xFF4CAF50) else Color.Gray,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                        Spacer(Modifier.width(12.dp))
+                            if (isLoading) {
+                                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally), color = Color(0xFF4CAF50))
+                            } else if (todayDoses.isEmpty()) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = Color.LightGray,
+                                        modifier = Modifier.size(48.dp)
+                                    )
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(localizedString("no_doses_today"), color = Color.Gray)
+                                    Text(localizedString("check_back_tomorrow"), fontSize = 12.sp, color = Color.LightGray)
+                                }
+                            } else {
+                                todayDoses.forEach { dose ->
+                                    val enabled =
+                                        !dose.taken &&
+                                                Instant.parse(dose.scheduled_iso).epochSeconds <= currentEpochSeconds()
 
-                                        // 2. NEW: Medicine Image/Icon
-                                        Surface(
-                                            shape = RoundedCornerShape(12.dp),
-                                            color = Color(0xFFE3F2FD), // Light blue background
-                                            modifier = Modifier.size(48.dp)
+                                    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Box(contentAlignment = Alignment.Center) {
-                                                Icon(
-                                                    Icons.Default.Medication,
-                                                    contentDescription = "Medicine",
-                                                    tint = Color(0xFF1976D2),
-                                                    modifier = Modifier.size(24.dp)
+                                            // 1. Status Checkmark
+                                            Icon(
+                                                if (dose.taken) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                                                contentDescription = null,
+                                                tint = if (dose.taken) Color(0xFF4CAF50) else Color.Gray,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                            Spacer(Modifier.width(12.dp))
+
+                                            // 2. NEW: Medicine Image/Icon
+                                            Surface(
+                                                shape = RoundedCornerShape(12.dp),
+                                                color = Color(0xFFE3F2FD), // Light blue background
+                                                modifier = Modifier.size(48.dp)
+                                            ) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(
+                                                        Icons.Default.Medication,
+                                                        contentDescription = "Medicine",
+                                                        tint = Color(0xFF1976D2),
+                                                        modifier = Modifier.size(24.dp)
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(Modifier.width(12.dp))
+
+                                            // 3. Medicine Details
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(dose.medicine_name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                                Text(
+                                                    "${dose.dose_label} · ${dose.scheduled_time}",
+                                                    fontSize = 13.sp,
+                                                    color = Color.Gray
                                                 )
                                             }
                                         }
 
-                                        Spacer(Modifier.width(12.dp))
+                                        Spacer(Modifier.height(12.dp))
 
-                                        // 3. Medicine Details
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(dose.medicine_name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                            Text(
-                                                "${dose.dose_label} · ${dose.scheduled_time}",
-                                                fontSize = 13.sp,
-                                                color = Color.Gray
+                                        // Mark Taken Button
+                                        Button(
+                                            onClick = {
+                                                scope.launch {
+                                                    val ok = apiRepository.markDoseTaken(patient.id, dose.id)
+                                                    if (ok) {
+                                                        refreshData()
+                                                        DoseRefreshBus.emit()
+                                                    }
+                                                }
+                                            },
+                                            enabled = enabled,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = Color(0xFF4CAF50),
+                                                disabledContainerColor = Color(0xFFE0E0E0)
+                                            ),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+                                            Icon(
+                                                if (dose.taken) Icons.Default.Check else Icons.Default.Medication,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp)
                                             )
+                                            Spacer(Modifier.width(8.dp))
+                                            Text(if (dose.taken) localizedString("btn_taken") else localizedString("btn_mark_taken"))
                                         }
                                     }
 
-                                    Spacer(Modifier.height(12.dp))
-
-                                    // Mark Taken Button
-                                    Button(
-                                        onClick = {
-                                            scope.launch {
-                                                val ok = apiRepository.markDoseTaken(patient.id, dose.id)
-                                                if (ok) {
-                                                    refreshData()
-                                                    DoseRefreshBus.emit()
-                                                }
-                                            }
-                                        },
-                                        enabled = enabled,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = Color(0xFF4CAF50),
-                                            disabledContainerColor = Color(0xFFE0E0E0)
-                                        ),
-                                        shape = RoundedCornerShape(8.dp)
-                                    ) {
-                                        Icon(
-                                            if (dose.taken) Icons.Default.Check else Icons.Default.Medication,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
+                                    if (dose != todayDoses.last()) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(vertical = 12.dp),
+                                            thickness = 0.5.dp,
+                                            color = Color.LightGray.copy(alpha = 0.5f)
                                         )
-                                        Spacer(Modifier.width(8.dp))
-                                        Text(if (dose.taken) localizedString("btn_taken") else localizedString("btn_mark_taken"))
                                     }
-                                }
-
-                                if (dose != todayDoses.last()) {
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(vertical = 12.dp),
-                                        thickness = 0.5.dp,
-                                        color = Color.LightGray.copy(alpha = 0.5f)
-                                    )
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            // Add some bottom spacing
-            item {
-                Spacer(modifier = Modifier.height(80.dp))
+                // Add some bottom spacing
+                item {
+                    Spacer(modifier = Modifier.height(80.dp))
+                }
             }
         }
     }

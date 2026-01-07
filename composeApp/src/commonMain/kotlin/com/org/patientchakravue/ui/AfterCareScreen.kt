@@ -32,8 +32,8 @@ fun AfterCareScreen(
     val scope = rememberCoroutineScope()
     val api = remember { ApiRepository() }
 
-    // Get current language to trigger recomposition when it changes
-    val currentLang = LocalLanguageManager.current.currentLanguage
+    // Trigger recomposition on language change
+    LocalLanguageManager.current.currentLanguage
 
     // Pre-capture localized strings for use in non-composable lambda contexts
     val errorNoPhotoMsg = localizedString("error_no_photo")
@@ -175,6 +175,8 @@ fun SymptomRow(label: String, icon: ImageVector, selectedValue: Int, onValueChan
                     onClick = { onValueChange(value) },
                     label = { Text(name, fontSize = 11.sp) },
                     colors = FilterChipDefaults.filterChipColors(
+                        containerColor = Color.White,
+                        labelColor = Color.Black,
                         selectedContainerColor = Color(0xFF4CAF50),
                         selectedLabelColor = Color.White
                     )

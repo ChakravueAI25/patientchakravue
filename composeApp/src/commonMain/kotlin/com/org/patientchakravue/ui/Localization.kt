@@ -176,6 +176,9 @@ object AppStrings {
         "doctor_advice" to "Doctor's Advice",
         "submitted_symptoms" to "Submitted Symptoms",
         "your_comments" to "Your Comments:",
+        // New keys used by NotificationsScreen
+        "hospital_updates" to "Doctor Updates",
+        "view_messages" to "View Messages",
         "dr_online" to "Online",
         "message_placeholder" to "Message",
         "report_summary" to "Report Summary"
@@ -290,6 +293,8 @@ object AppStrings {
         "doctor_advice" to "डॉक्टर की सलाह",
         "submitted_symptoms" to "जमा किए गए लक्षण",
         "your_comments" to "आपकी टिप्पणियाँ:",
+        "hospital_updates" to "डॉक्टर अपडेट्स",
+        "view_messages" to "संदेश देखें",
         "dr_online" to "ऑनलाइन",
         "message_placeholder" to "संदेश",
         "report_summary" to "रिपोर्ट सारांश"
@@ -404,6 +409,8 @@ object AppStrings {
         "doctor_advice" to "డాక్టర్ సలహా",
         "submitted_symptoms" to "సమర్పించిన లక్షణాలు",
         "your_comments" to "మీ వ్యాఖ్యలు:",
+        "hospital_updates" to "డాక్టర్ అప్డేట్స్",
+        "view_messages" to "సందేశాలు చూడండి",
         "dr_online" to "ఆన్‌లైన్",
         "message_placeholder" to "సందేశం",
         "report_summary" to "నివేదిక సారాంశం"
@@ -432,4 +439,3 @@ fun localizedString(key: String): String {
     // Reading currentLanguage triggers recomposition when it changes
     return AppStrings.get(key, languageManager.currentLanguage)
 }
-

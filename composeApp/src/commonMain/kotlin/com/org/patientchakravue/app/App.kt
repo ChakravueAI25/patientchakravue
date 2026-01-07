@@ -1,9 +1,14 @@
 package com.org.patientchakravue.app
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Dashboard
@@ -20,9 +25,16 @@ import com.org.patientchakravue.data.SessionManager
 import com.org.patientchakravue.ui.*
 import kotlinx.coroutines.launch
 
+// Added imports for animation, graphicsLayer and pointer input
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.graphics.graphicsLayer
+
 @Composable
 fun App(initialCallData: Pair<String, String>? = null) {
-    MaterialTheme {
+    AppTheme {
         AppLocalizationProvider {
             val sessionManager = remember { SessionManager() }
             val initialScreen = when {
@@ -39,13 +51,25 @@ fun App(initialCallData: Pair<String, String>? = null) {
                 AppBackHandler { navigator.goBack() }
             }
 
-            val bottomNavScreens = listOf(Screen.Dashboard, Screen.AfterCare, Screen.Vision, Screen.Notifications)
+            // include VideoCall in bottomNavScreens so nav remains visible during a call
+            // Use a predicate instead of a list because Screen.VideoCall is a data class (requires parameters)
+            val isBottomNavScreen: (Screen) -> Boolean = { screen ->
+                when (screen) {
+                    is Screen.Dashboard,
+                    is Screen.AfterCare,
+                    is Screen.Vision,
+                    is Screen.Notifications,
+                    is Screen.VideoCall,
+                    is Screen.VideoCallRequest -> true
+                    else -> false
+                }
+            }
 
             Scaffold(
                 modifier = Modifier.statusBarsPadding(),
                 snackbarHost = { SnackbarHost(snackbarHostState) },
                 bottomBar = {
-                    if (navigator.currentScreen in bottomNavScreens) {
+                    if (isBottomNavScreen(navigator.currentScreen)) {
                         BottomNavigationBar(navigator)
                     }
                 }
@@ -139,18 +163,14 @@ fun App(initialCallData: Pair<String, String>? = null) {
                         onBack = { navigator.goBack() }
                     )
                     is Screen.VideoCallRequest -> VideoCallRequestScreen(
-                        onBack = { navigator.goBack() },
-                        onRequestSent = { navigator.goBack() }
+                        { navigator.goBack() },
+                        { navigator.goBack() },
+                        paddingValues
                     )
                     is Screen.VideoCall -> VideoCallScreen(
-                        channelName = screen.channelName,
-                        doctorId = screen.doctorId,
-                        onCallEnded = { navigator.goBack() }
-                    )
-                    is Screen.VideoCall -> VideoCallScreen(
-                        channelName = screen.channelName,
-                        doctorId = screen.doctorId,
-                        onCallEnded = { navigator.goBack() }
+                        screen.channelName,
+                        screen.doctorId,
+                        { navigator.goBack() }
                     )
                     is Screen.FeedbackDetail -> FeedbackDetailScreen(note = screen.note, onBack = { navigator.goBack() })
                     is Screen.MedicineList -> Text("Medicine List Screen", modifier = Modifier.padding(paddingValues))
@@ -163,52 +183,124 @@ fun App(initialCallData: Pair<String, String>? = null) {
 @Composable
 fun BottomNavigationBar(navigator: Navigator) {
     Box {
-        NavigationBar {
-            // Dashboard - Left
-            NavigationBarItem(
-                icon = { Icon(Icons.Default.Dashboard, null) },
-                label = { Text("Home") },
-                selected = navigator.currentScreen == Screen.Dashboard,
-                onClick = { navigator.navigateAsPillar(Screen.Dashboard) }
-            )
+        // Keep the navigation surface as a simple white surface (no clear cutout)
+        Surface(
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            color = Color.White,
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            NavigationBar(
+                containerColor = Color.Transparent,
+                tonalElevation = 0.dp
+            ) {
+                 // Dashboard - Left
+                 NavigationBarItem(
+                     icon = { Icon(Icons.Default.Dashboard, null) },
+                     label = { Text("Home") },
+                     selected = navigator.currentScreen == Screen.Dashboard,
+                     onClick = { navigator.navigateAsPillar(Screen.Dashboard) },
+                     colors = NavigationBarItemDefaults.colors(
+                         selectedIconColor = Color(0xFF4CAF50),
+                         unselectedIconColor = Color.Black,
+                         indicatorColor = Color.Transparent
+                     )
+                 )
 
-            // AfterCare - Left-Center
-            NavigationBarItem(
-                icon = { Icon(Icons.AutoMirrored.Filled.List, null) },
-                label = { Text("Care") },
-                selected = navigator.currentScreen == Screen.AfterCare,
-                onClick = { navigator.navigateAsPillar(Screen.AfterCare) }
-            )
+                 // AfterCare - Left-Center
+                 NavigationBarItem(
+                     icon = { Icon(Icons.AutoMirrored.Filled.List, null) },
+                     label = { Text("Care") },
+                     selected = navigator.currentScreen == Screen.AfterCare,
+                     onClick = { navigator.navigateAsPillar(Screen.AfterCare) },
+                     colors = NavigationBarItemDefaults.colors(
+                         selectedIconColor = Color(0xFF4CAF50),
+                         unselectedIconColor = Color.Black,
+                         indicatorColor = Color.Transparent
+                     )
+                 )
 
-            // Empty spacer for center FAB - use Spacer weight instead of disabled item
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(1f))
+                 // Empty spacer for center FAB - use Spacer weight instead of disabled item
+                 Spacer(modifier = Modifier.weight(1f))
 
-            // Vision - Right-Center
-            NavigationBarItem(
-                icon = { Icon(Icons.Default.RemoveRedEye, null) },
-                label = { Text("Vision") },
-                selected = navigator.currentScreen == Screen.Vision,
-                onClick = { navigator.navigateAsPillar(Screen.Vision) }
-            )
+                 // Vision - Right-Center
+                 NavigationBarItem(
+                     icon = { Icon(Icons.Default.RemoveRedEye, null) },
+                     label = { Text("Vision") },
+                     selected = navigator.currentScreen == Screen.Vision,
+                     onClick = { navigator.navigateAsPillar(Screen.Vision) },
+                     colors = NavigationBarItemDefaults.colors(
+                         selectedIconColor = Color(0xFF4CAF50),
+                         unselectedIconColor = Color.Black,
+                         indicatorColor = Color.Transparent
+                     )
+                 )
 
-            // Notifications - Right
-            NavigationBarItem(
-                icon = { Icon(Icons.Default.Notifications, null) },
-                label = { Text("Alerts") },
-                selected = navigator.currentScreen == Screen.Notifications,
-                onClick = { navigator.navigateAsPillar(Screen.Notifications) }
-            )
+                 // Notifications - Right
+                 NavigationBarItem(
+                     icon = { Icon(Icons.Default.Notifications, null) },
+                     label = { Text("Alerts") },
+                     selected = navigator.currentScreen == Screen.Notifications,
+                     onClick = { navigator.navigateAsPillar(Screen.Notifications) },
+                     colors = NavigationBarItemDefaults.colors(
+                         selectedIconColor = Color(0xFF4CAF50),
+                         unselectedIconColor = Color.Black,
+                         indicatorColor = Color.Transparent
+                     )
+                 )
+
+            }
         }
 
-        // Center FAB for Video Call
-        FloatingActionButton(
-            onClick = { navigator.navigateForward(Screen.VideoCallRequest) },
-            containerColor = Color(0xFF4CAF50),
+        // Place the FAB so it sits on the nav bar (no border/shadow)
+        Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .offset(y = (-28).dp)
+                .offset(y = (-12).dp),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.Videocam, null, tint = Color.White)
+
+            // Press state
+            var pressed by remember { mutableStateOf(false) }
+
+            val scale by animateFloatAsState(
+                targetValue = if (pressed) 0.92f else 1f,
+                animationSpec = tween(durationMillis = 120),
+                label = "fab-scale"
+            )
+
+            // Green action button (no shadow, no border)
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    }
+                    .background(
+                        color = Color(0xFF4CAF50),
+                        shape = RoundedCornerShape(28.dp)
+                    )
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onPress = {
+                                pressed = true
+                                tryAwaitRelease()
+                                pressed = false
+                                navigator.navigateForward(Screen.VideoCallRequest)
+                            }
+                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Videocam,
+                    contentDescription = "Video Call",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     }
-}
+ }

@@ -29,7 +29,6 @@ import androidx.core.content.ContextCompat
 import com.org.patientchakravue.data.ApiRepository
 import io.agora.rtc2.*
 import io.agora.rtc2.video.VideoCanvas
-import kotlinx.coroutines.launch
 
 private const val TAG = "VideoCallScreen"
 
@@ -41,7 +40,6 @@ actual fun VideoCallScreen(
 ) {
     val context = LocalContext.current
     val api = remember { ApiRepository() }
-    val scope = rememberCoroutineScope()
 
     // Agora Engine State
     var rtcEngine by remember { mutableStateOf<RtcEngine?>(null) }
@@ -293,4 +291,3 @@ actual fun VideoCallScreen(
         }
     }
 }
-

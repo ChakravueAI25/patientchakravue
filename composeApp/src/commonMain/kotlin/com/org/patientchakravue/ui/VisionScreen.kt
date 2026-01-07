@@ -33,8 +33,8 @@ fun VisionScreen(
     var history by remember { mutableStateOf<List<VisionTestRecord>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
-    // Get current language to trigger recomposition when it changes
-    val currentLang = LocalLanguageManager.current.currentLanguage
+    // Read current language to trigger recomposition when it changes
+    LocalLanguageManager.current.currentLanguage
 
     // Fetch History on Load
     LaunchedEffect(Unit) {
@@ -70,7 +70,7 @@ fun VisionScreen(
             VisionTestCard(
                 title = localizedString("test_amsler"),
                 icon = Icons.Default.GridOn,
-                color = Color(0xFFE3F2FD), // Light Blue
+                color = Color.White, // make card background white, keep icon color
                 iconColor = Color(0xFF1976D2),
                 modifier = Modifier.weight(1f),
                 onClick = onNavigateToAmsler
@@ -80,7 +80,7 @@ fun VisionScreen(
             VisionTestCard(
                 title = localizedString("test_tumbling"),
                 icon = Icons.Default.Visibility,
-                color = Color(0xFFE8F5E9), // Light Green
+                color = Color.White, // make card background white, keep icon color
                 iconColor = Color(0xFF4CAF50),
                 modifier = Modifier.weight(1f),
                 onClick = onNavigateToTumblingE
