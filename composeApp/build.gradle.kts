@@ -42,6 +42,7 @@ kotlin {
             implementation("com.google.firebase:firebase-messaging-ktx:24.1.2")
             implementation("io.agora.rtc:full-sdk:4.6.1")
             implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.0")
+            implementation("androidx.fragment:fragment-ktx:1.8.5")
 
         }
         iosMain.dependencies {
@@ -97,15 +98,35 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+
+        // Limit to required ABIs only (reduces native library size significantly)
+        ndk {
+            abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a"))
+        }
     }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/NOTICE.md"
+            excludes += "/META-INF/LICENSE.md"
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/*.kotlin_module"
+        }
+        // Remove unnecessary native libraries
+        jniLibs {
+            excludes += "**/libagora_video_av1_decoder_extension.so"
+            excludes += "**/libagora_video_av1_encoder_extension.so"
+            excludes += "**/libagora_face_capture_extension.so"
+            excludes += "**/libagora_face_detection_extension.so"
+            excludes += "**/libagora_lip_sync_extension.so"
+            excludes += "**/libagora_video_quality_analyzer_extension.so"
         }
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
     compileOptions {
