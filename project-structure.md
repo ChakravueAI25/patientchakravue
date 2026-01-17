@@ -43,8 +43,7 @@ E:\patientchakravue\
 │       ├── 📁 commonMain/            # 🌐 SHARED CODE (Android + iOS)
 │       │   ├── 📁 composeResources/
 │       │   │   ├── 📁 drawable/
-│       │   │   │   ├── 📄 compose-multiplatform.xml
-│       │   │   │   └── 📄 Login_bg.jpeg
+│       │   │   │   └── 📄 compose-multiplatform.xml
 │       │   │   ├── 📁 values/
 │       │   │   │   └── 📄 strings.xml               # English strings
 │       │   │   ├── 📁 values-hi/
