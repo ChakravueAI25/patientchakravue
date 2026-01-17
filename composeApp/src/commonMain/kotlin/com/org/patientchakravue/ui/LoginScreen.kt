@@ -3,6 +3,7 @@ package com.org.patientchakravue.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -71,7 +72,7 @@ fun LoginScreen(
                     colors = CardDefaults.cardColors(
                         containerColor = Color.White.copy(alpha = 0.2f) // 20% translucent white
                     ),
-                    border = BorderStroke(2.dp, Color(0xFF4CAF50)), // Brand green border
+                    border = BorderStroke(2.dp, Color(0xFF00D25B)), // Brand green border (from image)
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column(
@@ -82,7 +83,13 @@ fun LoginScreen(
                             text = localizedString("login_title"),
                             fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground,
+                            color = Color(0xFF2979FF), // Blue from image
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                        Text(
+                            text = localizedString("login_caption"),
+                            color = Color(0xFF757575), // Subtle gray for caption
+                            fontSize = 16.sp,
                             modifier = Modifier.padding(bottom = 24.dp)
                         )
 
@@ -170,11 +177,13 @@ fun LoginScreen(
                                     }
                                 },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                    containerColor = Color(0xFF00D25B), // Green from image
+                                    contentColor = Color.White
                                 ),
-                                modifier = Modifier.fillMaxWidth().height(50.dp),
-                                shape = MaterialTheme.shapes.medium
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                shape = RoundedCornerShape(25.dp) // Fully rounded corners as in image
                             ) {
                                 Text(loginButtonText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                             }

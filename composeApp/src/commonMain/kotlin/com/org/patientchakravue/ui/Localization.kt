@@ -71,7 +71,7 @@ object AppStrings {
         "app_name" to "Patient Chakravue",
         "error_connection" to "Connection Error",
         "loading" to "Loading...",
-        "login_title" to "Patient Login",
+        "login_title" to "Login",
         "email_label" to "Email",
         "password_label" to "Password",
         "login_button" to "LOGIN",
@@ -181,14 +181,15 @@ object AppStrings {
         "view_messages" to "View Messages",
         "dr_online" to "Online",
         "message_placeholder" to "Message",
-        "report_summary" to "Report Summary"
+        "report_summary" to "Report Summary",
+        "login_caption" to "ChakraVue Healthcare"
     )
 
     private val hindiStrings = mapOf(
         "app_name" to "रोगी चक्रव्यूह",
         "error_connection" to "कनेक्शन त्रुटि",
         "loading" to "लोड हो रहा है...",
-        "login_title" to "रोगी लॉगिन",
+        "login_title" to "लॉगिन",
         "email_label" to "ईमेल",
         "password_label" to "पासवर्ड",
         "login_button" to "लॉगिन",
@@ -297,14 +298,15 @@ object AppStrings {
         "view_messages" to "संदेश देखें",
         "dr_online" to "ऑनलाइन",
         "message_placeholder" to "संदेश",
-        "report_summary" to "रिपोर्ट सारांश"
+        "report_summary" to "रिपोर्ट सारांश",
+        "login_caption" to "चक्रव्यू हेल्थकेयर"
     )
 
     private val teluguStrings = mapOf(
         "app_name" to "పేషెంట్ చక్రవ్యూ",
         "error_connection" to "కనెక్షన్ లోపం",
         "loading" to "లోడ్ అవుతోంది...",
-        "login_title" to "పేషెంట్ లాగిన్",
+        "login_title" to "లాగిన్",
         "email_label" to "ఈమెయిల్",
         "password_label" to "పాస్‌వర్డ్",
         "login_button" to "లాగిన్",
@@ -413,7 +415,8 @@ object AppStrings {
         "view_messages" to "సందేశాలు చూడండి",
         "dr_online" to "ఆన్‌లైన్",
         "message_placeholder" to "సందేశం",
-        "report_summary" to "నివేదిక సారాంశం"
+        "report_summary" to "నివేదిక సారాంశం",
+        "login_caption" to "చక్రవ్యూ హెల్త్‌కేర్"
     )
 
     /**
