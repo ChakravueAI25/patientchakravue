@@ -1,7 +1,7 @@
 # PatientChakraVue - Complete Folder Structure
 
 ```
-E:\patientchakravue\
+D:\ChakraVue AI\patientchakravue\
 │
 ├── 📁 .git/                          # Git repository
 ├── 📁 .gradle/                       # Gradle cache
@@ -12,24 +12,26 @@ E:\patientchakravue\
 ├── 📁 composeApp/                    # 🎯 MAIN APP MODULE
 │   ├── 📁 build/                     # Module build output
 │   ├── 📄 build.gradle.kts           # Module build config
-│   ├── 📄 google-services.json       # Firebase config
+│   ├── 📄 google-services.json       # Firebase config for Android
+│   ├── 📄 proguard-rules.pro         # ProGuard rules for code shrinking
 │   │
 │   └── 📁 src/
 │       │
 │       ├── 📁 androidMain/           # 🤖 ANDROID-SPECIFIC CODE
-│       │   ├── 📄 AndroidManifest.xml
+│       │   ├── 📄 AndroidManifest.xml         # Android app manifest
 │       │   ├── 📁 kotlin/com/org/patientchakravue/
 │       │   │   ├── 📁 app/
-│       │   │   │   └── 📄 AppBackHandler.android.kt
+│       │   │   │   └── 📄 AppBackHandler.android.kt   # Android back button handler
 │       │   │   ├── 📁 firebase/
-│       │   │   │   └── 📄 FirebaseService.kt        # FCM Service
+│       │   │   │   └── 📄 FirebaseService.kt          # FCM push notification service
 │       │   │   ├── 📁 platform/
-│       │   │   │   ├── 📄 BitmapCapture.android.kt
-│       │   │   │   ├── 📄 Platform.android.kt
-│       │   │   │   └── 📄 SystemTime.android.kt
-│       │   │   └── 📄 MainActivity.kt               # Android Entry Point
-│       │   │
-│       │   └── 📁 res/                              # Android Resources
+│       │   │   │   ├── 📄 BitmapCapture.android.kt    # Android bitmap capture
+│       │   │   │   ├── 📄 Platform.android.kt         # Android platform utils
+│       │   │   │   └── 📄 SystemTime.android.kt       # Android system time
+│       │   │   ├── 📁 ui/
+│       │   │   │   └── 📄 VideoCallScreen.kt          # Android-specific video call UI
+│       │   │   └── 📄 MainActivity.kt                 # Android entry point
+│       │   └── 📁 res/                               # Android resources (drawables, values, etc.)
 │       │       ├── 📁 drawable/
 │       │       ├── 📁 drawable-v24/
 │       │       ├── 📁 mipmap-anydpi-v26/
@@ -43,94 +45,86 @@ E:\patientchakravue\
 │       ├── 📁 commonMain/            # 🌐 SHARED CODE (Android + iOS)
 │       │   ├── 📁 composeResources/
 │       │   │   ├── 📁 drawable/
-│       │   │   │   └── 📄 compose-multiplatform.xml
+│       │   │   │   └── 📄 compose-multiplatform.xml   # Shared vector/image resources
 │       │   │   ├── 📁 values/
-│       │   │   │   └── 📄 strings.xml               # English strings
+│       │   │   │   └── 📄 strings.xml                 # English strings
 │       │   │   ├── 📁 values-hi/
-│       │   │   │   └── 📄 strings.xml               # Hindi strings
+│       │   │   │   └── 📄 strings.xml                 # Hindi strings
 │       │   │   └── 📁 values-te/
-│       │   │       └── 📄 strings.xml               # Telugu strings
-│       │   │
+│       │   │       └── 📄 strings.xml                 # Telugu strings
 │       │   └── 📁 kotlin/com/org/patientchakravue/
-│       │       │
 │       │       ├── 📁 app/                          # App Core
-│       │       │   ├── 📄 App.kt                    # Main Composable
-│       │       │   ├── 📄 AppBackHandler.kt         # Back navigation
+│       │       │   ├── 📄 App.kt                    # Main app composable
+│       │       │   ├── 📄 AppBackHandler.kt         # Shared back handler
 │       │       │   ├── 📄 AppScreen.kt              # Screen definitions
-│       │       │   ├── 📄 BackNavigation.kt
 │       │       │   └── 📄 Navigator.kt              # Navigation logic
-│       │       │
 │       │       ├── 📁 data/                         # Data Layer
 │       │       │   ├── 📄 ApiRepository.kt          # API calls
-│       │       │   └── 📄 SessionManager.kt         # User session
-│       │       │
+│       │       │   └── 📄 SessionManager.kt         # User session management
 │       │       ├── 📁 dose/                         # Dose Management
-│       │       │   └── 📄 DoseRefreshBus.kt         # Event bus for dose updates
-│       │       │
+│       │       │   └── 📄 DoseRefreshBus.kt         # Dose update event bus
 │       │       ├── 📁 model/                        # Data Models
-│       │       │   └── 📄 Models.kt                 # All data classes
-│       │       │
+│       │       │   └── 📄 Models.kt                 # Data classes
 │       │       ├── 📁 platform/                     # Platform Abstractions
-│       │       │   ├── 📄 BitmapCapture.kt
-│       │       │   ├── 📄 Platform.kt
-│       │       │   └── 📄 SystemTime.kt
-│       │       │
+│       │       │   ├── 📄 BitmapCapture.kt          # Shared bitmap capture
+│       │       │   ├── 📄 Platform.kt               # Shared platform utils
+│       │       │   └── 📄 SystemTime.kt             # Shared system time
 │       │       └── 📁 ui/                           # 🎨 UI SCREENS
-│       │           ├── 📄 AdherenceGraphScreen.kt   # Medicine adherence charts
-│       │           ├── 📄 AfterCareScreen.kt        # Post-surgery care form
-│       │           ├── 📄 AmslerTestScreen.kt       # Amsler Grid vision test
-│       │           ├── 📄 ChatScreen.kt             # Doctor-Patient chat
-│       │           ├── 📄 DashboardScreen.kt        # Main dashboard
-│       │           ├── 📄 FeedbackDetailScreen.kt   # Feedback details
+│       │           ├── 📄 AdherenceGraphScreen.kt   # Medicine adherence chart UI
+│       │           ├── 📄 AfterCareScreen.kt        # Post-surgery care form UI
+│       │           ├── 📄 AmslerTestScreen.kt       # Amsler grid vision test UI
+│       │           ├── 📄 ChatScreen.kt             # Doctor-patient chat UI
+│       │           ├── 📄 DashboardScreen.kt        # Main dashboard UI
+│       │           ├── 📄 FeedbackDetailScreen.kt   # Feedback details UI
 │       │           ├── 📄 LanguageSwitcherIcon.kt   # Language selector UI
 │       │           ├── 📄 Localization.kt           # i18n support
-│       │           ├── 📄 LoginScreen.kt            # Login page
-│       │           ├── 📄 NotificationsScreen.kt    # Notifications list
-│       │           ├── 📄 ProfileScreen.kt          # User profile
-│       │           ├── 📄 TumblingETestScreen.kt    # Tumbling E vision test
-│       │           └── 📄 VisionScreen.kt           # Vision tests hub
-│       │
-│       ├── 📁 commonTest/            # Shared Tests
-│       │
+│       │           ├── 📄 LoginScreen.kt            # Login page UI
+│       │           ├── 📄 NotificationsScreen.kt    # Notifications list UI
+│       │           ├── 📄 ProfileScreen.kt          # User profile UI
+│       │           ├── 📄 Theme.kt                  # App theme and colors
+│       │           ├── 📄 TumblingETestScreen.kt    # Tumbling E vision test UI
+│       │           ├── 📄 VideoCallRequestScreen.kt # Video call request UI
+│       │           ├── 📄 VideoCallScreen.kt        # Video call UI
+│       │           └── 📄 VisionScreen.kt           # Vision tests hub UI
+│       ├── 📁 commonTest/            # Shared tests
 │       ├── 📁 iosMain/               # 🍎 iOS-SPECIFIC CODE
 │       │   └── 📁 kotlin/com/org/patientchakravue/
 │       │       ├── 📁 app/
 │       │       ├── 📁 platform/
-│       │       └── 📄 MainViewController.kt
-│       │
-│       ├── 📁 iosArm64Main/          # iOS ARM64 specific
-│       └── 📁 iosX64Main/            # iOS X64 specific
+│       │       └── 📄 MainViewController.kt         # iOS entry point
+│       ├── 📁 iosArm64Main/          # iOS ARM64-specific code
+│       └── 📁 iosX64Main/            # iOS X64-specific code
 │
-├── 📁 gradle/                        # Gradle Wrapper
-│   ├── 📄 libs.versions.toml         # Version catalog
+├── 📁 gradle/                        # Gradle Wrapper and version catalog
+│   ├── 📄 libs.versions.toml         # Dependency versions
 │   └── 📁 wrapper/
-│       ├── 📄 gradle-wrapper.jar
-│       └── 📄 gradle-wrapper.properties
+│       ├── 📄 gradle-wrapper.jar     # Gradle wrapper binary
+│       └── 📄 gradle-wrapper.properties # Gradle wrapper config
 │
-├── 📁 iosApp/                        # 🍎 iOS NATIVE SHELL
+├── 📁 iosApp/                        # 🍎 iOS native shell project
 │   ├── 📁 Configuration/
-│   │   └── 📄 Config.xcconfig
+│   │   └── 📄 Config.xcconfig        # iOS build config
 │   ├── 📁 iosApp/
-│   │   ├── 📄 ContentView.swift
-│   │   ├── 📄 Info.plist
-│   │   ├── 📄 iOSApp.swift
-│   │   ├── 📁 Assets.xcassets/
-│   │   └── 📁 Preview Content/
+│   │   ├── 📄 ContentView.swift      # iOS SwiftUI entry
+│   │   ├── 📄 Info.plist             # iOS app info
+│   │   ├── 📄 iOSApp.swift           # iOS app main
+│   │   ├── 📁 Assets.xcassets/       # iOS image assets
+│   │   └── 📁 Preview Content/       # SwiftUI previews
 │   └── 📁 iosApp.xcodeproj/
-│       ├── 📄 project.pbxproj
-│       └── 📁 project.xcworkspace/
+│       ├── 📄 project.pbxproj        # Xcode project file
+│       └── 📁 project.xcworkspace/   # Xcode workspace
 │
 ├── 📄 .gitignore                     # Git ignore rules
-├── 📄 build.gradle.kts               # Root build config
+├── 📄 backend.md                     # Backend API documentation/notes
+├── 📄 backendpy.txt                  # Backend Python notes or code
+├── 📄 build.gradle.kts               # Root Gradle build config
 ├── 📄 gradle.properties              # Gradle properties
 ├── 📄 gradlew                        # Gradle wrapper (Unix)
 ├── 📄 gradlew.bat                    # Gradle wrapper (Windows)
 ├── 📄 local.properties               # Local SDK paths
-├── 📄 main.py                        # Backend Python script
-├── 📄 main (1).py                    # Backend Python script (backup)
-├── 📄 README.md                      # Project readme
+├── 📄 project-structure.md           # This file: project structure documentation
+├── 📄 README.md                      # Project documentation
 ├── 📄 settings.gradle.kts            # Gradle settings
-└── 📄 text.txt                       # Notes/scratch file
 ```
 
 ## Key Directories Summary
