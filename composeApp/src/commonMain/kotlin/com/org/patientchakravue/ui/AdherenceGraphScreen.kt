@@ -22,6 +22,8 @@ import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.data.SessionManager
 import com.org.patientchakravue.dose.DoseRefreshBus
 import com.org.patientchakravue.model.GraphData
+import com.org.patientchakravue.ui.language.LocalLanguageManager
+import com.org.patientchakravue.ui.language.localizedString
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

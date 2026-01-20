@@ -20,6 +20,9 @@ import androidx.compose.ui.unit.sp
 import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.data.SessionManager
 import com.org.patientchakravue.platform.registerFcmTokenAfterLogin
+import com.org.patientchakravue.ui.language.LanguageSwitcherIcon
+import com.org.patientchakravue.ui.language.localizedString
+import com.org.patientchakravue.ui.theme.AppBackground
 import kotlinx.coroutines.launch
 
 @Composable
@@ -72,7 +75,10 @@ fun LoginScreen(
                     colors = CardDefaults.cardColors(
                         containerColor = Color.White.copy(alpha = 0.2f) // 20% translucent white
                     ),
-                    border = BorderStroke(2.dp, Color(0xFF00D25B)), // Brand green border (from image)
+                    border = BorderStroke(
+                        2.dp,
+                        Color(0xFF00D25B)
+                    ), // Brand green border (from image)
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column(
@@ -100,9 +106,13 @@ fun LoginScreen(
                             label = { Text(localizedString("email_label")) },
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = MaterialTheme.colorScheme.onBackground,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(
+                                    alpha = 0.7f
+                                ),
                                 focusedLabelColor = MaterialTheme.colorScheme.onBackground,
-                                unfocusedLabelColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                                unfocusedLabelColor = MaterialTheme.colorScheme.onBackground.copy(
+                                    alpha = 0.7f
+                                ),
                                 cursorColor = MaterialTheme.colorScheme.onBackground,
                                 focusedTextColor = MaterialTheme.colorScheme.onBackground,
                                 unfocusedTextColor = MaterialTheme.colorScheme.onBackground
@@ -120,16 +130,25 @@ fun LoginScreen(
                             label = { Text(localizedString("password_label")) },
                             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             trailingIcon = {
-                                val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                                val image =
+                                    if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                    Icon(imageVector = image, contentDescription = null, tint = MaterialTheme.colorScheme.onBackground)
+                                    Icon(
+                                        imageVector = image,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onBackground
+                                    )
                                 }
                             },
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = MaterialTheme.colorScheme.onBackground,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(
+                                    alpha = 0.7f
+                                ),
                                 focusedLabelColor = MaterialTheme.colorScheme.onBackground,
-                                unfocusedLabelColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                                unfocusedLabelColor = MaterialTheme.colorScheme.onBackground.copy(
+                                    alpha = 0.7f
+                                ),
                                 cursorColor = MaterialTheme.colorScheme.onBackground,
                                 focusedTextColor = MaterialTheme.colorScheme.onBackground,
                                 unfocusedTextColor = MaterialTheme.colorScheme.onBackground
@@ -185,7 +204,11 @@ fun LoginScreen(
                                     .height(50.dp),
                                 shape = RoundedCornerShape(25.dp) // Fully rounded corners as in image
                             ) {
-                                Text(loginButtonText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    loginButtonText,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         }
                     }
