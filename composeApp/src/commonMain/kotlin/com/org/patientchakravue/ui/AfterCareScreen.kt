@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.model.Patient
+import com.org.patientchakravue.ui.language.LocalLanguageManager
+import com.org.patientchakravue.ui.language.localizedString
 // Peekaboo Image Picker imports
 import com.preat.peekaboo.image.picker.SelectionMode
 import com.preat.peekaboo.image.picker.rememberImagePickerLauncher

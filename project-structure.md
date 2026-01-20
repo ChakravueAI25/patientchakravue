@@ -76,12 +76,14 @@ D:\ChakraVue AI\patientchakravue\
 │       │           ├── 📄 ChatScreen.kt             # Doctor-patient chat UI
 │       │           ├── 📄 DashboardScreen.kt        # Main dashboard UI
 │       │           ├── 📄 FeedbackDetailScreen.kt   # Feedback details UI
-│       │           ├── 📄 LanguageSwitcherIcon.kt   # Language selector UI
-│       │           ├── 📄 Localization.kt           # i18n support
+│       │           ├── 📁 language/                 # Language utilities
+│       │           │   ├── 📄 LanguageSwitcherIcon.kt
+│       │           │   └── 📄 Localization.kt
 │       │           ├── 📄 LoginScreen.kt            # Login page UI
 │       │           ├── 📄 NotificationsScreen.kt    # Notifications list UI
 │       │           ├── 📄 ProfileScreen.kt          # User profile UI
-│       │           ├── 📄 Theme.kt                  # App theme and colors
+│       │           ├── 📁 theme/                    # Theme and styling
+│       │           │   └── 📄 Theme.kt
 │       │           ├── 📄 TumblingETestScreen.kt    # Tumbling E vision test UI
 │       │           ├── 📄 VideoCallRequestScreen.kt # Video call request UI
 │       │           ├── 📄 VideoCallScreen.kt        # Video call UI
@@ -91,9 +93,17 @@ D:\ChakraVue AI\patientchakravue\
 │       │   └── 📁 kotlin/com/org/patientchakravue/
 │       │       ├── 📁 app/
 │       │       ├── 📁 platform/
-│       │       └── 📄 MainViewController.kt         # iOS entry point
+│       │       └── 📄 MainViewController.kt         # iOS entry point (platform-specific)
 │       ├── 📁 iosArm64Main/          # iOS ARM64-specific code
-│       └── 📁 iosX64Main/            # iOS X64-specific code
+│       ├── 📁 iosX64Main/            # iOS X64-specific code
+│       └── 📁 main/                  # Android main resources used by multiplatform
+│           └── 📁 res/
+│               ├── 📁 mipmap-anydpi-v26/
+│               ├── 📁 mipmap-hdpi/
+│               ├── 📁 mipmap-mdpi/
+│               ├── 📁 mipmap-xhdpi/
+│               ├── 📁 mipmap-xxhdpi/
+│               └── 📁 mipmap-xxxhdpi/
 │
 ├── 📁 gradle/                        # Gradle Wrapper and version catalog
 │   ├── 📄 libs.versions.toml         # Dependency versions
@@ -105,10 +115,10 @@ D:\ChakraVue AI\patientchakravue\
 │   ├── 📁 Configuration/
 │   │   └── 📄 Config.xcconfig        # iOS build config
 │   ├── 📁 iosApp/
+│   │   ├── 📁 Assets.xcassets/       # iOS image assets
 │   │   ├── 📄 ContentView.swift      # iOS SwiftUI entry
 │   │   ├── 📄 Info.plist             # iOS app info
 │   │   ├── 📄 iOSApp.swift           # iOS app main
-│   │   ├── 📁 Assets.xcassets/       # iOS image assets
 │   │   └── 📁 Preview Content/       # SwiftUI previews
 │   └── 📁 iosApp.xcodeproj/
 │       ├── 📄 project.pbxproj        # Xcode project file
@@ -138,6 +148,10 @@ D:\ChakraVue AI\patientchakravue\
 | `composeApp/src/commonMain/kotlin/.../data/` | API & Session management |
 | `composeApp/src/commonMain/kotlin/.../model/` | Data models |
 | `composeApp/src/commonMain/composeResources/` | Shared resources (strings, images) |
+| `composeApp/src/main/res/` | Android resource mipmap folders used by the app |
 | `iosApp/` | iOS native shell project |
 | `gradle/` | Dependency version management |
+
+
+````
 
