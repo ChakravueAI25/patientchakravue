@@ -31,8 +31,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.graphics.graphicsLayer
-import com.org.patientchakravue.ui.language.AppLocalizationProvider
-import com.org.patientchakravue.ui.theme.AppTheme
 
 @Composable
 fun App(initialCallData: Pair<String, String>? = null) {
@@ -40,11 +38,7 @@ fun App(initialCallData: Pair<String, String>? = null) {
         AppLocalizationProvider {
             val sessionManager = remember { SessionManager() }
             val initialScreen = when {
-                initialCallData != null -> Screen.VideoCall(
-                    initialCallData.first,
-                    initialCallData.second
-                )
-
+                initialCallData != null -> Screen.VideoCall(initialCallData.first, initialCallData.second)
                 sessionManager.getPatient() != null -> Screen.Dashboard
                 else -> Screen.Login
             }
@@ -67,7 +61,6 @@ fun App(initialCallData: Pair<String, String>? = null) {
                     is Screen.Notifications,
                     is Screen.VideoCall,
                     is Screen.VideoCallRequest -> true
-
                     else -> false
                 }
             }
@@ -86,7 +79,6 @@ fun App(initialCallData: Pair<String, String>? = null) {
                         onLoginSuccess = { navigator.navigateAsPillar(Screen.Dashboard) },
                         showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } }
                     )
-
                     is Screen.Dashboard -> {
                         val patient = sessionManager.getPatient()
                         if (patient != null) {
@@ -102,7 +94,6 @@ fun App(initialCallData: Pair<String, String>? = null) {
                             navigator.navigateAsPillar(Screen.Login)
                         }
                     }
-
                     is Screen.Profile -> ProfileScreen(
                         sessionManager = sessionManager,
                         onBack = { navigator.goBack() },
@@ -111,26 +102,18 @@ fun App(initialCallData: Pair<String, String>? = null) {
                             navigator.navigateAsPillar(Screen.Login)
                         }
                     )
-
                     is Screen.AdherenceGraph -> AdherenceGraphScreen(onBack = { navigator.goBack() })
                     is Screen.AfterCare -> {
-                        val patient = sessionManager.getPatient()
-                        if (patient != null) {
+                         val patient = sessionManager.getPatient()
+                         if (patient != null) {
                             AfterCareScreen(
                                 patient = patient,
                                 onBack = { navigator.goBack() },
-                                showSnackbar = { msg ->
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            msg
-                                        )
-                                    }
-                                },
+                                showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } },
                                 contentPadding = paddingValues
                             )
-                        }
+                         }
                     }
-
                     is Screen.Vision -> {
                         val patient = sessionManager.getPatient()
                         if (patient != null) {
@@ -142,86 +125,55 @@ fun App(initialCallData: Pair<String, String>? = null) {
                             )
                         }
                     }
-
                     is Screen.AmslerGrid -> {
                         val patient = sessionManager.getPatient()
                         if (patient != null) {
                             AmslerTestScreen(
                                 patient = patient,
                                 onBack = { navigator.goBack() },
-                                showSnackbar = { msg ->
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            msg
-                                        )
-                                    }
-                                }
+                                showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } }
                             )
                         }
                     }
-
                     is Screen.TumblingE -> {
-                        val patient = sessionManager.getPatient()
-                        if (patient != null) {
+                         val patient = sessionManager.getPatient()
+                         if (patient != null) {
                             TumblingETestScreen(
                                 patient = patient,
                                 onBack = { navigator.goBack() },
-                                showSnackbar = { msg ->
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            msg
-                                        )
-                                    }
-                                }
+                                showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } }
                             )
-                        }
+                         }
                     }
-
                     is Screen.Notifications -> {
                         val patient = sessionManager.getPatient()
                         if (patient != null) {
                             NotificationsScreen(
                                 patient = patient,
                                 onNavigateToChat = { doctorId, doctorName, submissionIds ->
-                                    navigator.navigateForward(
-                                        Screen.Chat(
-                                            doctorId,
-                                            doctorName,
-                                            submissionIds
-                                        )
-                                    )
+                                    navigator.navigateForward(Screen.Chat(doctorId, doctorName, submissionIds))
                                 },
                                 bottomBar = { BottomNavigationBar(navigator) }
                             )
                         }
                     }
-
                     is Screen.Chat -> ChatScreen(
                         doctorName = screen.doctorName,
                         submissionIds = screen.submissionIds,
                         onBack = { navigator.goBack() }
                     )
-
                     is Screen.VideoCallRequest -> VideoCallRequestScreen(
                         { navigator.goBack() },
                         { navigator.goBack() },
                         paddingValues
                     )
-
                     is Screen.VideoCall -> VideoCallScreen(
                         screen.channelName,
                         screen.doctorId,
                         { navigator.goBack() }
                     )
-
-                    is Screen.FeedbackDetail -> FeedbackDetailScreen(
-                        note = screen.note,
-                        onBack = { navigator.goBack() })
-
-                    is Screen.MedicineList -> Text(
-                        "Medicine List Screen",
-                        modifier = Modifier.padding(paddingValues)
-                    )
+                    is Screen.FeedbackDetail -> FeedbackDetailScreen(note = screen.note, onBack = { navigator.goBack() })
+                    is Screen.MedicineList -> Text("Medicine List Screen", modifier = Modifier.padding(paddingValues))
                 }
             }
         }

@@ -1,4 +1,4 @@
-package com.org.patientchakravue.ui.language
+package com.org.patientchakravue.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider

@@ -1,4 +1,4 @@
-package com.org.patientchakravue.ui.language
+package com.org.patientchakravue.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable

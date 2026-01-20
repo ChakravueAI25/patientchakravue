@@ -21,8 +21,6 @@ import androidx.compose.ui.unit.sp
 import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.model.Patient
 import com.org.patientchakravue.model.VisionTestRecord
-import com.org.patientchakravue.ui.language.LocalLanguageManager
-import com.org.patientchakravue.ui.language.localizedString
 
 @Composable
 fun VisionScreen(

@@ -20,11 +20,6 @@ import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.dose.DoseRefreshBus
 import com.org.patientchakravue.model.*
 import com.org.patientchakravue.platform.currentEpochSeconds
-import com.org.patientchakravue.ui.language.LanguageSwitcherIcon
-import com.org.patientchakravue.ui.language.LocalLanguageManager
-import com.org.patientchakravue.ui.language.localizedString
-import com.org.patientchakravue.ui.theme.AppBackground
-import com.org.patientchakravue.ui.theme.PrescriptionCard
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -93,11 +88,7 @@ fun DashboardScreen(
                         // Language Switcher Icon
                         LanguageSwitcherIcon(tint = Color(0xFF1A3B5D))
                         IconButton(onClick = onNavigateToAdherence) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ShowChart,
-                                null,
-                                tint = Color(0xFF4CAF50)
-                            )
+                            Icon(Icons.AutoMirrored.Filled.ShowChart, null, tint = Color(0xFF4CAF50))
                         }
                         IconButton(onClick = onNavigateToProfile) {
                             Icon(Icons.Default.AccountCircle, null, tint = Color.Black)
@@ -107,11 +98,7 @@ fun DashboardScreen(
 
                 /* ---------- MEDICINES / PIE ---------- */
                 item {
-                    Text(
-                        localizedString("section_medicines"),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
+                    Text(localizedString("section_medicines"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     Spacer(Modifier.height(12.dp))
 
                     val taken = todayDoses.count { it.taken }
@@ -130,26 +117,12 @@ fun DashboardScreen(
                                 color = Color(0xFF4CAF50), // Green color
                                 trackColor = Color.White
                             )
-                            Icon(
-                                Icons.Default.LocalPharmacy,
-                                null,
-                                modifier = Modifier.size(40.dp),
-                                tint = Color(0xFF4CAF50)
-                            )
+                            Icon(Icons.Default.LocalPharmacy, null, modifier = Modifier.size(40.dp), tint = Color(0xFF4CAF50))
                         }
                         Spacer(Modifier.width(24.dp))
                         Column {
-                            Text(
-                                "$taken/$total",
-                                fontSize = 28.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF4CAF50)
-                            )
-                            Text(
-                                localizedString("doses_taken_today"),
-                                fontSize = 14.sp,
-                                color = Color.Gray
-                            )
+                            Text("$taken/$total", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50))
+                            Text(localizedString("doses_taken_today"), fontSize = 14.sp, color = Color.Gray)
                         }
                     }
                 }
@@ -160,11 +133,7 @@ fun DashboardScreen(
 
                 /* ---------- PRESCRIPTION ---------- */
                 item {
-                    Text(
-                        localizedString("section_prescription"),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
+                    Text(localizedString("section_prescription"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     Spacer(Modifier.height(8.dp))
                 }
 
@@ -174,11 +143,7 @@ fun DashboardScreen(
                     ) {
                         Column(Modifier.padding(16.dp)) {
 
-                            Text(
-                                localizedString("doctor_label"),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp
-                            )
+                            Text(localizedString("doctor_label"), fontWeight = FontWeight.Bold, fontSize = 16.sp)
 
                             // Next Appointment Section
                             Row(
@@ -210,10 +175,7 @@ fun DashboardScreen(
                             Spacer(Modifier.height(12.dp))
 
                             if (isLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                                    color = Color(0xFF4CAF50)
-                                )
+                                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally), color = Color(0xFF4CAF50))
                             } else if (todayDoses.isEmpty()) {
                                 Column(
                                     modifier = Modifier.fillMaxWidth().padding(24.dp),
@@ -227,11 +189,7 @@ fun DashboardScreen(
                                     )
                                     Spacer(Modifier.height(8.dp))
                                     Text(localizedString("no_doses_today"), color = Color.Gray)
-                                    Text(
-                                        localizedString("check_back_tomorrow"),
-                                        fontSize = 12.sp,
-                                        color = Color.LightGray
-                                    )
+                                    Text(localizedString("check_back_tomorrow"), fontSize = 12.sp, color = Color.LightGray)
                                 }
                             } else {
                                 todayDoses.forEach { dose ->
@@ -239,9 +197,7 @@ fun DashboardScreen(
                                         !dose.taken &&
                                                 Instant.parse(dose.scheduled_iso).epochSeconds <= currentEpochSeconds()
 
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-                                    ) {
+                                    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
 
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
@@ -276,11 +232,7 @@ fun DashboardScreen(
 
                                             // 3. Medicine Details
                                             Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    dose.medicine_name,
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 16.sp
-                                                )
+                                                Text(dose.medicine_name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                                                 Text(
                                                     "${dose.dose_label} · ${dose.scheduled_time}",
                                                     fontSize = 13.sp,
@@ -295,10 +247,7 @@ fun DashboardScreen(
                                         Button(
                                             onClick = {
                                                 scope.launch {
-                                                    val ok = apiRepository.markDoseTaken(
-                                                        patient.id,
-                                                        dose.id
-                                                    )
+                                                    val ok = apiRepository.markDoseTaken(patient.id, dose.id)
                                                     if (ok) {
                                                         refreshData()
                                                         DoseRefreshBus.emit()
@@ -319,11 +268,7 @@ fun DashboardScreen(
                                                 modifier = Modifier.size(18.dp)
                                             )
                                             Spacer(Modifier.width(8.dp))
-                                            Text(
-                                                if (dose.taken) localizedString("btn_taken") else localizedString(
-                                                    "btn_mark_taken"
-                                                )
-                                            )
+                                            Text(if (dose.taken) localizedString("btn_taken") else localizedString("btn_mark_taken"))
                                         }
                                     }
 

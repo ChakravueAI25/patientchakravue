@@ -1,5 +1,6 @@
 package com.org.patientchakravue.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -7,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,7 +22,6 @@ import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.model.DoctorNote
 import com.org.patientchakravue.model.DoctorThread
 import com.org.patientchakravue.model.Patient
-import com.org.patientchakravue.ui.language.localizedString
 
 @Composable
 fun NotificationsScreen(

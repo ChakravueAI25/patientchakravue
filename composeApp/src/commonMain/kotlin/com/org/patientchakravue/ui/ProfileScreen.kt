@@ -19,8 +19,6 @@ import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.data.SessionManager
 import com.org.patientchakravue.model.Patient
 import com.org.patientchakravue.platform.saveAndNotifyDownload
-import com.org.patientchakravue.ui.language.LocalLanguageManager
-import com.org.patientchakravue.ui.language.localizedString
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

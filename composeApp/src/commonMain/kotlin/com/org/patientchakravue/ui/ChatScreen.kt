@@ -27,8 +27,10 @@ import kotlinx.coroutines.isActive
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.asPaddingValues
-import com.org.patientchakravue.ui.language.LocalLanguageManager
-import com.org.patientchakravue.ui.language.localizedString
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.toSize
+import androidx.compose.ui.platform.LocalDensity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
