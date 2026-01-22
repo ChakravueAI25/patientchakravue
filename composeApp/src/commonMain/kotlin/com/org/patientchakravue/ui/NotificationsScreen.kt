@@ -72,7 +72,10 @@ fun NotificationsScreen(
             ) {
                 item {
                     Column(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
                             localizedString("hospital_updates"),

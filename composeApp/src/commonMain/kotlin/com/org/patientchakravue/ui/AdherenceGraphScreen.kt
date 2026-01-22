@@ -3,8 +3,8 @@ package com.org.patientchakravue.ui
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,7 +25,6 @@ import com.org.patientchakravue.model.GraphData
 import com.org.patientchakravue.ui.language.LocalLanguageManager
 import com.org.patientchakravue.ui.language.localizedString
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdherenceGraphScreen(onBack: () -> Unit) {
     val sessionManager = remember { SessionManager() }
@@ -55,96 +54,90 @@ fun AdherenceGraphScreen(onBack: () -> Unit) {
         DoseRefreshBus.events.collect { loadData() }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(localizedString("adherence_title")) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
-                    }
-                },
-                // Keep the top bar transparent so the app's global gradient shows through
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
-        // Use transparent scaffold background so global AppTheme gradient is visible
-        containerColor = Color.Transparent
-    ) { padding ->
-        Column(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(Modifier.height(16.dp))
+        Text(localizedString("adherence_title"), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
+        Text("Track your medication adherence", color = Color.Gray, fontSize = 14.sp)
+        Spacer(Modifier.height(24.dp))
+
+        // 1. View Selectors
+        Text(localizedString("view_by"), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF1A3B5D))
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ViewFilterChip(localizedString("view_day"), selectedView == "day") { selectedView = "day" }
+            ViewFilterChip(localizedString("view_week"), selectedView == "week") { selectedView = "week" }
+            ViewFilterChip(localizedString("view_medicine"), selectedView == "medicine") { selectedView = "medicine" }
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        // 2. The Graph Card
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(2.dp),
             modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(16.dp)
+                .fillMaxWidth()
+                .height(350.dp)
         ) {
-            // 1. View Selectors
-            Text(localizedString("view_by"), fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ViewFilterChip(localizedString("view_day"), selectedView == "day") { selectedView = "day" }
-                ViewFilterChip(localizedString("view_week"), selectedView == "week") { selectedView = "week" }
-                ViewFilterChip(localizedString("view_medicine"), selectedView == "medicine") { selectedView = "medicine" }
-            }
+            Box(modifier = Modifier.padding(16.dp).fillMaxSize()) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF4CAF50))
+                } else if (graphData != null) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = graphData!!.title,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1A3B5D)
+                        )
+                        Spacer(Modifier.height(24.dp))
 
-            Spacer(Modifier.height(24.dp))
-
-            // 2. The Graph Card
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(2.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(350.dp)
-            ) {
-                Box(modifier = Modifier.padding(16.dp).fillMaxSize()) {
-                    if (isLoading) {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF4CAF50))
-                    } else if (graphData != null) {
-                        Column {
-                            Text(
-                                text = graphData!!.title,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1A3B5D)
-                            )
-                            Spacer(Modifier.height(24.dp))
-
-                            // Render the Native Bar Chart
-                            SimpleBarChart(
-                                xAxisLabels = graphData!!.xAxis,
-                                yValues = graphData!!.yAxis,
-                                modifier = Modifier.weight(1f).fillMaxWidth()
-                            )
-                        }
-                    } else {
-                        Text(localizedString("no_data"), modifier = Modifier.align(Alignment.Center), color = Color.Gray)
+                        // Render the Native Bar Chart
+                        SimpleBarChart(
+                            xAxisLabels = graphData!!.xAxis,
+                            yValues = graphData!!.yAxis,
+                            modifier = Modifier.weight(1f).fillMaxWidth()
+                        )
                     }
+                } else {
+                    Text(localizedString("no_data"), modifier = Modifier.align(Alignment.Center), color = Color.Gray)
                 }
             }
+        }
 
-            Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
-            // 3. Summary Text
-            if (graphData != null) {
-                val totalTaken = graphData!!.yAxis.sum()
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(localizedString("summary_title"), fontWeight = FontWeight.Bold)
-                        Text("${localizedString("summary_total")} $totalTaken")
-                        if (selectedView == "day") {
-                            Text(localizedString("desc_day"), fontSize = 12.sp, color = Color.Gray)
-                        } else if (selectedView == "week") {
-                            Text(localizedString("desc_week"), fontSize = 12.sp, color = Color.Gray)
-                        } else {
-                            Text(localizedString("desc_medicine"), fontSize = 12.sp, color = Color.Gray)
-                        }
+        // 3. Summary Text
+        if (graphData != null) {
+            val totalTaken = graphData!!.yAxis.sum()
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(localizedString("summary_title"), fontWeight = FontWeight.Bold)
+                    Text("${localizedString("summary_total")} $totalTaken")
+                    if (selectedView == "day") {
+                        Text(localizedString("desc_day"), fontSize = 12.sp, color = Color.Gray)
+                    } else if (selectedView == "week") {
+                        Text(localizedString("desc_week"), fontSize = 12.sp, color = Color.Gray)
+                    } else {
+                        Text(localizedString("desc_medicine"), fontSize = 12.sp, color = Color.Gray)
                     }
                 }
             }
         }
+
+        Spacer(Modifier.height(16.dp))
     }
 }
 

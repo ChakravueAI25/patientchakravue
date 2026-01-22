@@ -110,7 +110,8 @@ fun DashboardScreen(
                     Text(
                         localizedString("section_medicines"),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
+                        fontSize = 18.sp,
+                        color = Color(0xFF1A3B5D)
                     )
                     Spacer(Modifier.height(12.dp))
 
@@ -163,7 +164,8 @@ fun DashboardScreen(
                     Text(
                         localizedString("section_prescription"),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
+                        fontSize = 18.sp,
+                        color = Color(0xFF1A3B5D)
                     )
                     Spacer(Modifier.height(8.dp))
                 }

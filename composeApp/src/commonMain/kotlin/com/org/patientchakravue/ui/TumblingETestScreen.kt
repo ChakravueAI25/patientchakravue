@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
@@ -53,7 +52,6 @@ val MEDICAL_LEVELS = listOf(
 enum class E_Direction { UP, DOWN, LEFT, RIGHT }
 enum class TestState { INSTRUCTIONS, TESTING, COMPLETED }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TumblingETestScreen(
     patient: Patient,
@@ -84,40 +82,22 @@ fun TumblingETestScreen(
     val scope = rememberCoroutineScope()
     var isSubmitting by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(localizedString("acuity_title")) },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        when (gameState) {
-                            TestState.TESTING -> gameState = TestState.INSTRUCTIONS
-                            else -> onBack()
-                        }
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (gameState) {
+            TestState.INSTRUCTIONS -> {
+                TumblingEInstructionScreen(
+                    onStart = { eye ->
+                        // RESET LOGIC
+                        selectedEye = eye
+                        currentLevelIndex = 0
+                        trialsInCurrentLevel = 0
+                        correctInCurrentLevel = 0
+                        levelResults.clear()
+                        currentDirection = E_Direction.entries.toTypedArray().random()
+                        gameState = TestState.TESTING
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF5F5F5))
-            )
-        }
-    ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize().background(Color.White)) {
-            when (gameState) {
-                TestState.INSTRUCTIONS -> {
-                    TumblingEInstructionScreen(
-                        onStart = { eye ->
-                            // RESET LOGIC
-                            selectedEye = eye
-                            currentLevelIndex = 0
-                            trialsInCurrentLevel = 0
-                            correctInCurrentLevel = 0
-                            levelResults.clear()
-                            currentDirection = E_Direction.entries.toTypedArray().random()
-                            gameState = TestState.TESTING
-                        }
-                    )
-                }
+                )
+            }
                 TestState.TESTING -> {
                     // Get current level data
                     val currentLevelData = MEDICAL_LEVELS.getOrElse(currentLevelIndex) { MEDICAL_LEVELS.last() }
@@ -211,7 +191,6 @@ fun TumblingETestScreen(
                 }
             }
         }
-    }
 }
 
 // --- UI COMPONENTS ---
@@ -223,14 +202,16 @@ fun TumblingEInstructionScreen(onStart: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .background(Color.White)
+            .padding(horizontal = 24.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(Icons.Default.Info, null, modifier = Modifier.size(64.dp), tint = Color(0xFF4CAF50))
         Spacer(Modifier.height(24.dp))
-        Text(localizedString("visual_acuity_test"), fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text(localizedString("visual_acuity_test"), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
+        Text("Follow the instructions to test your vision", color = Color.Gray, fontSize = 14.sp)
         Spacer(Modifier.height(16.dp))
 
         Card(
@@ -251,7 +232,7 @@ fun TumblingEInstructionScreen(onStart: (String) -> Unit) {
         Spacer(Modifier.height(24.dp))
 
         // Eye Selector
-        Text(localizedString("select_eye"), fontWeight = FontWeight.SemiBold)
+        Text(localizedString("select_eye"), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF1A3B5D))
         Spacer(Modifier.height(8.dp))
         Row {
             FilterChip(
@@ -301,6 +282,7 @@ fun TumblingEGameScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragEnd = {
@@ -329,8 +311,8 @@ fun TumblingEGameScreen(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(headerText, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-            Text(subText, fontSize = 16.sp, color = Color.Gray)
+            Text(headerText, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
+            Text(subText, fontSize = 14.sp, color = Color.Gray)
         }
 
         Spacer(Modifier.weight(1f))
@@ -374,14 +356,15 @@ fun TumblingEResultScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .padding(horizontal = 24.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(80.dp), tint = Color(0xFF4CAF50))
         Spacer(Modifier.height(24.dp))
-        Text(localizedString("test_complete"), fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Text(localizedString("test_complete"), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
+        Text("View your results below", color = Color.Gray, fontSize = 14.sp)
 
         Card(
             modifier = Modifier.padding(vertical = 24.dp).fillMaxWidth(),

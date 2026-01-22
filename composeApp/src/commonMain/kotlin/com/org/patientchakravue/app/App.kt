@@ -203,20 +203,20 @@ fun App(initialCallData: Pair<String, String>? = null) {
                     )
 
                     is Screen.VideoCallRequest -> VideoCallRequestScreen(
-                        { navigator.goBack() },
-                        { navigator.goBack() },
+                        { navigator.navigateAsPillar(Screen.Dashboard) },
+                        { navigator.navigateAsPillar(Screen.Dashboard) },
                         paddingValues
                     )
 
                     is Screen.VideoCall -> VideoCallScreen(
                         screen.channelName,
                         screen.doctorId,
-                        { navigator.goBack() }
+                        { navigator.navigateAsPillar(Screen.Dashboard) }
                     )
 
                     is Screen.FeedbackDetail -> FeedbackDetailScreen(
                         note = screen.note,
-                        onBack = { navigator.goBack() })
+                        onBack = { navigator.navigateAsPillar(Screen.Dashboard) })
 
                     is Screen.MedicineList -> Text(
                         "Medicine List Screen",
@@ -336,7 +336,7 @@ fun BottomNavigationBar(navigator: Navigator) {
                                 pressed = true
                                 tryAwaitRelease()
                                 pressed = false
-                                navigator.navigateForward(Screen.VideoCallRequest)
+                                navigator.navigateAsPillar(Screen.VideoCallRequest)
                             }
                         )
                     },

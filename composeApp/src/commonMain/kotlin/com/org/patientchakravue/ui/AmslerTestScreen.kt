@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
@@ -31,7 +30,6 @@ import kotlinx.coroutines.launch
 // Steps for the Test Flow
 enum class AmslerStep { INSTRUCTIONS, DRAWING }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AmslerTestScreen(
     patient: Patient,
@@ -44,39 +42,23 @@ fun AmslerTestScreen(
     // Get current language to trigger recomposition when it changes
     val currentLang = LocalLanguageManager.current.currentLanguage
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(localizedString("amsler_title")) },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        if (currentStep == AmslerStep.DRAWING) currentStep = AmslerStep.INSTRUCTIONS
-                        else onBack()
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (currentStep) {
+            AmslerStep.INSTRUCTIONS -> AmslerInstructions(
+                onNext = { eye ->
+                    selectedEye = eye
+                    currentStep = AmslerStep.DRAWING
                 }
             )
-        }
-    ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            when (currentStep) {
-                AmslerStep.INSTRUCTIONS -> AmslerInstructions(
-                    onNext = { eye ->
-                        selectedEye = eye
-                        currentStep = AmslerStep.DRAWING
-                    }
-                )
-                AmslerStep.DRAWING -> AmslerCanvasDrawing(
-                    patient = patient,
-                    eyeSide = selectedEye,
-                    onSuccess = {
-                        showSnackbar("Test submitted successfully!")
-                        onBack()
-                    },
-                    onError = { showSnackbar("Failed to submit test.") }
-                )
-            }
+            AmslerStep.DRAWING -> AmslerCanvasDrawing(
+                patient = patient,
+                eyeSide = selectedEye,
+                onSuccess = {
+                    showSnackbar("Test submitted successfully!")
+                    onBack()
+                },
+                onError = { showSnackbar("Failed to submit test.") }
+            )
         }
     }
 }
@@ -89,11 +71,13 @@ fun AmslerInstructions(onNext: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(localizedString("instructions_title"), fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(16.dp))
+        Text(localizedString("instructions_title"), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
+        Text("Follow the steps below to start the test", color = Color.Gray, fontSize = 14.sp)
         Spacer(Modifier.height(16.dp))
 
         // Static Grid Preview
@@ -122,7 +106,7 @@ fun AmslerInstructions(onNext: (String) -> Unit) {
 
         Spacer(Modifier.height(20.dp))
 
-        Text(localizedString("select_eye"), fontWeight = FontWeight.SemiBold)
+        Text(localizedString("select_eye"), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF1A3B5D))
         Row(Modifier.padding(vertical = 8.dp)) {
             FilterChip(
                 selected = selectedEye == "Right",
@@ -180,8 +164,9 @@ fun AmslerCanvasDrawing(
     val paths = remember { mutableStateListOf<Path>() }
     var currentPath by remember { mutableStateOf<Path?>(null) }
 
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Text("${localizedString("mark_distortions")} ($eyeSide)", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Spacer(Modifier.height(16.dp))
+        Text("${localizedString("mark_distortions")} ($eyeSide)", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
         Text(localizedString("draw_hint"), color = Color.Gray, fontSize = 14.sp)
 
         Spacer(Modifier.height(16.dp))
