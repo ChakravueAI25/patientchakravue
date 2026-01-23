@@ -38,8 +38,7 @@ fun DashboardScreen(
     patient: Patient,
     onNavigateToProfile: () -> Unit,
     onNavigateToAdherence: () -> Unit,
-    onNavigateToMedicineList: () -> Unit,
-    bottomBar: @Composable () -> Unit
+    onNavigateToMedicineList: () -> Unit
 ) {
     val apiRepository = remember { ApiRepository() }
     var todayDoses by remember { mutableStateOf<List<DoseItem>>(emptyList()) }
@@ -68,7 +67,6 @@ fun DashboardScreen(
 
     AppBackground {
         Scaffold(
-            bottomBar = bottomBar,
             containerColor = Color.Transparent
         ) { padding ->
             LazyColumn(

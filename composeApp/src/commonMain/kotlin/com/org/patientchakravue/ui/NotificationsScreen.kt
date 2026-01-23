@@ -25,8 +25,7 @@ import com.org.patientchakravue.ui.language.localizedString
 @Composable
 fun NotificationsScreen(
     patient: Patient,
-    onNavigateToChat: (doctorId: String, doctorName: String, submissionIds: List<String>) -> Unit, // Navigate with full doctor thread data
-    bottomBar: @Composable () -> Unit
+    onNavigateToChat: (doctorId: String, doctorName: String, submissionIds: List<String>) -> Unit
 ) {
     val api = remember { ApiRepository() }
     var messages by remember { mutableStateOf<List<DoctorNote>>(emptyList()) }
@@ -37,7 +36,7 @@ fun NotificationsScreen(
         isLoading = false
     }
 
-    Scaffold(bottomBar = bottomBar) { padding ->
+    Scaffold { padding ->
         if (isLoading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = Color(0xFF4CAF50))
