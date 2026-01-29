@@ -164,18 +164,16 @@ fun AmslerCanvasDrawing(
     val paths = remember { mutableStateListOf<Path>() }
     var currentPath by remember { mutableStateOf<Path?>(null) }
 
-    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(Modifier.height(16.dp))
         Text("${localizedString("mark_distortions")} ($eyeSide)", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
         Text(localizedString("draw_hint"), color = Color.Gray, fontSize = 14.sp)
 
         Spacer(Modifier.height(16.dp))
 
-        // THE CANVAS
         Box(
             modifier = Modifier
-                .weight(1f)
-                .aspectRatio(1f)
+                .size(300.dp)
                 .background(Color.White)
                 .align(Alignment.CenterHorizontally)
                 .pointerInput(Unit) {
@@ -219,10 +217,10 @@ fun AmslerCanvasDrawing(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(24.dp))
 
         // CONTROLS
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             OutlinedButton(onClick = { paths.clear() }) {
                 Icon(Icons.Default.Refresh, null)
                 Spacer(Modifier.width(4.dp))
