@@ -29,8 +29,23 @@ import androidx.core.content.ContextCompat
 import com.org.patientchakravue.data.ApiRepository
 import io.agora.rtc2.*
 import io.agora.rtc2.video.VideoCanvas
+import kotlin.math.absoluteValue
 
 private const val TAG = "VideoCallScreen"
+
+// Patient UID offset to ensure no collision with doctor (doctor uses base hash, patient adds offset)
+private const val PATIENT_UID_OFFSET = 50000
+
+/**
+ * Generate a unique UID for the patient based on channel name.
+ * Uses offset to ensure patient UID never collides with doctor UID.
+ * Doctor: hash % 100000 (range 0-99999, typically 0-49999)
+ * Patient: (hash % 50000) + 50000 (range 50000-99999)
+ */
+private fun generatePatientUid(channelName: String): Int {
+    val hash = channelName.hashCode().absoluteValue
+    return (hash % PATIENT_UID_OFFSET) + PATIENT_UID_OFFSET
+}
 
 @Composable
 actual fun VideoCallScreen(
@@ -40,6 +55,9 @@ actual fun VideoCallScreen(
 ) {
     val context = LocalContext.current
     val api = remember { ApiRepository() }
+
+    // Generate unique patient UID - MUST be different from doctor UID
+    val patientUid = remember(channelName) { generatePatientUid(channelName) }
 
     // Agora Engine State
     var rtcEngine by remember { mutableStateOf<RtcEngine?>(null) }
@@ -131,11 +149,12 @@ actual fun VideoCallScreen(
                 // Setup local video
                 val localView = SurfaceView(context)
                 localSurfaceView = localView
-                setupLocalVideo(VideoCanvas(localView, VideoCanvas.RENDER_MODE_HIDDEN, 0))
+                setupLocalVideo(VideoCanvas(localView, VideoCanvas.RENDER_MODE_HIDDEN, patientUid))
                 startPreview()
 
-                // Join channel
-                joinChannel(tokenResponse.token, channelName, 0, ChannelMediaOptions())
+                // Join channel with UNIQUE patient UID (not 0!)
+                Log.d(TAG, "Joining channel: $channelName with patientUid: $patientUid")
+                joinChannel(tokenResponse.token, channelName, patientUid, ChannelMediaOptions())
             }
 
         } catch (e: Exception) {

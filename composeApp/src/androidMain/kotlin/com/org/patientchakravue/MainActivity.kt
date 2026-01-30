@@ -146,25 +146,36 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Fetches FCM token and registers it with the backend if user is logged in.
+     * FORCE REFRESH: Deletes old token first, then gets a fresh one.
      */
     private fun initializeFirebaseMessaging() {
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (!task.isSuccessful) {
-                Log.w("FCM", "Fetching FCM registration token failed", task.exception)
-                return@addOnCompleteListener
+        // Step 1: Delete the old token to force a refresh
+        FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener { deleteTask ->
+            if (deleteTask.isSuccessful) {
+                Log.d("FCM", "Old token deleted successfully, fetching new token...")
+            } else {
+                Log.w("FCM", "Failed to delete old token, proceeding anyway", deleteTask.exception)
             }
 
-            // Get new FCM registration token
-            val token = task.result
-            Log.d("FCM", "FCM Token: $token")
+            // Step 2: Get a fresh token after deletion
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    Log.w("FCM", "Fetching FCM registration token failed", task.exception)
+                    return@addOnCompleteListener
+                }
 
-            // Send to Backend if user is logged in
-            val session = SessionManager()
-            val patient = session.getPatient()
-            if (patient != null) {
-                CoroutineScope(Dispatchers.IO).launch {
-                    val success = ApiRepository().registerFcmToken(patient.id, token)
-                    Log.d("FCM", "Token registration ${if (success) "successful" else "failed"}")
+                // Get new FCM registration token
+                val token = task.result
+                Log.d("FCM", "NEW FCM Token: $token")
+
+                // Send to Backend if user is logged in
+                val session = SessionManager()
+                val patient = session.getPatient()
+                if (patient != null) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val success = ApiRepository().registerFcmToken(patient.id, token)
+                        Log.d("FCM", "Token registration ${if (success) "successful" else "failed"}")
+                    }
                 }
             }
         }
@@ -174,12 +185,24 @@ class MainActivity : ComponentActivity() {
         /**
          * Static helper to register FCM token after login.
          * Call this from LoginScreen after successful authentication.
+         * FORCE REFRESH: Deletes old token first, then gets a fresh one.
          */
         fun registerFcmTokenAfterLogin(patientId: String) {
-            FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
-                CoroutineScope(Dispatchers.IO).launch {
-                    val success = ApiRepository().registerFcmToken(patientId, token)
-                    Log.d("FCM", "Post-login token registration ${if (success) "successful" else "failed"}")
+            // Delete old token first
+            FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener { deleteTask ->
+                if (deleteTask.isSuccessful) {
+                    Log.d("FCM", "Old token deleted on login, fetching fresh token...")
+                } else {
+                    Log.w("FCM", "Failed to delete old token on login", deleteTask.exception)
+                }
+
+                // Get fresh token
+                FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+                    Log.d("FCM", "Fresh FCM Token after login: $token")
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val success = ApiRepository().registerFcmToken(patientId, token)
+                        Log.d("FCM", "Post-login token registration ${if (success) "successful" else "failed"}")
+                    }
                 }
             }
         }
