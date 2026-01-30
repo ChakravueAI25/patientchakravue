@@ -82,12 +82,23 @@ fun DashboardScreen(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            patient.name ?: "Patient",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f)
-                        )
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "HELLO, ",
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Text(
+                                patient.name ?: "Patient",
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                         // Language Switcher Icon
                         LanguageSwitcherIcon(tint = Color(0xFF1A3B5D))
                         IconButton(onClick = onNavigateToAdherence) {
@@ -256,25 +267,7 @@ fun DashboardScreen(
                                             )
                                             Spacer(Modifier.width(12.dp))
 
-                                            // 2. NEW: Medicine Image/Icon
-                                            Surface(
-                                                shape = RoundedCornerShape(12.dp),
-                                                color = Color(0xFFE3F2FD), // Light blue background
-                                                modifier = Modifier.size(48.dp)
-                                            ) {
-                                                Box(contentAlignment = Alignment.Center) {
-                                                    Icon(
-                                                        Icons.Default.Medication,
-                                                        contentDescription = "Medicine",
-                                                        tint = Color(0xFF1976D2),
-                                                        modifier = Modifier.size(24.dp)
-                                                    )
-                                                }
-                                            }
-
-                                            Spacer(Modifier.width(12.dp))
-
-                                            // 3. Medicine Details
+                                            // Medicine Details
                                             Column(modifier = Modifier.weight(1f)) {
                                                 Text(
                                                     dose.medicine_name,
@@ -313,12 +306,6 @@ fun DashboardScreen(
                                             ),
                                             shape = RoundedCornerShape(8.dp)
                                         ) {
-                                            Icon(
-                                                if (dose.taken) Icons.Default.Check else Icons.Default.Medication,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                            Spacer(Modifier.width(8.dp))
                                             Text(
                                                 if (dose.taken) localizedString("btn_taken") else localizedString(
                                                     "btn_mark_taken"
@@ -442,8 +429,11 @@ private fun calculateNextAppointment(patient: Patient): String? {
                 }
             }
 
-            // If all milestones passed, show the final one or a "Follow-up Completed" message
-            return "Follow-up Completed"
+            // If all milestones passed, show the final milestone date (15 days)
+            val finalMilestoneDate = surgeryDate.plus(15, DateTimeUnit.DAY)
+            val result = formatDate(finalMilestoneDate)
+            println("[DEBUG] All milestones passed, showing final milestone: $result")
+            return result
         }
 
         println("[DEBUG] No surgery date found, returning null")

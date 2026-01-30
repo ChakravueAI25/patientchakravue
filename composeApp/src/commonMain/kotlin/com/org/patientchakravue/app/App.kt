@@ -1,6 +1,5 @@
 package com.org.patientchakravue.app
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.*
@@ -12,6 +11,11 @@ import kotlinx.coroutines.launch
 import com.org.patientchakravue.ui.language.AppLocalizationProvider
 import com.org.patientchakravue.ui.theme.AppTheme
 import com.org.patientchakravue.ui.theme.PatientBottomNavBar
+import com.org.patientchakravue.ui.theme.NavigationAnimations
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.AnimatedContentTransitionScope
 
 @Composable
 fun App(initialCallData: Pair<String, String>? = null) {
@@ -31,9 +35,36 @@ fun App(initialCallData: Pair<String, String>? = null) {
             val snackbarHostState = remember { SnackbarHostState() }
             val scope = rememberCoroutineScope()
 
+            // Track previous screen to determine navigation direction
+            var previousScreen by remember { mutableStateOf<Screen>(initialScreen) }
+
             // Show back handler on any screen that is NOT a root screen
             if (navigator.currentScreen !in listOf(Screen.Dashboard, Screen.Login)) {
                 AppBackHandler { navigator.goBack() }
+            }
+
+            // Helper function to classify screens
+            fun getScreenPosition(screen: Screen): Int = when (screen) {
+                is Screen.Dashboard -> 0  // Home - leftmost
+                is Screen.AfterCare -> 1  // Care - left-center
+                is Screen.Vision -> 2     // Vision - right-center
+                is Screen.Notifications -> 3  // Alerts - rightmost
+                is Screen.VideoCallRequest -> 0  // Maps to Dashboard pillar
+                else -> -1  // Nested/detail screens (Profile, AmslerGrid, Chat, etc)
+            }
+
+            // Helper function to determine if navigation is to right or left pillar
+            fun isNavigatingRight(from: Screen, to: Screen): Boolean {
+                val fromPos = getScreenPosition(from)
+                val toPos = getScreenPosition(to)
+                return if (fromPos >= 0 && toPos >= 0) toPos > fromPos else false
+            }
+
+            // Helper function to determine if navigating to nested screen
+            fun isNavigatingForward(from: Screen, to: Screen): Boolean {
+                val fromPos = getScreenPosition(from)
+                val toPos = getScreenPosition(to)
+                return fromPos >= 0 && toPos < 0  // From pillar to nested screen
             }
 
             // include VideoCall in bottomNavScreens so nav remains visible during a call
@@ -44,7 +75,6 @@ fun App(initialCallData: Pair<String, String>? = null) {
                     is Screen.AfterCare,
                     is Screen.Vision,
                     is Screen.Notifications,
-                    is Screen.VideoCall,
                     is Screen.VideoCallRequest -> true
 
                     else -> false
@@ -60,8 +90,35 @@ fun App(initialCallData: Pair<String, String>? = null) {
                     }
                 }
             ) { paddingValues ->
-                when (val screen = navigator.currentScreen) {
-                    is Screen.Login -> LoginScreen(
+                // Determine which animation to use based on navigation direction
+                val currentTransitionSpec: AnimatedContentTransitionScope<Screen>.() -> ContentTransform = {
+                    when {
+                        // Back navigation - use pop animations
+                        isNavigatingForward(navigator.currentScreen, previousScreen) -> {
+                            NavigationAnimations.popEnter togetherWith NavigationAnimations.popExit
+                        }
+                        // Forward to nested screen - use forward animations
+                        isNavigatingForward(previousScreen, navigator.currentScreen) -> {
+                            NavigationAnimations.enterForward togetherWith NavigationAnimations.exitForward
+                        }
+                        // Navigating right on bottom nav (Vision, Notifications) - slide from right
+                        isNavigatingRight(previousScreen, navigator.currentScreen) -> {
+                            NavigationAnimations.enterFromRight togetherWith NavigationAnimations.exitToRight
+                        }
+                        // Navigating left on bottom nav (Home, Care) - slide from left
+                        else -> {
+                            NavigationAnimations.enterFromLeft togetherWith NavigationAnimations.exitToLeft
+                        }
+                    }
+                }
+
+                AnimatedContent(
+                    targetState = navigator.currentScreen,
+                    transitionSpec = currentTransitionSpec,
+                    label = "screen-transition"
+                ) { screen ->
+                    when (screen) {
+                        is Screen.Login -> LoginScreen(
                         onLoginSuccess = { navigator.navigateAsPillar(Screen.Dashboard) },
                         showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } }
                     )
@@ -199,6 +256,12 @@ fun App(initialCallData: Pair<String, String>? = null) {
                         "Medicine List Screen",
                         modifier = Modifier.padding(paddingValues)
                     )
+                    }
+                }
+
+                // Track screen changes for next animation
+                LaunchedEffect(navigator.currentScreen) {
+                    previousScreen = navigator.currentScreen
                 }
             }
         }

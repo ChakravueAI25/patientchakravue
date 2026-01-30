@@ -5,15 +5,16 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.RemoveRedEye
@@ -32,125 +33,167 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import com.org.patientchakravue.app.Navigator
 import com.org.patientchakravue.app.Screen
 
-data class PatientBottomNavItem(
-    val screen: Screen,
-    val label: String,
-    val icon: ImageVector
-)
 
 @Composable
 fun PatientBottomNavBar(navigator: Navigator) {
-    val bottomNavItems = listOf(
-        PatientBottomNavItem(Screen.Dashboard, "Home", Icons.Default.Dashboard),
-        PatientBottomNavItem(Screen.AfterCare, "Care", Icons.AutoMirrored.Filled.List),
-        PatientBottomNavItem(Screen.Vision, "Vision", Icons.Default.RemoveRedEye),
-        PatientBottomNavItem(Screen.Notifications, "Alerts", Icons.Default.Notifications),
-    )
+    val activeColor = Color(0xFF4CAF50)
+    val inactiveColor = Color(0xFF000000)
+    val navBarColor = Color(0xFFBFE6D3)
+    val bubbleColor = Color.White
 
     Box {
-        // Keep the navigation surface as a simple white surface
         Surface(
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-            color = Color.White,
-            tonalElevation = 0.dp,
-            shadowElevation = 0.dp,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            color = navBarColor,
+            shadowElevation = 12.dp,
+            shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
         ) {
             NavigationBar(
+                modifier = Modifier
+                    .height(88.dp)
+                    .padding(horizontal = 12.dp),
                 containerColor = Color.Transparent,
-                tonalElevation = 0.dp,
-                modifier = Modifier.height(90.dp)
+                tonalElevation = 0.dp
             ) {
-                // Dashboard - Left
+
+                // Dashboard - Home
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, null) },
-                    label = { Text("Home") },
                     selected = navigator.currentScreen == Screen.Dashboard,
                     onClick = { navigator.navigateAsPillar(Screen.Dashboard) },
+                    icon = {
+                        CustomNavIcon(
+                            icon = Icons.Default.Home,
+                            label = "Home",
+                            isSelected = navigator.currentScreen == Screen.Dashboard,
+                            activeColor = activeColor,
+                            inactiveColor = inactiveColor,
+                            bubbleColor = bubbleColor
+                        )
+                    },
+                    label = null,
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF4CAF50),
-                        unselectedIconColor = Color.Black,
+                        selectedIconColor = activeColor,
+                        selectedTextColor = activeColor,
+                        unselectedIconColor = inactiveColor,
+                        unselectedTextColor = inactiveColor,
                         indicatorColor = Color.Transparent
-                    )
+                    ),
+                    alwaysShowLabel = false,
+                    interactionSource = remember { MutableInteractionSource() }
                 )
 
-                // AfterCare - Left-Center
+                // AfterCare - Care
                 NavigationBarItem(
-                    icon = { Icon(Icons.AutoMirrored.Filled.List, null) },
-                    label = { Text("Care") },
                     selected = navigator.currentScreen == Screen.AfterCare,
                     onClick = { navigator.navigateAsPillar(Screen.AfterCare) },
+                    icon = {
+                        CustomNavIcon(
+                            icon = Icons.AutoMirrored.Filled.List,
+                            label = "Care",
+                            isSelected = navigator.currentScreen == Screen.AfterCare,
+                            activeColor = activeColor,
+                            inactiveColor = inactiveColor,
+                            bubbleColor = bubbleColor
+                        )
+                    },
+                    label = null,
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF4CAF50),
-                        unselectedIconColor = Color.Black,
+                        selectedIconColor = activeColor,
+                        selectedTextColor = activeColor,
+                        unselectedIconColor = inactiveColor,
+                        unselectedTextColor = inactiveColor,
                         indicatorColor = Color.Transparent
-                    )
+                    ),
+                    alwaysShowLabel = false,
+                    interactionSource = remember { MutableInteractionSource() }
                 )
 
-                // Empty spacer for center FAB
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Vision - Right-Center
+                // Vision
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.RemoveRedEye, null) },
-                    label = { Text("Vision") },
                     selected = navigator.currentScreen == Screen.Vision,
                     onClick = { navigator.navigateAsPillar(Screen.Vision) },
+                    icon = {
+                        CustomNavIcon(
+                            icon = Icons.Default.RemoveRedEye,
+                            label = "Vision",
+                            isSelected = navigator.currentScreen == Screen.Vision,
+                            activeColor = activeColor,
+                            inactiveColor = inactiveColor,
+                            bubbleColor = bubbleColor
+                        )
+                    },
+                    label = null,
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF4CAF50),
-                        unselectedIconColor = Color.Black,
+                        selectedIconColor = activeColor,
+                        selectedTextColor = activeColor,
+                        unselectedIconColor = inactiveColor,
+                        unselectedTextColor = inactiveColor,
                         indicatorColor = Color.Transparent
-                    )
+                    ),
+                    alwaysShowLabel = false,
+                    interactionSource = remember { MutableInteractionSource() }
                 )
 
-                // Notifications - Right
+                // Notifications - Alerts
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Notifications, null) },
-                    label = { Text("Alerts") },
                     selected = navigator.currentScreen == Screen.Notifications,
                     onClick = { navigator.navigateAsPillar(Screen.Notifications) },
+                    icon = {
+                        CustomNavIcon(
+                            icon = Icons.Default.Notifications,
+                            label = "Alerts",
+                            isSelected = navigator.currentScreen == Screen.Notifications,
+                            activeColor = activeColor,
+                            inactiveColor = inactiveColor,
+                            bubbleColor = bubbleColor
+                        )
+                    },
+                    label = null,
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF4CAF50),
-                        unselectedIconColor = Color.Black,
+                        selectedIconColor = activeColor,
+                        selectedTextColor = activeColor,
+                        unselectedIconColor = inactiveColor,
+                        unselectedTextColor = inactiveColor,
                         indicatorColor = Color.Transparent
-                    )
+                    ),
+                    alwaysShowLabel = false,
+                    interactionSource = remember { MutableInteractionSource() }
                 )
             }
         }
 
-        // FAB for Video Call Request
+        // Center FAB for Video Call Request
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .offset(y = (-12).dp),
+                .offset(y = (-20).dp),
             contentAlignment = Alignment.Center
         ) {
             var pressed by remember { mutableStateOf(false) }
 
             val scale by animateFloatAsState(
-                targetValue = if (pressed) 0.92f else 1f,
-                animationSpec = tween(durationMillis = 120),
+                targetValue = if (pressed) 0.9f else 1f,
+                animationSpec = tween(120),
                 label = "fab-scale"
             )
 
             Box(
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(64.dp)
                     .graphicsLayer {
                         scaleX = scale
                         scaleY = scale
                     }
-                    .background(
-                        color = Color(0xFF4CAF50),
-                        shape = RoundedCornerShape(28.dp)
-                    )
+                    .background(activeColor, RoundedCornerShape(32.dp))
                     .pointerInput(Unit) {
                         detectTapGestures(
                             onPress = {
@@ -167,9 +210,69 @@ fun PatientBottomNavBar(navigator: Navigator) {
                     Icons.Default.Videocam,
                     contentDescription = "Video Call",
                     tint = Color.White,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(28.dp)
                 )
             }
         }
     }
 }
+
+@Composable
+fun CustomNavIcon(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    isSelected: Boolean,
+    activeColor: Color,
+    inactiveColor: Color,
+    bubbleColor: Color
+) {
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1.2f else 1f,
+        animationSpec = tween(300),
+        label = "icon-scale"
+    )
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(48.dp)
+        ) {
+            // White bubble behind icon when selected
+            if (isSelected) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(bubbleColor, RoundedCornerShape(10.dp))
+                )
+            }
+
+            // Icon with scale animation
+            Icon(
+                icon,
+                contentDescription = label,
+                modifier = Modifier
+                    .size(26.dp)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    },
+                tint = if (isSelected) activeColor else inactiveColor
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Show label only when selected
+        if (isSelected) {
+            Text(
+                label,
+                style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                color = activeColor
+            )
+        }
+    }
+}
+
+

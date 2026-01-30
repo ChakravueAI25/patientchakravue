@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash Screen Theme for Android 12+ (API 31+) -->
+    <style name="SplashTheme" parent="Theme.SplashScreen">
+        <!-- Set splash screen background to black -->
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <!-- Hide the animated icon completely -->
+        <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+        <!-- Remove any branding image -->
+        <item name="android:windowSplashScreenBrandingImage">@null</item>
+        <!-- No animation duration -->
+        <item name="android:windowSplashScreenAnimationDuration">0</item>
+        <!-- Black icon background -->
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/splash_background</item>
+        <!-- Status and navigation bars -->
+        <item name="android:statusBarColor">@color/splash_background</item>
+        <item name="android:navigationBarColor">@color/splash_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <!-- Post splash theme -->
+        <item name="postSplashScreenTheme">@style/AppTheme</item>
+    </style>
+
+    <!-- Main app theme after splash -->
+    <style name="AppTheme" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

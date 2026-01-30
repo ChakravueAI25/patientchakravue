@@ -14,10 +14,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.org.patientchakravue.SplashScreen as CustomSplashScreen
 import com.google.firebase.messaging.FirebaseMessaging
 import com.org.patientchakravue.app.App
 import com.org.patientchakravue.data.ApiRepository
@@ -38,6 +41,13 @@ class MainActivity : ComponentActivity() {
 
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Handle Android 12+ splash screen API
+        val splashScreen = installSplashScreen()
+
+        // Keep splash screen visible until our custom animation is ready
+        var keepSplashVisible = true
+        splashScreen.setKeepOnScreenCondition { keepSplashVisible }
+
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
@@ -47,9 +57,9 @@ class MainActivity : ComponentActivity() {
         // Make content draw behind system bars but use safe insets in Compose (WindowInsets.safeDrawing)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        // Set status bar background to white and request dark icons
-        window.statusBarColor = Color.WHITE
-        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = true
+        // Set status bar background to black for splash screen
+        window.statusBarColor = Color.BLACK
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
 
         // STEP 1: Create ALL notification channels ONCE at app startup
         createNotificationChannels()
@@ -66,11 +76,29 @@ class MainActivity : ComponentActivity() {
         val doctorId = intent.getStringExtra("doctor_id")
 
         setContent {
-            App(
-                initialCallData = if (targetScreen == "call_screen" && channelName != null) {
-                    Pair(channelName, doctorId ?: "unknown")
-                } else null
-            )
+            var showSplash by remember { mutableStateOf(true) }
+
+            // Dismiss native splash screen when Compose is ready
+            LaunchedEffect(Unit) {
+                keepSplashVisible = false
+            }
+
+            if (showSplash) {
+                CustomSplashScreen(
+                    onSplashComplete = {
+                        showSplash = false
+                        // Update status bar for main app
+                        window.statusBarColor = Color.WHITE
+                        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = true
+                    }
+                )
+            } else {
+                App(
+                    initialCallData = if (targetScreen == "call_screen" && channelName != null) {
+                        Pair(channelName, doctorId ?: "unknown")
+                    } else null
+                )
+            }
         }
     }
 

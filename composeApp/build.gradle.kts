@@ -43,6 +43,7 @@ kotlin {
             implementation("io.agora.rtc:full-sdk:4.6.1")
             implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.0")
             implementation("androidx.fragment:fragment-ktx:1.8.5")
+            implementation("androidx.core:core-splashscreen:1.0.1") // Splash screen API for Android 12+
 
         }
         iosMain.dependencies {
