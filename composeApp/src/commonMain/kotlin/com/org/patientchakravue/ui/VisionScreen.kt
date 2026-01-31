@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Visibility
@@ -29,7 +30,8 @@ fun VisionScreen(
     patient: Patient,
     onNavigateToAmsler: () -> Unit,
     onNavigateToTumblingE: () -> Unit,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    onBack: () -> Unit = {}
 ) {
     val api = remember { ApiRepository() }
     var history by remember { mutableStateOf<List<VisionTestRecord>>(emptyList()) }
@@ -51,17 +53,42 @@ fun VisionScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            localizedString("vision_title"),
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A3B5D)
-        )
-        Text(
-            localizedString("vision_subtitle"),
-            color = Color.Gray,
-            fontSize = 14.sp
-        )
+        // Header with back icon beside the title
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color(0xFF1A3B5D),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    localizedString("vision_title"),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1A3B5D)
+                )
+                Text(
+                    localizedString("vision_subtitle"),
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
+        }
+
         Spacer(Modifier.height(24.dp))
 
         // --- 1. HORIZONTAL BUTTONS ROW ---

@@ -173,7 +173,8 @@ fun App(initialCallData: Pair<String, String>? = null) {
                                 patient = patient,
                                 contentPadding = paddingValues,
                                 onNavigateToAmsler = { navigator.navigateForward(Screen.AmslerGrid) },
-                                onNavigateToTumblingE = { navigator.navigateForward(Screen.TumblingE) }
+                                onNavigateToTumblingE = { navigator.navigateForward(Screen.TumblingE) },
+                                onBack = { navigator.goBack() }
                             )
                         }
                     }
@@ -225,7 +226,8 @@ fun App(initialCallData: Pair<String, String>? = null) {
                                             submissionIds
                                         )
                                     )
-                                }
+                                },
+                                onBack = { navigator.goBack() }
                             )
                         }
                     }

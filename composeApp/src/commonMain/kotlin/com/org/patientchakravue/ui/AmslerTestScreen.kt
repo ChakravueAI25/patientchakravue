@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
@@ -40,32 +41,40 @@ fun AmslerTestScreen(
     var selectedEye by remember { mutableStateOf("Left") }
 
     // Get current language to trigger recomposition when it changes
-    val currentLang = LocalLanguageManager.current.currentLanguage
+    LocalLanguageManager.current.currentLanguage
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        when (currentStep) {
-            AmslerStep.INSTRUCTIONS -> AmslerInstructions(
-                onNext = { eye ->
-                    selectedEye = eye
-                    currentStep = AmslerStep.DRAWING
-                }
-            )
-            AmslerStep.DRAWING -> AmslerCanvasDrawing(
-                patient = patient,
-                eyeSide = selectedEye,
-                onSuccess = {
-                    showSnackbar("Test submitted successfully!")
-                    onBack()
-                },
-                onError = { showSnackbar("Failed to submit test.") }
-            )
-        }
+    // No global overlay back button here (it can overlap with step UIs)
+    when (currentStep) {
+        AmslerStep.INSTRUCTIONS -> AmslerInstructions(
+            onBack = onBack,
+            onNext = { eye ->
+                selectedEye = eye
+                currentStep = AmslerStep.DRAWING
+            }
+        )
+
+        AmslerStep.DRAWING -> AmslerCanvasDrawing(
+            patient = patient,
+            eyeSide = selectedEye,
+            onBack = {
+                // Back from drawing returns to the instructions step (same as system back behavior)
+                currentStep = AmslerStep.INSTRUCTIONS
+            },
+            onSuccess = {
+                showSnackbar("Test submitted successfully!")
+                onBack()
+            },
+            onError = { showSnackbar("Failed to submit test.") }
+        )
     }
 }
 
 // --- STEP 1: INSTRUCTIONS ---
 @Composable
-fun AmslerInstructions(onNext: (String) -> Unit) {
+fun AmslerInstructions(
+    onBack: () -> Unit,
+    onNext: (String) -> Unit
+) {
     var selectedEye by remember { mutableStateOf("Right") }
 
     Column(
@@ -76,7 +85,44 @@ fun AmslerInstructions(onNext: (String) -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(Modifier.height(16.dp))
-        Text(localizedString("instructions_title"), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
+
+        // Header row: back icon (left) + centered title/subtitle (doesn't push layout down)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color(0xFF1A3B5D),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    localizedString("instructions_title"),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1A3B5D)
+                )
+                Text(
+                    localizedString("instructions_subtitle"),
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
+
+            // Right-side spacer to keep title truly centered (balances the back button width)
+            Spacer(modifier = Modifier.size(48.dp))
+        }
+
+        Spacer(Modifier.height(16.dp))
+
         Text("Follow the steps below to start the test", color = Color.Gray, fontSize = 14.sp)
         Spacer(Modifier.height(16.dp))
 
@@ -153,6 +199,7 @@ fun InstructionItem(text: String) {
 fun AmslerCanvasDrawing(
     patient: Patient,
     eyeSide: String,
+    onBack: () -> Unit,
     onSuccess: () -> Unit,
     onError: () -> Unit
 ) {
@@ -164,9 +211,39 @@ fun AmslerCanvasDrawing(
     val paths = remember { mutableStateListOf<Path>() }
     var currentPath by remember { mutableStateOf<Path?>(null) }
 
-    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Spacer(Modifier.height(16.dp))
-        Text("${localizedString("mark_distortions")} ($eyeSide)", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
+
+        // Header row: back icon (left) + centered title (balances with right spacer)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color(0xFF1A3B5D),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Text(
+                text = "${localizedString("mark_distortions")} ($eyeSide)",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1A3B5D),
+                modifier = Modifier.weight(1f)
+            )
+
+            Spacer(modifier = Modifier.size(48.dp))
+        }
+
         Text(localizedString("draw_hint"), color = Color.Gray, fontSize = 14.sp)
 
         Spacer(Modifier.height(16.dp))

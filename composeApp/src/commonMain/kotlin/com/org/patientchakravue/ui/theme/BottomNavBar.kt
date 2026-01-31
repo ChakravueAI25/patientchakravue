@@ -3,22 +3,26 @@ package com.org.patientchakravue.ui.theme
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.RemoveRedEye
-import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -35,7 +39,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import com.org.patientchakravue.app.Navigator
 import com.org.patientchakravue.app.Screen
@@ -44,7 +50,7 @@ import com.org.patientchakravue.app.Screen
 @Composable
 fun PatientBottomNavBar(navigator: Navigator) {
     val activeColor = Color(0xFF4CAF50)
-    val inactiveColor = Color(0xFF000000)
+    val inactiveColor = Color(0xFF666666)
     val navBarColor = Color(0xFFBFE6D3)
     val bubbleColor = Color.White
 
@@ -55,119 +61,85 @@ fun PatientBottomNavBar(navigator: Navigator) {
             shadowElevation = 12.dp,
             shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
         ) {
-            NavigationBar(
+            Row(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .height(88.dp)
-                    .padding(horizontal = 12.dp),
-                containerColor = Color.Transparent,
-                tonalElevation = 0.dp
+                    .padding(horizontal = 16.dp, vertical = 8.dp), // Reduced horizontal padding for more space
+                horizontalArrangement = Arrangement.Center, // Center the content
+                verticalAlignment = Alignment.Top
             ) {
+                // Dashboard - Home (far left)
+                Box(
+                    modifier = Modifier.weight(1f), // Use weight for equal distribution
+                    contentAlignment = Alignment.Center
+                ) {
+                    CustomNavIconNew(
+                        icon = Icons.Default.Home,
+                        label = "Home",
+                        isSelected = navigator.currentScreen == Screen.Dashboard,
+                        activeColor = activeColor,
+                        inactiveColor = inactiveColor,
+                        bubbleColor = bubbleColor,
+                        onClick = { navigator.navigateAsPillar(Screen.Dashboard) }
+                    )
+                }
 
-                // Dashboard - Home
-                NavigationBarItem(
-                    selected = navigator.currentScreen == Screen.Dashboard,
-                    onClick = { navigator.navigateAsPillar(Screen.Dashboard) },
-                    icon = {
-                        CustomNavIcon(
-                            icon = Icons.Default.Home,
-                            label = "Home",
-                            isSelected = navigator.currentScreen == Screen.Dashboard,
-                            activeColor = activeColor,
-                            inactiveColor = inactiveColor,
-                            bubbleColor = bubbleColor
-                        )
-                    },
-                    label = null,
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = activeColor,
-                        selectedTextColor = activeColor,
-                        unselectedIconColor = inactiveColor,
-                        unselectedTextColor = inactiveColor,
-                        indicatorColor = Color.Transparent
-                    ),
-                    alwaysShowLabel = false,
-                    interactionSource = remember { MutableInteractionSource() }
-                )
+                // AfterCare - Care (left of center)
+                Box(
+                    modifier = Modifier.weight(1f), // Equal weight
+                    contentAlignment = Alignment.Center
+                ) {
+                    CustomNavIconNew(
+                        icon = Icons.AutoMirrored.Filled.List,
+                        label = "Care",
+                        isSelected = navigator.currentScreen == Screen.AfterCare,
+                        activeColor = activeColor,
+                        inactiveColor = inactiveColor,
+                        bubbleColor = bubbleColor,
+                        onClick = { navigator.navigateAsPillar(Screen.AfterCare) }
+                    )
+                }
 
-                // AfterCare - Care
-                NavigationBarItem(
-                    selected = navigator.currentScreen == Screen.AfterCare,
-                    onClick = { navigator.navigateAsPillar(Screen.AfterCare) },
-                    icon = {
-                        CustomNavIcon(
-                            icon = Icons.AutoMirrored.Filled.List,
-                            label = "Care",
-                            isSelected = navigator.currentScreen == Screen.AfterCare,
-                            activeColor = activeColor,
-                            inactiveColor = inactiveColor,
-                            bubbleColor = bubbleColor
-                        )
-                    },
-                    label = null,
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = activeColor,
-                        selectedTextColor = activeColor,
-                        unselectedIconColor = inactiveColor,
-                        unselectedTextColor = inactiveColor,
-                        indicatorColor = Color.Transparent
-                    ),
-                    alwaysShowLabel = false,
-                    interactionSource = remember { MutableInteractionSource() }
-                )
+                // Spacer for center FAB - consistent with other sections
+                Box(
+                    modifier = Modifier.weight(1f), // Equal weight for center space
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Empty space for the FAB
+                }
 
-                Spacer(modifier = Modifier.weight(1f))
+                // Vision (right of center)
+                Box(
+                    modifier = Modifier.weight(1f), // Equal weight
+                    contentAlignment = Alignment.Center
+                ) {
+                    CustomNavIconNew(
+                        icon = Icons.Default.RemoveRedEye,
+                        label = "Vision",
+                        isSelected = navigator.currentScreen == Screen.Vision,
+                        activeColor = activeColor,
+                        inactiveColor = inactiveColor,
+                        bubbleColor = bubbleColor,
+                        onClick = { navigator.navigateAsPillar(Screen.Vision) }
+                    )
+                }
 
-                // Vision
-                NavigationBarItem(
-                    selected = navigator.currentScreen == Screen.Vision,
-                    onClick = { navigator.navigateAsPillar(Screen.Vision) },
-                    icon = {
-                        CustomNavIcon(
-                            icon = Icons.Default.RemoveRedEye,
-                            label = "Vision",
-                            isSelected = navigator.currentScreen == Screen.Vision,
-                            activeColor = activeColor,
-                            inactiveColor = inactiveColor,
-                            bubbleColor = bubbleColor
-                        )
-                    },
-                    label = null,
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = activeColor,
-                        selectedTextColor = activeColor,
-                        unselectedIconColor = inactiveColor,
-                        unselectedTextColor = inactiveColor,
-                        indicatorColor = Color.Transparent
-                    ),
-                    alwaysShowLabel = false,
-                    interactionSource = remember { MutableInteractionSource() }
-                )
-
-                // Notifications - Alerts
-                NavigationBarItem(
-                    selected = navigator.currentScreen == Screen.Notifications,
-                    onClick = { navigator.navigateAsPillar(Screen.Notifications) },
-                    icon = {
-                        CustomNavIcon(
-                            icon = Icons.Default.Notifications,
-                            label = "Alerts",
-                            isSelected = navigator.currentScreen == Screen.Notifications,
-                            activeColor = activeColor,
-                            inactiveColor = inactiveColor,
-                            bubbleColor = bubbleColor
-                        )
-                    },
-                    label = null,
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = activeColor,
-                        selectedTextColor = activeColor,
-                        unselectedIconColor = inactiveColor,
-                        unselectedTextColor = inactiveColor,
-                        indicatorColor = Color.Transparent
-                    ),
-                    alwaysShowLabel = false,
-                    interactionSource = remember { MutableInteractionSource() }
-                )
+                // Notifications - Alerts (far right)
+                Box(
+                    modifier = Modifier.weight(1f), // Equal weight
+                    contentAlignment = Alignment.Center
+                ) {
+                    CustomNavIconNew(
+                        icon = Icons.Default.Notifications,
+                        label = "Alerts",
+                        isSelected = navigator.currentScreen == Screen.Notifications,
+                        activeColor = activeColor,
+                        inactiveColor = inactiveColor,
+                        bubbleColor = bubbleColor,
+                        onClick = { navigator.navigateAsPillar(Screen.Notifications) }
+                    )
+                }
             }
         }
 
@@ -207,8 +179,8 @@ fun PatientBottomNavBar(navigator: Navigator) {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    Icons.Default.Videocam,
-                    contentDescription = "Video Call",
+                    Icons.Default.Phone,
+                    contentDescription = "Call",
                     tint = Color.White,
                     modifier = Modifier.size(28.dp)
                 )
@@ -217,6 +189,80 @@ fun PatientBottomNavBar(navigator: Navigator) {
     }
 }
 
+@Composable
+fun CustomNavIconNew(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    isSelected: Boolean,
+    activeColor: Color,
+    inactiveColor: Color,
+    bubbleColor: Color,
+    onClick: () -> Unit
+) {
+    // Removed scaling animation for better spacing
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clickable(
+                indication = null, // Remove ripple effect
+                interactionSource = remember { MutableInteractionSource() }
+            ) { onClick() }
+            .padding(2.dp) // Minimal padding for better space usage
+    ) {
+        if (isSelected) {
+            // White bubble with icon and text below it for selected state
+            Box(
+                modifier = Modifier
+                    .size(width = 64.dp, height = 52.dp) // Reduced width to fit within container better
+                    .background(bubbleColor, RoundedCornerShape(26.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 2.dp)
+                ) {
+                    // Icon at the top (no scaling)
+                    Icon(
+                        icon,
+                        contentDescription = label,
+                        modifier = Modifier.size(22.dp), // Consistent size
+                        tint = activeColor
+                    )
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    // Text below the icon inside the bubble
+                    Text(
+                        text = label,
+                        color = activeColor,
+                        fontSize = 9.sp, // Slightly smaller font for better fit
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1
+                    )
+                }
+            }
+        } else {
+            // Clean icon-only design for unselected state
+            Box(
+                modifier = Modifier
+                    .size(48.dp) // Consistent container size
+                    .padding(2.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = label,
+                    modifier = Modifier.size(22.dp), // Consistent icon size with selected state
+                    tint = inactiveColor
+                )
+            }
+        }
+    }
+}
+
+// Keep the old CustomNavIcon for compatibility (not used anymore but in case)
 @Composable
 fun CustomNavIcon(
     icon: androidx.compose.ui.graphics.vector.ImageVector,

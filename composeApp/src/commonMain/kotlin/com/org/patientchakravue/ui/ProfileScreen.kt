@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -50,164 +51,200 @@ fun ProfileScreen(
         }
     }
 
-    if (isLoading) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(color = Color(0xFF4CAF50))
-        }
-    } else if (patient != null) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(localizedString("profile_title"), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
-            Text("Your personal information", color = Color.Gray, fontSize = 14.sp)
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Basic Information
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(localizedString("basic_info"), style = MaterialTheme.typography.titleMedium, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ProfileRow(localizedString("label_name"), patient?.name)
-                    ProfileRow(localizedString("label_age"), patient?.age)
-                    ProfileRow(localizedString("label_sex"), patient?.sex)
-                    ProfileRow(localizedString("label_blood"), patient?.bloodType)
-                }
+                CircularProgressIndicator(color = Color(0xFF4CAF50))
             }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Contact Information
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+        } else if (patient != null) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(localizedString("contact_info"), style = MaterialTheme.typography.titleMedium, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ProfileRow(localizedString("label_phone"), patient?.phone)
-                    ProfileRow(localizedString("label_email"), patient?.email)
-                    ProfileRow(localizedString("label_address"), patient?.address)
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // Emergency Contact
-            if (!patient?.emergencyContactName.isNullOrBlank()) {
+                // Header row: back arrow + title/subtitle (same line)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color(0xFF1A3B5D),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            localizedString("profile_title"),
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1A3B5D)
+                        )
+                        Text(
+                            "Your personal information",
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    // Spacer to keep title centered (balances IconButton width)
+                    Spacer(modifier = Modifier.size(48.dp))
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Basic Information
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(localizedString("emergency_contact"), style = MaterialTheme.typography.titleMedium, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
+                        Text(localizedString("basic_info"), style = MaterialTheme.typography.titleMedium, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
                         Spacer(modifier = Modifier.height(8.dp))
-                        ProfileRow(localizedString("label_name"), patient?.emergencyContactName)
-                        ProfileRow(localizedString("label_phone"), patient?.emergencyContactPhone)
+                        ProfileRow(localizedString("label_name"), patient?.name)
+                        ProfileRow(localizedString("label_age"), patient?.age)
+                        ProfileRow(localizedString("label_sex"), patient?.sex)
+                        ProfileRow(localizedString("label_blood"), patient?.bloodType)
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-            }
 
-            // System Information
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(localizedString("system_info"), style = MaterialTheme.typography.titleMedium, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ProfileRow(localizedString("label_patient_id"), patient?.id)
-                    ProfileRow(localizedString("label_registered"), patient?.registrationId)
-                }
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            // --- HOSPITAL CARD ---
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                // Contact Information
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            "SPARK EYE & DENTAL HOSPITAL",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = Color(0xFF1976D2)
-                        )
-                        Text(
-                            "Dr. Ajay Chakravarthy",
-                            fontSize = 14.sp,
-                            color = Color.DarkGray
-                        )
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(localizedString("contact_info"), style = MaterialTheme.typography.titleMedium, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ProfileRow(localizedString("label_phone"), patient?.phone)
+                        ProfileRow(localizedString("label_email"), patient?.email)
+                        ProfileRow(localizedString("label_address"), patient?.address)
                     }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
 
-                    // Download Button
-                    if (isDownloading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = Color(0xFF1976D2)
-                        )
-                    } else {
-                        IconButton(onClick = {
-                            isDownloading = true
-                            scope.launch {
-                                val pdfData = apiRepository.downloadCaseSheet(patientId ?: "")
-                                if (pdfData != null) {
-                                    saveAndNotifyDownload("CaseSheet_Spark.pdf", pdfData)
-                                }
-                                isDownloading = false
-                            }
-                        }) {
-                            Icon(
-                                Icons.Default.Download,
-                                contentDescription = "Download Case Sheet",
-                                tint = Color(0xFF1976D2)
+                // Emergency Contact
+                if (!patient?.emergencyContactName.isNullOrBlank()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(localizedString("emergency_contact"), style = MaterialTheme.typography.titleMedium, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
+                            Spacer(modifier = Modifier.height(8.dp))
+                            ProfileRow(localizedString("label_name"), patient?.emergencyContactName)
+                            ProfileRow(localizedString("label_phone"), patient?.emergencyContactPhone)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // System Information
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(localizedString("system_info"), style = MaterialTheme.typography.titleMedium, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ProfileRow(localizedString("label_patient_id"), patient?.id)
+                        ProfileRow(localizedString("label_registered"), patient?.registrationId)
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                // --- HOSPITAL CARD ---
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "SPARK EYE & DENTAL HOSPITAL",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = Color(0xFF1976D2)
                             )
+                            Text(
+                                "Dr. Ajay Chakravarthy",
+                                fontSize = 14.sp,
+                                color = Color.DarkGray
+                            )
+                        }
+
+                        // Download Button
+                        if (isDownloading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color(0xFF1976D2)
+                            )
+                        } else {
+                            IconButton(onClick = {
+                                isDownloading = true
+                                scope.launch {
+                                    val pdfData = apiRepository.downloadCaseSheet(patientId ?: "")
+                                    if (pdfData != null) {
+                                        saveAndNotifyDownload("CaseSheet_Spark.pdf", pdfData)
+                                    }
+                                    isDownloading = false
+                            }
+                            }) {
+                                Icon(
+                                    Icons.Default.Download,
+                                    contentDescription = "Download Case Sheet",
+                                    tint = Color(0xFF1976D2)
+                                )
+                            }
                         }
                     }
                 }
+
+                Spacer(Modifier.height(24.dp))
+
+                Button(
+                    onClick = {
+                        sessionManager.clearSession()
+                        onLogout()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4CAF50)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(localizedString("logout_btn"))
+                }
+
+                Spacer(Modifier.height(16.dp))
             }
-
-            Spacer(Modifier.height(24.dp))
-
-            Button(
-                onClick = {
-                    sessionManager.clearSession()
-                    onLogout()
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4CAF50)
-                ),
-                modifier = Modifier.fillMaxWidth()
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                Text(localizedString("logout_btn"))
+                Text("Could not load profile.")
             }
-
-            Spacer(Modifier.height(16.dp))
         }
-    } else {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Could not load profile.")
-        }
-    }
+    } // Close main Box
 }
 
 @Composable

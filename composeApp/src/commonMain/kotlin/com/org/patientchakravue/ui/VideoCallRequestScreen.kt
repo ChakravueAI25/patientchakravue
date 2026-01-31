@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -43,14 +44,48 @@ fun VideoCallRequestScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(Modifier.height(16.dp))
-            Text("Request Video Call", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
-            Text("Explain your concern to your doctor", color = Color.Gray, fontSize = 14.sp)
+
+            // Header row: back arrow + title/subtitle (same line)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color(0xFF1A3B5D),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "Request Call",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1A3B5D)
+                    )
+                    Text(
+                        "Explain your concern to your doctor",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                }
+
+                // Spacer to keep title centered (balances IconButton width)
+                Spacer(modifier = Modifier.size(48.dp))
+            }
+
             Spacer(Modifier.height(24.dp))
 
             OutlinedTextField(
                 value = reason,
                 onValueChange = { reason = it },
-                label = { Text("Reason for video call") },
+                label = { Text("Reason for call") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp),
@@ -69,7 +104,7 @@ fun VideoCallRequestScreen(
                     }
                     if (patient == null) {
                         scope.launch {
-                            snackbarHostState.showSnackbar("Please login to send a video call request")
+                            snackbarHostState.showSnackbar("Please login to send a call request")
                         }
                         return@Button
                     }
@@ -80,7 +115,7 @@ fun VideoCallRequestScreen(
                         isLoading = false
                         if (success) {
                             requestSent = true
-                            snackbarHostState.showSnackbar("Video call request sent to your doctor!")
+                            snackbarHostState.showSnackbar("Call request sent to your doctor!")
                             delay(1000)
                             onRequestSent()
                         } else {
@@ -106,7 +141,7 @@ fun VideoCallRequestScreen(
                 } else {
                     Icon(Icons.AutoMirrored.Filled.Send, null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Send Video Call Request")
+                    Text("Send Call Request")
                 }
             }
 

@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,7 +26,8 @@ import com.org.patientchakravue.ui.language.localizedString
 @Composable
 fun NotificationsScreen(
     patient: Patient,
-    onNavigateToChat: (doctorId: String, doctorName: String, submissionIds: List<String>) -> Unit
+    onNavigateToChat: (doctorId: String, doctorName: String, submissionIds: List<String>) -> Unit,
+    onBack: () -> Unit = {}
 ) {
     val api = remember { ApiRepository() }
     var messages by remember { mutableStateOf<List<DoctorNote>>(emptyList()) }
@@ -70,23 +72,41 @@ fun NotificationsScreen(
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 item {
-                    Column(
+                    Row(
                         modifier = Modifier
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                             .fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
                     ) {
-                        Text(
-                            localizedString("hospital_updates"),
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1A3B5D)
-                        )
-                        Text(
-                            localizedString("view_messages"),
-                            fontSize = 14.sp,
-                            color = Color.Gray
-                        )
+                        IconButton(
+                            onClick = onBack,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF1A3B5D),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                localizedString("hospital_updates"),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1A3B5D)
+                            )
+                            Text(
+                                localizedString("view_messages"),
+                                fontSize = 14.sp,
+                                color = Color.Gray
+                            )
+                        }
                     }
                 }
 

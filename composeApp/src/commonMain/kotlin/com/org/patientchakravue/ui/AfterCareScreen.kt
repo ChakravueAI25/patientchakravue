@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.*
@@ -63,7 +64,8 @@ fun AfterCareScreen(
         }
     )
 
-    Column(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
@@ -72,8 +74,43 @@ fun AfterCareScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(Modifier.height(16.dp))
-        Text(localizedString("daily_checkin_title"), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
-        Text(localizedString("daily_checkin_subtitle"), color = Color.Gray, fontSize = 14.sp)
+
+        // Header with back icon beside the title
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color(0xFF1A3B5D),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    localizedString("daily_checkin_title"),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1A3B5D)
+                )
+                Text(
+                    localizedString("daily_checkin_subtitle"),
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
+        }
+
         Spacer(Modifier.height(24.dp))
 
         // 1. Blurred Vision (Moved to top as requested)
@@ -151,7 +188,8 @@ fun AfterCareScreen(
 
         // Extra space at the bottom to ensure submit button is visible above bottom nav
         Spacer(Modifier.height(24.dp))
-    }
+        } // Close Column
+    } // Close Box
 }
 
 @Composable
