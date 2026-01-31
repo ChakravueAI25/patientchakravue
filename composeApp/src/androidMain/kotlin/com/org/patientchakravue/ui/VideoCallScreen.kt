@@ -1,4 +1,4 @@
-package com.org.patientchakravue.ui
+package com.org.patientchakravue.uipackage com.org.patientchakravue.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -11,7 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CallEnd
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.Videocam
@@ -268,7 +268,7 @@ actual fun VideoCallScreen(
                 containerColor = Color.Red,
                 modifier = Modifier.size(72.dp)
             ) {
-                Icon(Icons.Default.CallEnd, "End", tint = Color.White)
+                Icon(Icons.Default.Call, "End", tint = Color.White)
             }
 
             // Video Toggle

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Resource shrinking configuration
+    This file tells the resource shrinker which resources to keep
+    even if they appear unused in the code.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_launcher_foreground,@drawable/ic_launcher_background,@mipmap/*"
+    tools:discard="@layout/unused_*"
+    tools:shrinkMode="strict" />

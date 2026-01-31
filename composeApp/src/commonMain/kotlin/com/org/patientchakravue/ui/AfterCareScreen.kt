@@ -116,14 +116,14 @@ fun AfterCareScreen(
         // 1. Blurred Vision (Moved to top as requested)
         SymptomRow(localizedString("symptom_blurred_vision"), Icons.Outlined.Visibility, blurredVision) { blurredVision = it }
 
-        // 2. Original Symptoms
+        // 2. Original Symptoms (using standard icons to reduce APK size)
         SymptomRow(localizedString("symptom_pain"), Icons.Filled.Favorite, pain) { pain = it }
         SymptomRow(localizedString("symptom_redness"), Icons.Filled.RemoveRedEye, redness) { redness = it }
-        SymptomRow(localizedString("symptom_watering"), Icons.Filled.WaterDrop, watering) { watering = it }
-        SymptomRow(localizedString("symptom_itching"), Icons.Filled.PanToolAlt, itching) { itching = it }
+        SymptomRow(localizedString("symptom_watering"), Icons.Filled.Warning, watering) { watering = it }
+        SymptomRow(localizedString("symptom_itching"), Icons.Filled.TouchApp, itching) { itching = it }
 
-        // 3. Discharge (Added to the list)
-        SymptomRow(localizedString("symptom_discharge"), Icons.Filled.Opacity, discharge) { discharge = it }
+        // 3. Discharge (using standard icon)
+        SymptomRow(localizedString("symptom_discharge"), Icons.Filled.Circle, discharge) { discharge = it }
 
         Spacer(Modifier.height(16.dp))
 

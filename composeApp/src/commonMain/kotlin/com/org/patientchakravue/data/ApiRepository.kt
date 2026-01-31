@@ -15,7 +15,6 @@ import io.ktor.client.request.forms.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
-import io.ktor.client.plugins.logging.*
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -32,10 +31,7 @@ object NetworkClient {
                 coerceInputValues = true
             })
         }
-        // Useful for debugging network calls in Logcat
-        install(Logging) {
-            level = LogLevel.INFO
-        }
+        // Logging removed in production for smaller APK size
     }
 }
 

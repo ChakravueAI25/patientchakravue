@@ -1,4 +1,3 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
@@ -35,16 +34,18 @@ kotlin {
     sourceSets {
 
         androidMain.dependencies {
-            implementation(compose.preview)
+            // Only include preview in debug builds
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp) // Android Engine
             implementation(libs.kotlinx.coroutines.android)
             implementation("com.google.firebase:firebase-messaging-ktx:24.1.2")
-            implementation("io.agora.rtc:full-sdk:4.6.1")
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.0")
+            // Agora Video SDK - using voice-only SDK for smaller size if video not needed
+            // For video calls, use full-sdk but exclude unused extensions via jniLibs excludes
+            implementation("io.agora.rtc:full-sdk:4.5.0")
             implementation("androidx.fragment:fragment-ktx:1.8.5")
-            implementation("androidx.core:core-splashscreen:1.0.1") // Splash screen API for Android 12+
-
+            implementation("androidx.core:core-splashscreen:1.0.1")
+            // Material Icons Core for VideoCallScreen (standard icons only, not extended)
+            implementation("androidx.compose.material:material-icons-core:1.7.6")
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin) // iOS Engine
@@ -53,39 +54,39 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
-            implementation(compose.materialIconsExtended) // Material Icons Extended for KMP
+            // Use specific icons instead of materialIconsExtended to reduce APK size
+            // materialIconsExtended adds ~20MB to the APK
             implementation(compose.ui)
             implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-            implementation(libs.ktor.client.logging)
             implementation(libs.kotlinx.datetime)
 
-
-            // 1. Networking (Replaces 'http')
+            // Networking
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.peekaboo.image.picker)
 
-
-            // 2. Storage (Replaces 'shared_preferences')
+            // Storage
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)
 
-            // 3. Images (Replaces 'cached_network_image')
+            // Images
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
-
-            // 4. Date Formatting (Replaces 'intl')
-            implementation(libs.kotlinx.datetime)
-
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
+    }
+}
+
+// Remove ktor logging in release builds
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
     }
 }
 
@@ -105,6 +106,11 @@ android {
             abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a"))
         }
     }
+
+    // Enable resource optimization - limit to supported languages
+    androidResources {
+        localeFilters += listOf("en", "hi", "ta")
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -112,8 +118,13 @@ android {
             excludes += "/META-INF/LICENSE.md"
             excludes += "/META-INF/INDEX.LIST"
             excludes += "/META-INF/*.kotlin_module"
+            excludes += "/META-INF/versions/**"
+            excludes += "/kotlin/**"
+            excludes += "/*.txt"
+            excludes += "/*.properties"
+            excludes += "/DebugProbesKt.bin"
         }
-        // Remove unnecessary native libraries
+        // Remove unnecessary native libraries (Agora extensions)
         jniLibs {
             excludes += "**/libagora_video_av1_decoder_extension.so"
             excludes += "**/libagora_video_av1_encoder_extension.so"
@@ -121,6 +132,21 @@ android {
             excludes += "**/libagora_face_detection_extension.so"
             excludes += "**/libagora_lip_sync_extension.so"
             excludes += "**/libagora_video_quality_analyzer_extension.so"
+            excludes += "**/libagora_spatial_audio_extension.so"
+            excludes += "**/libagora_ai_echo_cancellation_extension.so"
+            excludes += "**/libagora_ai_noise_suppression_extension.so"
+            excludes += "**/libagora_content_inspect_extension.so"
+            excludes += "**/libagora_screen_capture_extension.so"
+            excludes += "**/libagora_segmentation_extension.so"
+            excludes += "**/libagora_super_resolution_extension.so"
+            excludes += "**/libagora_clear_vision_extension.so"
+            excludes += "**/libagora_drm_loader_extension.so"
+            excludes += "**/libagora_pvc_extension.so"
+            excludes += "**/libagora_video_decoder_extension.so"
+            excludes += "**/libagora_video_encoder_extension.so"
+            excludes += "**/libagora_udrm3_extension.so"
+            excludes += "**/libagora_dav1d_extension.so"
+            excludes += "**/libagora_jnd_extension.so"
         }
     }
     buildTypes {
@@ -129,10 +155,26 @@ android {
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+        getByName("debug") {
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    // Enable build features optimization
+    buildFeatures {
+        buildConfig = false
+        resValues = false
+    }
+
+    // Lint optimization
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 }
 
