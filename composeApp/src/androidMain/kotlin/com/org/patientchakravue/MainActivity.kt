@@ -15,7 +15,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -237,8 +236,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Preview
+// Preview is only available in debug builds
+@Suppress("UnusedPrivateMember")
 @Composable
-fun AppAndroidPreview() {
+private fun AppAndroidPreview() {
     App(initialCallData = null)
 }

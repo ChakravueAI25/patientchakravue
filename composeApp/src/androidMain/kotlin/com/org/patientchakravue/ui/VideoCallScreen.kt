@@ -1,10 +1,9 @@
-package com.org.patientchakravue.uipackage com.org.patientchakravue.ui
+package com.org.patientchakravue.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
 import android.util.Log
 import android.view.SurfaceView
-import android.widget.FrameLayout
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -12,10 +11,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MicOff
-import androidx.compose.material.icons.filled.Videocam
-import androidx.compose.material.icons.filled.VideocamOff
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -57,7 +54,6 @@ actual fun VideoCallScreen(
     // Agora Engine State
     var rtcEngine by remember { mutableStateOf<RtcEngine?>(null) }
     var remoteUid by remember { mutableStateOf<Int?>(null) }
-    var isJoined by remember { mutableStateOf(false) }
     var isConnecting by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -108,7 +104,6 @@ actual fun VideoCallScreen(
                 mEventHandler = object : IRtcEngineEventHandler() {
                     override fun onJoinChannelSuccess(channel: String?, uid: Int, elapsed: Int) {
                         Log.d(TAG, "Join success: $channel, uid: $uid")
-                        isJoined = true
                         isConnecting = false
                     }
 
@@ -171,6 +166,7 @@ actual fun VideoCallScreen(
         // --- REMOTE VIDEO (Full Screen) ---
         // This is the Doctor's feed. It sits at the bottom layer.
         if (remoteUid != null && rtcEngine != null) {
+            @Suppress("DEPRECATION", "ComposeViewCompositionLocalNotFound")
             AndroidView(
                 factory = { ctx ->
                     // Create SurfaceView inside the factory!
@@ -222,6 +218,7 @@ actual fun VideoCallScreen(
                     .size(120.dp, 160.dp)
                     .clip(RoundedCornerShape(12.dp))
             ) {
+                @Suppress("DEPRECATION", "ComposeViewCompositionLocalNotFound")
                 AndroidView(
                     factory = { ctx ->
                         SurfaceView(ctx).apply {
@@ -253,7 +250,7 @@ actual fun VideoCallScreen(
                 containerColor = if (isMuted) Color.White else Color.DarkGray
             ) {
                 Icon(
-                    imageVector = if (isMuted) Icons.Default.MicOff else Icons.Default.Mic,
+                    imageVector = if (isMuted) Icons.Default.Close else Icons.Default.Phone,
                     contentDescription = "Mute",
                     tint = if (isMuted) Color.Black else Color.White
                 )
@@ -280,7 +277,7 @@ actual fun VideoCallScreen(
                 containerColor = if (!isVideoEnabled) Color.White else Color.DarkGray
             ) {
                 Icon(
-                    imageVector = if (isVideoEnabled) Icons.Default.Videocam else Icons.Default.VideocamOff,
+                    imageVector = if (isVideoEnabled) Icons.Default.Phone else Icons.Default.Close,
                     contentDescription = "Video",
                     tint = if (!isVideoEnabled) Color.Black else Color.White
                 )

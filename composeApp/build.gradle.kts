@@ -54,8 +54,9 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
-            // Use specific icons instead of materialIconsExtended to reduce APK size
-            // materialIconsExtended adds ~20MB to the APK
+            // Material Icons Extended - needed for ShowChart, LocalPharmacy, GridOn, etc
+            // Adding back but with optimization: only used in commonMain, not in debug
+            implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
