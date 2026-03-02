@@ -5,14 +5,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -114,16 +112,16 @@ fun AfterCareScreen(
         Spacer(Modifier.height(24.dp))
 
         // 1. Blurred Vision (Moved to top as requested)
-        SymptomRow(localizedString("symptom_blurred_vision"), Icons.Outlined.Visibility, blurredVision) { blurredVision = it }
+        SymptomRow(localizedString("symptom_blurred_vision"), blurredVision) { blurredVision = it }
 
         // 2. Original Symptoms
-        SymptomRow(localizedString("symptom_pain"), Icons.Filled.Favorite, pain) { pain = it }
-        SymptomRow(localizedString("symptom_redness"), Icons.Filled.RemoveRedEye, redness) { redness = it }
-        SymptomRow(localizedString("symptom_watering"), Icons.Filled.WaterDrop, watering) { watering = it }
-        SymptomRow(localizedString("symptom_itching"), Icons.Filled.PanToolAlt, itching) { itching = it }
+        SymptomRow(localizedString("symptom_pain"), pain) { pain = it }
+        SymptomRow(localizedString("symptom_redness"), redness) { redness = it }
+        SymptomRow(localizedString("symptom_watering"), watering) { watering = it }
+        SymptomRow(localizedString("symptom_itching"), itching) { itching = it }
 
         // 3. Discharge (Added to the list)
-        SymptomRow(localizedString("symptom_discharge"), Icons.Filled.Opacity, discharge) { discharge = it }
+        SymptomRow(localizedString("symptom_discharge"), discharge) { discharge = it }
 
         Spacer(Modifier.height(16.dp))
 
@@ -193,7 +191,7 @@ fun AfterCareScreen(
 }
 
 @Composable
-fun SymptomRow(label: String, icon: ImageVector, selectedValue: Int, onValueChange: (Int) -> Unit) {
+fun SymptomRow(label: String, selectedValue: Int, onValueChange: (Int) -> Unit) {
     // Mapping: None=0, Mild=3, Moderate=6, Severe=10
     val levels = listOf(
         localizedString("level_none") to 0,
@@ -203,11 +201,7 @@ fun SymptomRow(label: String, icon: ImageVector, selectedValue: Int, onValueChan
     )
 
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, null, tint = Color(0xFF1976D2), modifier = Modifier.size(24.dp))
-            Spacer(Modifier.width(8.dp))
-            Text(label, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-        }
+        Text(label, fontWeight = FontWeight.SemiBold)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             levels.forEach { (name, value) ->
                 FilterChip(

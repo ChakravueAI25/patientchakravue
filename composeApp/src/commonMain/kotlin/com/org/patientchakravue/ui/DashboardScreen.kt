@@ -282,35 +282,33 @@ fun DashboardScreen(
                                             }
                                         }
 
-                                        Spacer(Modifier.height(12.dp))
+                                        if (!dose.taken) {
+                                            Spacer(Modifier.height(12.dp))
 
-                                        // Mark Taken Button
-                                        Button(
-                                            onClick = {
-                                                scope.launch {
-                                                    val ok = apiRepository.markDoseTaken(
-                                                        patient.id,
-                                                        dose.id
-                                                    )
-                                                    if (ok) {
-                                                        refreshData()
-                                                        DoseRefreshBus.emit()
+                                            // Mark Taken Button
+                                            Button(
+                                                onClick = {
+                                                    scope.launch {
+                                                        val ok = apiRepository.markDoseTaken(
+                                                            patient.id,
+                                                            dose.id
+                                                        )
+                                                        if (ok) {
+                                                            refreshData()
+                                                            DoseRefreshBus.emit()
+                                                        }
                                                     }
-                                                }
-                                            },
-                                            enabled = enabled,
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = Color(0xFF4CAF50),
-                                                disabledContainerColor = Color(0xFFE0E0E0)
-                                            ),
-                                            shape = RoundedCornerShape(8.dp)
-                                        ) {
-                                            Text(
-                                                if (dose.taken) localizedString("btn_taken") else localizedString(
-                                                    "btn_mark_taken"
-                                                )
-                                            )
+                                                },
+                                                enabled = enabled,
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color(0xFF4CAF50),
+                                                    disabledContainerColor = Color(0xFFE0E0E0)
+                                                ),
+                                                shape = RoundedCornerShape(8.dp)
+                                            ) {
+                                                Text(localizedString("btn_mark_taken"))
+                                            }
                                         }
                                     }
 

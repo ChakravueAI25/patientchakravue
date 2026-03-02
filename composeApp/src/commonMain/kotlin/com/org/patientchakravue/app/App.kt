@@ -18,7 +18,10 @@ import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.AnimatedContentTransitionScope
 
 @Composable
-fun App(initialCallData: Pair<String, String>? = null) {
+fun App(
+    initialCallData: Pair<String, String>? = null,
+    liveCallData: Pair<String, String>? = null
+) {
     AppTheme {
         AppLocalizationProvider {
             val sessionManager = remember { SessionManager() }
@@ -34,6 +37,16 @@ fun App(initialCallData: Pair<String, String>? = null) {
             val navigator = remember { Navigator(initialScreen) }
             val snackbarHostState = remember { SnackbarHostState() }
             val scope = rememberCoroutineScope()
+
+            // When a call notification arrives while the app is already open,
+            // navigate directly to VideoCall — no restart, no splash, instant.
+            LaunchedEffect(liveCallData) {
+                if (liveCallData != null && sessionManager.getPatient() != null) {
+                    navigator.navigateAsPillar(
+                        Screen.VideoCall(liveCallData.first, liveCallData.second)
+                    )
+                }
+            }
 
             // Track previous screen to determine navigation direction
             var previousScreen by remember { mutableStateOf<Screen>(initialScreen) }

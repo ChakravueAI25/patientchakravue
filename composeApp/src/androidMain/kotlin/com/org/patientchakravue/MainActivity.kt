@@ -3,6 +3,7 @@ package com.org.patientchakravue
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.media.RingtoneManager
@@ -69,13 +70,22 @@ class MainActivity : ComponentActivity() {
         // STEP 3: Initialize FCM token registration
         initializeFirebaseMessaging()
 
-        // Check if launched from a call notification
+        // Check if launched from a call notification (cold start / killed app)
         val targetScreen = intent.getStringExtra("target_screen")
         val channelName = intent.getStringExtra("channel_name")
         val doctorId = intent.getStringExtra("doctor_id")
 
+        // If this is a call intent AND the patient is logged in, skip the splash entirely
+        val isCallIntent = targetScreen == "call_screen" && !channelName.isNullOrEmpty()
+        val session = SessionManager()
+        val isLoggedIn = session.getPatient() != null
+
         setContent {
-            var showSplash by remember { mutableStateOf(true) }
+            // showSplash: skip immediately for call intents (so patient enters call directly)
+            var showSplash by remember { mutableStateOf(!isCallIntent || !isLoggedIn) }
+
+            // Observe live call data pushed via onNewIntent (app already open scenario)
+            val liveCallData by liveCallData
 
             // Dismiss native splash screen when Compose is ready
             LaunchedEffect(Unit) {
@@ -92,14 +102,45 @@ class MainActivity : ComponentActivity() {
                     }
                 )
             } else {
+                // Set light status bar for the main app content
+                LaunchedEffect(Unit) {
+                    window.statusBarColor = Color.WHITE
+                    WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = true
+                }
                 App(
-                    initialCallData = if (targetScreen == "call_screen" && channelName != null) {
+                    // Cold-start call intent: pass channel directly as initialCallData
+                    initialCallData = if (isCallIntent && isLoggedIn) {
                         Pair(channelName, doctorId ?: "unknown")
-                    } else null
+                    } else null,
+                    // Live call data: pushed by onNewIntent when app is already running
+                    liveCallData = liveCallData
                 )
             }
         }
     }
+
+    /**
+     * Called when the activity is already running (singleTop) and a new intent arrives.
+     * This happens when the patient taps the call notification while the app is open.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent) // Keep intent fresh for any future reads
+
+        val targetScreen = intent.getStringExtra("target_screen")
+        val channelName = intent.getStringExtra("channel_name")
+        val doctorId = intent.getStringExtra("doctor_id")
+
+        if (targetScreen == "call_screen" && !channelName.isNullOrEmpty()) {
+            val session = SessionManager()
+            if (session.getPatient() != null) {
+                Log.d("MainActivity", "onNewIntent: routing to video call channel=$channelName")
+                // Push the call data — App's LaunchedEffect will navigate immediately
+                liveCallData.value = Pair(channelName, doctorId ?: "unknown")
+            }
+        }
+    }
+
 
     /**
      * Creates ALL notification channels at startup.
@@ -210,6 +251,13 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         /**
+         * Observable live call data. Updated by onNewIntent when app is already open.
+         * App composable observes this and navigates directly to VideoCall screen.
+         * Value is Pair(channelName, doctorId) or null when no active call intent.
+         */
+        val liveCallData = mutableStateOf<Pair<String, String>?>(null)
+
+        /**
          * Static helper to register FCM token after login.
          * Call this from LoginScreen after successful authentication.
          * FORCE REFRESH: Deletes old token first, then gets a fresh one.
@@ -240,5 +288,5 @@ class MainActivity : ComponentActivity() {
 @Suppress("UnusedPrivateMember")
 @Composable
 private fun AppAndroidPreview() {
-    App(initialCallData = null)
+    App(initialCallData = null, liveCallData = null)
 }

@@ -10,9 +10,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.CallEnd
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MicOff
+import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.VideocamOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -172,7 +174,7 @@ actual fun VideoCallScreen(
                     // Create SurfaceView inside the factory!
                     SurfaceView(ctx).apply {
                         setZOrderMediaOverlay(false) // BACKGROUND LAYER
-                        // Setup the video rendering immediately
+                        // Set up the video rendering immediately
                         val canvas = VideoCanvas(this, VideoCanvas.RENDER_MODE_HIDDEN, remoteUid!!)
                         rtcEngine?.setupRemoteVideo(canvas)
                     }
@@ -250,7 +252,7 @@ actual fun VideoCallScreen(
                 containerColor = if (isMuted) Color.White else Color.DarkGray
             ) {
                 Icon(
-                    imageVector = if (isMuted) Icons.Default.Close else Icons.Default.Phone,
+                    imageVector = if (isMuted) Icons.Default.MicOff else Icons.Default.Mic,
                     contentDescription = "Mute",
                     tint = if (isMuted) Color.Black else Color.White
                 )
@@ -265,7 +267,7 @@ actual fun VideoCallScreen(
                 containerColor = Color.Red,
                 modifier = Modifier.size(72.dp)
             ) {
-                Icon(Icons.Default.Call, "End", tint = Color.White)
+                Icon(Icons.Default.CallEnd, "End", tint = Color.White)
             }
 
             // Video Toggle
@@ -277,7 +279,7 @@ actual fun VideoCallScreen(
                 containerColor = if (!isVideoEnabled) Color.White else Color.DarkGray
             ) {
                 Icon(
-                    imageVector = if (isVideoEnabled) Icons.Default.Phone else Icons.Default.Close,
+                    imageVector = if (isVideoEnabled) Icons.Default.Videocam else Icons.Default.VideocamOff,
                     contentDescription = "Video",
                     tint = if (!isVideoEnabled) Color.Black else Color.White
                 )

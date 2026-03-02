@@ -172,7 +172,7 @@ class FirebaseService : FirebaseMessagingService() {
 
         // Intent to open App
         val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             putExtra("target_screen", "call_screen")
             putExtra("channel_name", channelName)
             putExtra("doctor_id", doctorId)
