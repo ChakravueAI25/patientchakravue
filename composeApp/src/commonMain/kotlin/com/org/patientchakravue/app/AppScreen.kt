@@ -8,6 +8,7 @@ sealed class Screen {
     data object AfterCare : Screen()
     data object Vision : Screen()
     data object Notifications : Screen()
+    data object Terms : Screen() // One-time Terms & Conditions consent (after login)
     data object Profile : Screen() // Added from previous context
     data object AdherenceGraph: Screen() // Added from previous context
     data object MedicineList: Screen() // Added from previous context

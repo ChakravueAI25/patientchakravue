@@ -33,9 +33,12 @@ class FirebaseService : FirebaseMessagingService() {
     companion object {
         private const val TAG = "FirebaseService"
 
-        // Channel IDs must match those created in MainActivity
+        // Channel IDs must match those created in MainActivity.
+        // NOTE: notification channels are immutable once created, so the call
+        // channel id is versioned (_v2) to force a clean re-create on devices that
+        // had the old, silent channel from a previous build.
         const val CHANNEL_MEDICINE = "medicine_channel"
-        const val CHANNEL_CALLS = "call_channel_id"
+        const val CHANNEL_CALLS = "call_channel_id_v2"
         const val CHANNEL_DEFAULT = "default_channel_id"
     }
 
@@ -170,6 +173,11 @@ class FirebaseService : FirebaseMessagingService() {
         // Ensure channel exists
         ensureChannelExists(notificationManager, CHANNEL_CALLS)
 
+        // Start the continuous, looping ring. The notification channel is silent on
+        // purpose (so we don't get a one-shot chime on top of this loop). The ring is
+        // stopped when the patient answers (MainActivity) or after a 60s timeout.
+        IncomingCallRingtone.start(applicationContext)
+
         // Intent to open App
         val intent = Intent(this, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -192,8 +200,8 @@ class FirebaseService : FirebaseMessagingService() {
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setAutoCancel(true)
+            .setOngoing(true)
             .setFullScreenIntent(pendingIntent, true)
-            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE))
             .setContentIntent(pendingIntent)
             .setVibrate(longArrayOf(0, 500, 200, 500))
             .build()
@@ -218,7 +226,10 @@ class FirebaseService : FirebaseMessagingService() {
                     this.description = description
                     enableVibration(true)
                     if (channelId == CHANNEL_CALLS) {
-                        setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE), null)
+                        // Silent channel: the looping ring is played by
+                        // IncomingCallRingtone (MediaPlayer), so suppress the
+                        // channel's own one-shot sound to avoid a double chime.
+                        setSound(null, null)
                     }
                 }
                 manager.createNotificationChannel(channel)

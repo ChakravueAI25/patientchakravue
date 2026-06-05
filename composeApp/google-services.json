@@ -1,13 +1,33 @@
 {
   "project_info": {
-    "project_number": "115564934409",
-    "project_id": "chakravue-2afd8",
-    "storage_bucket": "chakravue-2afd8.firebasestorage.app"
+    "project_number": "737618580255",
+    "project_id": "appnotifications-5e2c7",
+    "storage_bucket": "appnotifications-5e2c7.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:115564934409:android:24611307ba0fe9544e0fd8",
+        "mobilesdk_app_id": "1:737618580255:android:81d06d0733e5572453562a",
+        "android_client_info": {
+          "package_name": "com.org.doctorchakravue"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCs8-o5FHLwVKHGv1RXJui_Yy6KHD9dtFk"
+        }
+      ],
+
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:737618580255:android:8b7049e12f3862b853562a",
         "android_client_info": {
           "package_name": "com.org.patientchakravue"
         }
@@ -15,7 +35,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBOrmOE-SBE8wL438K0YRbClMjNIsuVtys"
+          "current_key": "AIzaSyCs8-o5FHLwVKHGv1RXJui_Yy6KHD9dtFk"
         }
       ],
       "services": {

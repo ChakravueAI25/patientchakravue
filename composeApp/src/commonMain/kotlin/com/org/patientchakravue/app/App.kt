@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.data.SessionManager
 import com.org.patientchakravue.ui.*
 import kotlinx.coroutines.launch
@@ -31,7 +32,12 @@ fun App(
                     initialCallData.second
                 )
 
-                sessionManager.getPatient() != null -> Screen.Dashboard
+                sessionManager.getPatient() != null ->
+                    if (sessionManager.hasAcceptedTerms(sessionManager.getPatient()!!.id, LegalConfig.TERMS_VERSION))
+                        Screen.Dashboard
+                    else
+                        Screen.Terms
+
                 else -> Screen.Login
             }
             val navigator = remember { Navigator(initialScreen) }
@@ -52,7 +58,7 @@ fun App(
             var previousScreen by remember { mutableStateOf<Screen>(initialScreen) }
 
             // Show back handler on any screen that is NOT a root screen
-            if (navigator.currentScreen !in listOf(Screen.Dashboard, Screen.Login)) {
+            if (navigator.currentScreen !in listOf(Screen.Dashboard, Screen.Login, Screen.Terms)) {
                 AppBackHandler { navigator.goBack() }
             }
 
@@ -132,8 +138,25 @@ fun App(
                 ) { screen ->
                     when (screen) {
                         is Screen.Login -> LoginScreen(
-                        onLoginSuccess = { navigator.navigateAsPillar(Screen.Dashboard) },
+                        onLoginSuccess = {
+                            val p = sessionManager.getPatient()
+                            if (p != null && sessionManager.hasAcceptedTerms(p.id, LegalConfig.TERMS_VERSION))
+                                navigator.navigateAsPillar(Screen.Dashboard)
+                            else
+                                navigator.navigateAsPillar(Screen.Terms)
+                        },
                         showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } }
+                    )
+
+                    is Screen.Terms -> TermsScreen(
+                        onAccept = {
+                            val p = sessionManager.getPatient()
+                            if (p != null) {
+                                sessionManager.setTermsAccepted(p.id, LegalConfig.TERMS_VERSION)
+                                scope.launch { ApiRepository().recordConsent(p.id, LegalConfig.TERMS_VERSION) }
+                            }
+                            navigator.navigateAsPillar(Screen.Dashboard)
+                        }
                     )
 
                     is Screen.Dashboard -> {

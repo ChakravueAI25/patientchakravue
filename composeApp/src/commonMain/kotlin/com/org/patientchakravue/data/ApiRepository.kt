@@ -44,6 +44,19 @@ class ApiRepository {
 
     private val baseUrl = BASE_URL
 
+    // Consent (Terms & Conditions audit record) — fire-and-forget from the UI.
+    suspend fun recordConsent(userId: String, version: Int): Boolean {
+        return try {
+            val response = NetworkClient.client.post("$baseUrl/consent") {
+                contentType(ContentType.Application.Json)
+                setBody(mapOf("user_id" to userId, "role" to "patient", "terms_version" to version.toString()))
+            }
+            response.status == HttpStatusCode.OK
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     suspend fun login(email: String, password: String): Patient? {
         return try {
             val response = NetworkClient.client.post("$baseUrl/login") {
