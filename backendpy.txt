@@ -495,6 +495,98 @@ def _extract_password_from_user(user: Dict[str, Any]) -> Optional[str]:
     return None
 
 
+def _extract_passwords_all_tiers(user: Dict[str, Any]) -> List[tuple]:
+    """
+    Returns ALL passwords found across all tiers as [(tier_label, password), ...].
+    Used by login to cascade: if TIER 1 hash verification fails, try TIER 2 (plain text), then TIER 2B.
+    """
+    if not isinstance(user, dict):
+        return []
+
+    def is_valid_password(val):
+        return isinstance(val, str) and len(val.strip()) > 0
+
+    results = []
+    seen = set()  # avoid returning duplicate password values
+
+    def _add(tier, pwd):
+        if pwd not in seen:
+            seen.add(pwd)
+            results.append((tier, pwd))
+
+    # ========== TIER 1: Known Field Locations ==========
+    candidates_tier1 = [
+        user.get("password"),
+        user.get("hashed_password"),
+    ]
+    pat_details = user.get("patientDetails") or {}
+    if isinstance(pat_details, dict):
+        candidates_tier1.append(pat_details.get("password"))
+    last_reception = user.get("lastReception") or {}
+    if isinstance(last_reception, dict):
+        last_rec_pat = last_reception.get("patientDetails") or {}
+        if isinstance(last_rec_pat, dict):
+            candidates_tier1.append(last_rec_pat.get("password"))
+    for pwd_value in candidates_tier1:
+        if is_valid_password(pwd_value):
+            _add("TIER1", pwd_value)
+
+    # ========== TIER 2: Nested Arrays (encounters, visits) ==========
+    encounters = user.get("encounters") or []
+    if isinstance(encounters, list):
+        for encounter in encounters:
+            if not isinstance(encounter, dict):
+                continue
+            if is_valid_password(encounter.get("password")):
+                _add("TIER2", encounter.get("password"))
+            details = encounter.get("details") or {}
+            if isinstance(details, dict):
+                pat_det = details.get("patientDetails") or {}
+                if isinstance(pat_det, dict) and is_valid_password(pat_det.get("password")):
+                    _add("TIER2", pat_det.get("password"))
+
+    visits = user.get("visits") or []
+    if isinstance(visits, list):
+        for visit in visits:
+            if not isinstance(visit, dict):
+                continue
+            if is_valid_password(visit.get("password")):
+                _add("TIER2", visit.get("password"))
+            stages = visit.get("stages") or {}
+            if isinstance(stages, dict):
+                reception = stages.get("reception") or {}
+                if isinstance(reception, dict):
+                    data = reception.get("data") or {}
+                    if isinstance(data, dict):
+                        pat_det = data.get("patientDetails") or {}
+                        if isinstance(pat_det, dict) and is_valid_password(pat_det.get("password")):
+                            _add("TIER2", pat_det.get("password"))
+
+    # ========== TIER 2B: Recursive deep search ==========
+    def find_password_recursive(obj, depth=0):
+        if depth > 15:
+            return None
+        if isinstance(obj, dict):
+            if "password" in obj and is_valid_password(obj["password"]):
+                return obj["password"]
+            for value in obj.values():
+                result = find_password_recursive(value, depth + 1)
+                if result:
+                    return result
+        elif isinstance(obj, list):
+            for item in obj:
+                result = find_password_recursive(item, depth + 1)
+                if result:
+                    return result
+        return None
+
+    pwd_recursive = find_password_recursive(user)
+    if pwd_recursive:
+        _add("TIER2B", pwd_recursive)
+
+    return results
+
+
 async def _find_user_by_email_or_contact(email: str) -> Optional[Dict[str, Any]]:
     """
     Two-tier email lookup strategy:
@@ -742,46 +834,44 @@ async def login(request: LoginRequest):
         print(f"[LOGIN] User NOT found - raising 404")
         raise HTTPException(status_code=404, detail="Invalid email or password")
 
-    # Use two-tier password extraction helper (robust to all schema variations)
-    stored_pw = _extract_password_from_user(user)
-    if not stored_pw:
-        print(f"[LOGIN] ERROR: No valid password found in user document after searching all locations")
+    # Extract ALL passwords from every tier for cascading verification
+    all_passwords = _extract_passwords_all_tiers(user)
+    if not all_passwords:
+        print(f"[LOGIN] ERROR: No valid password found in user document after searching all tiers")
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    print(f"[LOGIN] DEBUG - Password extraction successful:")
-    print(f"[LOGIN]   - stored_pw type: {type(stored_pw)}")
-    print(f"[LOGIN]   - stored_pw length: {len(str(stored_pw)) if stored_pw else 0}")
+    print(f"[LOGIN] DEBUG - Found {len(all_passwords)} password candidate(s) across tiers")
+    print(f"[LOGIN] DEBUG - Request password: {repr(request.password)} (length={len(request.password)})")
 
-    # DEBUG: Log request password
-    print(f"[LOGIN] DEBUG - Request password:")
-    print(f"[LOGIN]   - request.password: {repr(request.password)}")
-    print(f"[LOGIN]   - request.password type: {type(request.password)}")
-    print(f"[LOGIN]   - request.password length: {len(request.password)}")
+    # Cascade: try each tier's password until one succeeds.
+    # TIER 1 passwords may be hashed (bcrypt/pbkdf2); TIER 2/2B are expected plain-text.
+    valid = False
+    matched_tier = None
+    for tier_label, stored_pw in all_passwords:
+        print(f"[LOGIN] Trying {tier_label} password (length={len(stored_pw)})")
+        try:
+            is_hash = pwd_context.identify(stored_pw)
+            if is_hash:
+                print(f"[LOGIN]   - {tier_label}: Using hash verification")
+                tier_valid = pwd_context.verify(request.password, stored_pw)
+            else:
+                print(f"[LOGIN]   - {tier_label}: Using plaintext comparison")
+                tier_valid = (request.password == stored_pw)
 
-    # Accept both hashed and legacy plain-text passwords.
-    # If stored_pw is a passlib hash, pwd_context.identify will return a scheme name;
-    # otherwise fall back to a direct string comparison (for legacy records).
-    try:
-        is_hash = pwd_context.identify(stored_pw)
-        print(f"[LOGIN] DEBUG - Password verification:")
-        print(f"[LOGIN]   - is_hash (pwd_context.identify): {is_hash}")
-
-        if is_hash:
-            print(f"[LOGIN]   - Using bcrypt verification (hash detected)")
-            valid = pwd_context.verify(request.password, stored_pw)
-            print(f"[LOGIN]   - Hash verification result: {valid}")
-        else:
-            # legacy plaintext password stored in DB
-            print(f"[LOGIN]   - Using plaintext comparison (no hash detected)")
-            print(f"[LOGIN]   - Comparing: {repr(request.password)} == {repr(stored_pw)}")
-            valid = (request.password == stored_pw)
-            print(f"[LOGIN]   - Plaintext comparison result: {valid}")
-    except Exception as e:
-        print(f"[LOGIN] DEBUG - Password verification EXCEPTION: {e}")
-        valid = False
+            print(f"[LOGIN]   - {tier_label}: Result = {tier_valid}")
+            if tier_valid:
+                valid = True
+                matched_tier = tier_label
+                break
+        except Exception as e:
+            print(f"[LOGIN]   - {tier_label}: Verification exception: {e}, moving to next tier...")
+            continue
 
     if not valid:
+        print(f"[LOGIN] ✗ All tiers exhausted - none matched - raising 401")
         raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    print(f"[LOGIN] ✓ Login successful via {matched_tier}")
 
     user_safe = deepcopy(user)
     user_safe.pop("password", None)

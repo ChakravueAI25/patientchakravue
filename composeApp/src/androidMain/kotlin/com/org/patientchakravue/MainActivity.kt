@@ -80,6 +80,11 @@ class MainActivity : ComponentActivity() {
         val session = SessionManager()
         val isLoggedIn = session.getPatient() != null
 
+        // Patient answered (tapped the call notification) -> silence the ring.
+        if (isCallIntent) {
+            com.org.patientchakravue.firebase.IncomingCallRingtone.stop()
+        }
+
         setContent {
             // showSplash: skip immediately for call intents (so patient enters call directly)
             var showSplash by remember { mutableStateOf(!isCallIntent || !isLoggedIn) }
@@ -132,6 +137,8 @@ class MainActivity : ComponentActivity() {
         val doctorId = intent.getStringExtra("doctor_id")
 
         if (targetScreen == "call_screen" && !channelName.isNullOrEmpty()) {
+            // Patient answered while the app was open -> silence the ring.
+            com.org.patientchakravue.firebase.IncomingCallRingtone.stop()
             val session = SessionManager()
             if (session.getPatient() != null) {
                 Log.d("MainActivity", "onNewIntent: routing to video call channel=$channelName")
@@ -162,18 +169,22 @@ class MainActivity : ComponentActivity() {
                 setShowBadge(true)
             }
 
-            // 2. Incoming Calls Channel (HIGH importance with ringtone)
+            // 2. Incoming Calls Channel (HIGH importance, full-screen + vibration).
+            // Versioned id (_v2) because channels are immutable once created — this
+            // forces a clean channel on devices that had the old build's channel.
+            // Sound is intentionally OFF here: the continuous ring is played by
+            // IncomingCallRingtone (a looping MediaPlayer), so we suppress the
+            // channel's one-shot sound to avoid a double chime.
             val callChannel = NotificationChannel(
-                "call_channel_id",
+                "call_channel_id_v2",
                 "Incoming Calls",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Incoming doctor video calls"
                 enableVibration(true)
-                setSound(
-                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
-                    null
-                )
+                vibrationPattern = longArrayOf(0, 500, 200, 500)
+                setSound(null, null)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             }
 
             // 3. Default/General Channel
