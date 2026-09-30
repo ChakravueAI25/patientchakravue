@@ -18,6 +18,9 @@ actual fun registerFcmTokenAfterLogin(patientId: String) {
     println("iOS FCM registration placeholder for patient: $patientId")
 }
 
+actual fun getDeviceId(): String =
+    UIDevice.currentDevice.identifierForVendor?.UUIDString ?: "unknown-device"
+
 /**
  * iOS implementation: Save PDF and notify user.
  * This is a placeholder - iOS file handling would need native implementation.

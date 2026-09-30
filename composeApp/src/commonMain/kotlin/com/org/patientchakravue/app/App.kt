@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.org.patientchakravue.data.ApiRepository
 import com.org.patientchakravue.data.SessionManager
+import com.org.patientchakravue.platform.registerFcmTokenAfterLogin
 import com.org.patientchakravue.ui.*
 import kotlinx.coroutines.launch
 import com.org.patientchakravue.ui.language.AppLocalizationProvider
@@ -54,11 +55,22 @@ fun App(
                 }
             }
 
+            // Where to go once a patient is signed in (login, registration, account switch)
+            val afterSignIn = {
+                val p = sessionManager.getPatient()
+                if (p != null && sessionManager.hasAcceptedTerms(p.id, LegalConfig.TERMS_VERSION))
+                    navigator.navigateAsPillar(Screen.Dashboard)
+                else
+                    navigator.navigateAsPillar(Screen.Terms)
+            }
+
             // Track previous screen to determine navigation direction
             var previousScreen by remember { mutableStateOf<Screen>(initialScreen) }
 
             // Show back handler on any screen that is NOT a root screen
-            if (navigator.currentScreen !in listOf(Screen.Dashboard, Screen.Login, Screen.Terms)) {
+            if (navigator.currentScreen !in listOf(Screen.Dashboard, Screen.Login, Screen.Terms) &&
+                navigator.currentScreen !is Screen.RegistrationSuccess // password is shown once: no back
+            ) {
                 AppBackHandler { navigator.goBack() }
             }
 
@@ -138,13 +150,27 @@ fun App(
                 ) { screen ->
                     when (screen) {
                         is Screen.Login -> LoginScreen(
-                        onLoginSuccess = {
-                            val p = sessionManager.getPatient()
-                            if (p != null && sessionManager.hasAcceptedTerms(p.id, LegalConfig.TERMS_VERSION))
-                                navigator.navigateAsPillar(Screen.Dashboard)
-                            else
-                                navigator.navigateAsPillar(Screen.Terms)
-                        },
+                        onLoginSuccess = afterSignIn,
+                        showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } },
+                        onRegister = { navigator.navigateForward(Screen.Register) }
+                    )
+
+                    is Screen.AddAccount -> LoginScreen(
+                        onLoginSuccess = afterSignIn,
+                        showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } },
+                        onRegister = { navigator.navigateForward(Screen.Register) },
+                        onCancel = { navigator.goBack() }
+                    )
+
+                    is Screen.Register -> RegisterScreen(
+                        onBack = { navigator.goBack() },
+                        onRegistered = { navigator.navigateAsPillar(Screen.RegistrationSuccess(it)) },
+                        showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } }
+                    )
+
+                    is Screen.RegistrationSuccess -> RegistrationSuccessScreen(
+                        credentials = screen.credentials,
+                        onContinue = afterSignIn,
                         showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } }
                     )
 
@@ -180,7 +206,13 @@ fun App(
                         onLogout = {
                             sessionManager.clearSession()
                             navigator.navigateAsPillar(Screen.Login)
-                        }
+                        },
+                        onSwitchAccount = { acc ->
+                            sessionManager.savePatient(acc)
+                            registerFcmTokenAfterLogin(acc.id)
+                            afterSignIn()
+                        },
+                        onAddAccount = { navigator.navigateForward(Screen.AddAccount) }
                     )
 
                     is Screen.AdherenceGraph -> AdherenceGraphScreen(onBack = { navigator.goBack() })

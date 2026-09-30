@@ -13,6 +13,9 @@ expect fun getPlatform(): Platform
  */
 expect fun registerFcmTokenAfterLogin(patientId: String)
 
+/** Stable per-device identifier, used for self-registration rate limiting. */
+expect fun getDeviceId(): String
+
 /**
  * Saves a byte array as a PDF file and shows a local notification on completion.
  */
