@@ -42,6 +42,11 @@ actual fun registerFcmTokenAfterLogin(patientId: String) {
     }
 }
 
+@android.annotation.SuppressLint("HardwareIds")
+actual fun getDeviceId(): String =
+    android.provider.Settings.Secure.getString(androidContext.contentResolver, android.provider.Settings.Secure.ANDROID_ID)
+        ?: "unknown-device"
+
 /**
  * Android implementation: Saves PDF file to Downloads and shows notification.
  * Uses MediaStore for Android 10+ (API 29+) and legacy method for older versions.

@@ -1,11 +1,18 @@
 package com.org.patientchakravue.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,12 +34,15 @@ import kotlinx.coroutines.launch
 fun ProfileScreen(
     sessionManager: SessionManager,
     onBack: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onSwitchAccount: (Patient) -> Unit,
+    onAddAccount: () -> Unit
 ) {
     val patientId = sessionManager.getPatient()?.id
     var patient by remember { mutableStateOf<Patient?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var isDownloading by remember { mutableStateOf(false) }
+    var showAccounts by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val apiRepository = remember { ApiRepository() }
 
@@ -221,6 +231,15 @@ fun ProfileScreen(
 
                 Spacer(Modifier.height(24.dp))
 
+                OutlinedButton(
+                    onClick = { showAccounts = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Change account")
+                }
+
+                Spacer(Modifier.height(12.dp))
+
                 Button(
                     onClick = {
                         sessionManager.clearSession()
@@ -245,6 +264,85 @@ fun ProfileScreen(
             }
         }
     } // Close main Box
+
+    if (showAccounts) {
+        AccountSwitcherDialog(
+            sessionManager = sessionManager,
+            currentId = patientId,
+            onDismiss = { showAccounts = false },
+            onSwitch = { showAccounts = false; onSwitchAccount(it) },
+            onAdd = { showAccounts = false; onAddAccount() }
+        )
+    }
+}
+
+/** Gmail-style account list: tap to switch, X to forget a saved account, "Add account" to sign in another. */
+@Composable
+private fun AccountSwitcherDialog(
+    sessionManager: SessionManager,
+    currentId: String?,
+    onDismiss: () -> Unit,
+    onSwitch: (Patient) -> Unit,
+    onAdd: () -> Unit
+) {
+    var accounts by remember { mutableStateOf(sessionManager.getSavedAccounts()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Choose an account", fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D)) },
+        text = {
+            Column {
+                accounts.forEach { acc ->
+                    val isCurrent = acc.id == currentId
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !isCurrent) { onSwitch(acc) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier.size(40.dp).background(Color(0xFF1976D2), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                (acc.name?.firstOrNull() ?: '?').uppercase(),
+                                color = Color.White, fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(acc.name ?: "Patient", fontWeight = FontWeight.Medium)
+                            Text(
+                                acc.registrationId ?: acc.phone ?: "",
+                                fontSize = 12.sp, color = Color.Gray
+                            )
+                        }
+                        if (isCurrent) {
+                            Icon(Icons.Default.Check, "Current account", tint = Color(0xFF4CAF50))
+                        } else {
+                            IconButton(onClick = {
+                                sessionManager.removeAccount(acc.id)
+                                accounts = sessionManager.getSavedAccounts()
+                            }) { Icon(Icons.Default.Close, "Remove account", tint = Color.Gray) }
+                        }
+                    }
+                }
+                HorizontalDivider(Modifier.padding(vertical = 4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().clickable(onClick = onAdd).padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier.size(40.dp).border(1.dp, Color.Gray, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) { Icon(Icons.Default.Add, null, tint = Color(0xFF1976D2)) }
+                    Spacer(Modifier.width(12.dp))
+                    Text("Add account", fontWeight = FontWeight.Medium, color = Color(0xFF1976D2))
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }
+    )
 }
 
 @Composable

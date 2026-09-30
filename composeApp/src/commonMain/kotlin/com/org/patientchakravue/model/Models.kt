@@ -228,3 +228,31 @@ data class CallTokenResponse(
     @SerialName("app_id") val appId: String
 )
 
+
+// --- Self registration ---
+@Serializable
+data class RegisterRequest(
+    val name: String,
+    val age: String,
+    val sex: String,
+    val phone: String,
+    val email: String = "",
+    val address: String = "",
+    val bloodType: String = "",
+    val aadhaarNumber: String = "",
+    val panNumber: String = "",
+    val insuranceType: String = "",
+    val insuranceCompany: String = "",
+    val insuranceTPA: String = "",
+    val allergies: String = "",
+    val emergencyContactName: String = "",
+    val emergencyContactPhone: String = "",
+    @SerialName("device_id") val deviceId: String
+)
+
+@Serializable
+data class RegisterResponse(
+    val registrationId: String,
+    val username: String,
+    val password: String
+)

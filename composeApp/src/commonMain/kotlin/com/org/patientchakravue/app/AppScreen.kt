@@ -8,6 +8,9 @@ sealed class Screen {
     data object AfterCare : Screen()
     data object Vision : Screen()
     data object Notifications : Screen()
+    data object Register : Screen()
+    data class RegistrationSuccess(val credentials: com.org.patientchakravue.model.RegisterResponse) : Screen()
+    data object AddAccount : Screen() // Login screen reused to add another saved account
     data object Terms : Screen() // One-time Terms & Conditions consent (after login)
     data object Profile : Screen() // Added from previous context
     data object AdherenceGraph: Screen() // Added from previous context

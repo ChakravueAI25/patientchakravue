@@ -2,9 +2,11 @@ package com.org.patientchakravue.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -13,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -28,7 +31,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    showSnackbar: (String) -> Unit
+    showSnackbar: (String) -> Unit,
+    onRegister: () -> Unit = {},
+    onCancel: (() -> Unit)? = null // set when adding another account: shows a back arrow
 ) {
     val scope = rememberCoroutineScope()
     val sessionManager = remember { SessionManager() }
@@ -60,6 +65,19 @@ fun LoginScreen(
                         .align(Alignment.TopEnd)
                 ) {
                     LanguageSwitcherIcon(tint = MaterialTheme.colorScheme.onBackground)
+                }
+            }
+
+            if (onCancel != null) {
+                IconButton(
+                    onClick = onCancel,
+                    modifier = Modifier.padding(top = 40.dp, start = 8.dp).align(Alignment.TopStart)
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
                 }
             }
 
@@ -210,6 +228,19 @@ fun LoginScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                             }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("New patient? ", color = Color(0xFF757575), fontSize = 14.sp)
+                            Text(
+                                "Register?",
+                                color = Color(0xFF2979FF),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                textDecoration = TextDecoration.Underline,
+                                modifier = Modifier.clickable(onClick = onRegister)
+                            )
                         }
                     }
                 }

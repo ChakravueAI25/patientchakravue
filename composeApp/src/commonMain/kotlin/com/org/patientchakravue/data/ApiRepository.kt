@@ -12,6 +12,7 @@ import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
@@ -56,6 +57,29 @@ class ApiRepository {
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+
+    /** Self-registration. Returns (response, null) on success or (null, message) on failure. */
+    suspend fun registerPatient(req: com.org.patientchakravue.model.RegisterRequest):
+            Pair<com.org.patientchakravue.model.RegisterResponse?, String?> {
+        return try {
+            val response = NetworkClient.client.post("$baseUrl/register") {
+                contentType(ContentType.Application.Json)
+                setBody(req)
+            }
+            if (response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK) {
+                response.body<com.org.patientchakravue.model.RegisterResponse>() to null
+            } else {
+                val detail = try {
+                    (Json.parseToJsonElement(response.bodyAsText()) as? kotlinx.serialization.json.JsonObject)
+                        ?.get("detail")?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content }
+                } catch (e: Exception) { null }
+                null to (detail ?: "Registration failed (${response.status.value})")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null to "Connection error. Please check your internet and try again."
         }
     }
 
@@ -393,6 +417,23 @@ class ApiRepository {
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+
+    // Record Patient Consent for Terms and Conditions
+    suspend fun recordConsent(patientId: String, version: Int): Boolean {
+        return try {
+            val response = NetworkClient.client.post("$baseUrl/patients/$patientId/consent") {
+                contentType(ContentType.Application.Json)
+                setBody(mapOf(
+                    "version" to version,
+                    "platform" to "android"
+                ))
+            }
+            response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
     }
 }
