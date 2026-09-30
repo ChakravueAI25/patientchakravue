@@ -89,7 +89,7 @@ object RemoteLogger {
 class ApiRepository {
     // PUBLIC BASE URL for use by UI components (e.g., image loading)
     companion object {
-        const val BASE_URL = "https://patient.chakravue.co.in"
+        const val BASE_URL = "https://admin.chakravue.co.in/api/mobile"
     }
 
     private val baseUrl = BASE_URL
