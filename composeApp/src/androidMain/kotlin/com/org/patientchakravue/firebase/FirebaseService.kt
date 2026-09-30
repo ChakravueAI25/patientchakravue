@@ -81,7 +81,9 @@ class FirebaseService : FirebaseMessagingService() {
             "incoming_call" -> {
                 val channelName = data["channel_name"] ?: ""
                 val doctorId = data["doctor_id"] ?: ""
-                showIncomingCallNotification(channelName, doctorId)
+                val agoraToken = data["agora_token"]
+                val appId = data["app_id"]
+                showIncomingCallNotification(channelName, doctorId, agoraToken, appId)
             }
 
             // Handle Medicine Reminder - ALWAYS show notification + refresh UI
@@ -165,7 +167,12 @@ class FirebaseService : FirebaseMessagingService() {
     /**
      * Show incoming call notification with full-screen intent.
      */
-    private fun showIncomingCallNotification(channelName: String, doctorId: String) {
+    private fun showIncomingCallNotification(
+        channelName: String,
+        doctorId: String,
+        agoraToken: String? = null,
+        appId: String? = null
+    ) {
         Log.d(TAG, "Incoming call notification: channel=$channelName, doctor=$doctorId")
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -182,8 +189,11 @@ class FirebaseService : FirebaseMessagingService() {
         val intent = Intent(this, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             putExtra("target_screen", "call_screen")
+            putExtra("type", "incoming_call")
             putExtra("channel_name", channelName)
             putExtra("doctor_id", doctorId)
+            putExtra("agora_token", agoraToken)
+            putExtra("app_id", appId)
         }
 
         val pendingIntent = PendingIntent.getActivity(
@@ -218,14 +228,14 @@ class FirebaseService : FirebaseMessagingService() {
             if (manager.getNotificationChannel(channelId) == null) {
                 val (name, importance, description) = when (channelId) {
                     CHANNEL_MEDICINE -> Triple("Medicine Reminders", NotificationManager.IMPORTANCE_HIGH, "Medicine dose reminders")
-                    CHANNEL_CALLS -> Triple("Incoming Calls", NotificationManager.IMPORTANCE_HIGH, "Incoming video calls")
+                    CHANNEL_CALLS, "call_channel_id" -> Triple("Incoming Calls", NotificationManager.IMPORTANCE_HIGH, "Incoming video calls")
                     else -> Triple("General Notifications", NotificationManager.IMPORTANCE_DEFAULT, "General notifications")
                 }
 
                 val channel = NotificationChannel(channelId, name, importance).apply {
                     this.description = description
                     enableVibration(true)
-                    if (channelId == CHANNEL_CALLS) {
+                    if (channelId == CHANNEL_CALLS || channelId == "call_channel_id") {
                         // Silent channel: the looping ring is played by
                         // IncomingCallRingtone (MediaPlayer), so suppress the
                         // channel's own one-shot sound to avoid a double chime.

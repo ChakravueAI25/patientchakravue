@@ -228,6 +228,13 @@ data class CallTokenResponse(
     @SerialName("app_id") val appId: String
 )
 
+data class CallData(
+    val channelName: String,
+    val doctorId: String,
+    val agoraToken: String? = null,
+    val appId: String? = null
+)
+
 
 // --- Self registration ---
 @Serializable
