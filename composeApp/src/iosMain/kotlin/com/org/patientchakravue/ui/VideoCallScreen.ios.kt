@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.sp
 actual fun VideoCallScreen(
     channelName: String,
     doctorId: String,
+    agoraToken: String?,
+    appId: String?,
     onCallEnded: () -> Unit
 ) {
     // iOS placeholder - Video calling not yet implemented for iOS

@@ -31,6 +31,9 @@ import io.agora.rtc2.*
 import io.agora.rtc2.video.VideoCanvas
 import kotlin.math.absoluteValue
 
+import android.os.Handler
+import android.os.Looper
+
 private const val TAG = "VideoCallScreen"
 
 // Patient UID offset to ensure no collision with doctor
@@ -45,10 +48,13 @@ private fun generatePatientUid(channelName: String): Int {
 actual fun VideoCallScreen(
     channelName: String,
     doctorId: String,
+    agoraToken: String?,
+    appId: String?,
     onCallEnded: () -> Unit
 ) {
     val context = LocalContext.current
     val api = remember { ApiRepository() }
+    val mainHandler = remember { Handler(Looper.getMainLooper()) }
 
     // Generate unique patient UID
     val patientUid = remember(channelName) { generatePatientUid(channelName) }
@@ -90,57 +96,83 @@ actual fun VideoCallScreen(
             return@LaunchedEffect
         }
 
-        // 1. Get Token
-        val tokenResponse = api.getCallToken(channelName)
-        if (tokenResponse == null) {
-            errorMessage = "Failed to get call token"
-            isConnecting = false
-            return@LaunchedEffect
+        // 1. Determine Token & App ID (use passed intent extras or fetch from API)
+        val activeToken: String
+        val activeAppId: String
+
+        if (!agoraToken.isNullOrEmpty() && !appId.isNullOrEmpty()) {
+            activeToken = agoraToken
+            activeAppId = appId
+            Log.d(TAG, "Using FCM pre-supplied token and appId for channel $channelName")
+        } else {
+            Log.d(TAG, "Fetching Agora token from backend for channel $channelName...")
+            val tokenResponse = api.getCallToken(channelName)
+            if (tokenResponse == null) {
+                errorMessage = "Failed to get call token"
+                isConnecting = false
+                return@LaunchedEffect
+            }
+            activeToken = tokenResponse.token
+            activeAppId = tokenResponse.appId
         }
 
         try {
             // 2. Initialize Engine
             val config = RtcEngineConfig().apply {
                 mContext = context
-                mAppId = tokenResponse.appId
+                mAppId = activeAppId
                 mEventHandler = object : IRtcEngineEventHandler() {
                     override fun onJoinChannelSuccess(channel: String?, uid: Int, elapsed: Int) {
                         Log.d(TAG, "Join success: $channel, uid: $uid")
-                        isConnecting = false
+                        mainHandler.post {
+                            isConnecting = false
+                        }
                     }
 
                     override fun onUserJoined(uid: Int, elapsed: Int) {
                         Log.d(TAG, "Remote user joined: $uid")
-                        // Trigger UI update to render remote video
-                        remoteUid = uid
+                        mainHandler.post {
+                            remoteUid = uid
+                            isConnecting = false
+                        }
                     }
 
                     override fun onUserOffline(uid: Int, reason: Int) {
-                        Log.d(TAG, "Remote user offline: $uid")
-                        if (remoteUid == uid) {
-                            remoteUid = null
-                            // Optional: End call if doctor leaves
-                            // onCallEnded()
+                        Log.d(TAG, "Remote user offline: $uid, reason: $reason")
+                        mainHandler.post {
+                            if (remoteUid == uid) {
+                                remoteUid = null
+                                onCallEnded()
+                            }
                         }
                     }
 
                     override fun onError(err: Int) {
                         Log.e(TAG, "Agora error: $err")
+                        mainHandler.post {
+                            errorMessage = "Agora connection error: $err"
+                            isConnecting = false
+                        }
                     }
                 }
             }
 
             val engine = RtcEngine.create(config)
             engine.enableVideo()
-            engine.setChannelProfile(Constants.CHANNEL_PROFILE_COMMUNICATION)
-            engine.setClientRole(Constants.CLIENT_ROLE_BROADCASTER)
+            engine.startPreview()
+            engine.setDefaultAudioRoutetoSpeakerphone(true)
 
-            // 3. Join Channel
-            val options = ChannelMediaOptions()
-            options.clientRoleType = Constants.CLIENT_ROLE_BROADCASTER
-            options.channelProfile = Constants.CHANNEL_PROFILE_COMMUNICATION
+            // 3. Join Channel with explicit media options (camera, mic, auto-subscribe)
+            val options = ChannelMediaOptions().apply {
+                clientRoleType = Constants.CLIENT_ROLE_BROADCASTER
+                channelProfile = Constants.CHANNEL_PROFILE_COMMUNICATION
+                publishCameraTrack = true
+                publishMicrophoneTrack = true
+                autoSubscribeAudio = true
+                autoSubscribeVideo = true
+            }
 
-            engine.joinChannel(tokenResponse.token, channelName, patientUid, options)
+            engine.joinChannel(activeToken, channelName, patientUid, options)
             rtcEngine = engine
 
         } catch (e: Exception) {
