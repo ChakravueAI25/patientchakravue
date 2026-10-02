@@ -26,6 +26,7 @@ import com.org.patientchakravue.ui.language.localizedString
 import com.org.patientchakravue.ui.theme.AppBackground
 import com.org.patientchakravue.ui.theme.PrescriptionCard
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.DateTimeUnit
@@ -43,6 +44,8 @@ fun DashboardScreen(
     val apiRepository = remember { ApiRepository() }
     var todayDoses by remember { mutableStateOf<List<DoseItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var showBookingDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     // Get current language to trigger recomposition when it changes
@@ -67,14 +70,15 @@ fun DashboardScreen(
 
     AppBackground {
         Scaffold(
-            containerColor = Color.Transparent
+            containerColor = Color.Transparent,
+            snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { padding ->
-            LazyColumn(
-                modifier = Modifier
-                    .padding(padding)
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp)
-            ) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp)
+                ) {
 
                 /* ---------- HEADER ---------- */
                 item {
@@ -216,6 +220,23 @@ fun DashboardScreen(
                                 )
                             }
 
+                            Spacer(Modifier.height(8.dp))
+
+                            Button(
+                                onClick = { showBookingDialog = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
+                                shape = RoundedCornerShape(20.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    Icons.Default.CalendarMonth,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text("Book Appointment", fontWeight = FontWeight.Bold)
+                            }
+
                             Spacer(Modifier.height(16.dp))
                             HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray)
                             Spacer(Modifier.height(12.dp))
@@ -330,7 +351,157 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.height(80.dp))
                 }
             }
+
+            if (showBookingDialog) {
+                BookAppointmentDialog(
+                    patient = patient,
+                    onDismiss = { showBookingDialog = false },
+                    onBookSuccess = { msg ->
+                        scope.launch {
+                            snackbarHostState.showSnackbar(msg)
+                            refreshData()
+                        }
+                    },
+                    onBookError = { err ->
+                        scope.launch {
+                            snackbarHostState.showSnackbar(err)
+                        }
+                    }
+                )
+            }
         }
+    }
+}
+}
+
+@Composable
+fun BookAppointmentDialog(
+    patient: Patient,
+    onDismiss: () -> Unit,
+    onBookSuccess: (String) -> Unit,
+    onBookError: (String) -> Unit
+) {
+    val scope = rememberCoroutineScope()
+    val apiRepository = remember { ApiRepository() }
+
+    var dateText by remember { mutableStateOf(getTodayDateString()) }
+    var selectedTime by remember { mutableStateOf("10:00 AM") }
+    var reason by remember { mutableStateOf("Eye Checkup") }
+    var isBooking by remember { mutableStateOf(false) }
+
+    val times = listOf("09:00 AM", "10:00 AM", "11:30 AM", "02:00 PM", "04:00 PM")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Book Appointment", fontWeight = FontWeight.Bold, color = Color(0xFF1A3B5D))
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Patient: ${patient.name ?: "Patient"}", fontWeight = FontWeight.Medium, color = Color.DarkGray)
+                if (!patient.phone.isNullOrBlank()) {
+                    Text("Phone: ${patient.phone}", fontSize = 12.sp, color = Color.Gray)
+                }
+
+                OutlinedTextField(
+                    value = dateText,
+                    onValueChange = { dateText = it },
+                    label = { Text("Date (YYYY-MM-DD) *") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Text("Select Time *", fontSize = 13.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    times.take(3).forEach { t ->
+                        FilterChip(
+                            selected = (selectedTime == t),
+                            onClick = { selectedTime = t },
+                            label = { Text(t, fontSize = 11.sp) }
+                        )
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    times.drop(3).forEach { t ->
+                        FilterChip(
+                            selected = (selectedTime == t),
+                            onClick = { selectedTime = t },
+                            label = { Text(t, fontSize = 11.sp) }
+                        )
+                    }
+                }
+
+                OutlinedTextField(
+                    value = reason,
+                    onValueChange = { reason = it },
+                    label = { Text("Reason for Visit *") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            if (isBooking) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color(0xFF00D25B))
+            } else {
+                Button(
+                    onClick = {
+                        if (dateText.isBlank() || reason.isBlank()) {
+                            onBookError("Please enter date and reason")
+                            return@Button
+                        }
+                        isBooking = true
+                        scope.launch {
+                            val req = BookAppointmentRequest(
+                                patientId = patient.id,
+                                patientName = patient.name ?: "Patient",
+                                phone = patient.phone ?: "",
+                                email = patient.email ?: "",
+                                date = dateText.trim(),
+                                time = selectedTime,
+                                reason = reason.trim(),
+                                department = "Ophthalmology",
+                                status = "Scheduled",
+                                age = patient.age ?: "",
+                                sex = patient.sex ?: "",
+                                address = patient.address ?: ""
+                            )
+                            val success = apiRepository.bookAppointment(req)
+                            isBooking = false
+                            if (success) {
+                                onBookSuccess("Appointment booked successfully!")
+                                onDismiss()
+                            } else {
+                                onBookError("Failed to book appointment. Please check date or try again.")
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00D25B))
+                ) {
+                    Text("Confirm Booking")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isBooking) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+private fun getTodayDateString(): String {
+    return try {
+        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        "${today.year}-${today.monthNumber.toString().padStart(2, '0')}-${today.dayOfMonth.toString().padStart(2, '0')}"
+    } catch (e: Exception) {
+        "2026-10-02"
     }
 }
 

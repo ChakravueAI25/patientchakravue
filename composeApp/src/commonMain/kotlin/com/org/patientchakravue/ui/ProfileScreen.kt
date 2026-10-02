@@ -38,9 +38,10 @@ fun ProfileScreen(
     onSwitchAccount: (Patient) -> Unit,
     onAddAccount: () -> Unit
 ) {
-    val patientId = sessionManager.getPatient()?.id
-    var patient by remember { mutableStateOf<Patient?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
+    val initialPatient = remember { sessionManager.getPatient() }
+    val patientId = initialPatient?.id
+    var patient by remember { mutableStateOf<Patient?>(initialPatient) }
+    var isLoading by remember { mutableStateOf(false) }
     var isDownloading by remember { mutableStateOf(false) }
     var showAccounts by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -51,13 +52,13 @@ fun ProfileScreen(
 
     LaunchedEffect(patientId) {
         if (patientId != null) {
-            isLoading = true
             scope.launch {
-                patient = apiRepository.getPatientProfile(patientId)
-                isLoading = false
+                val remotePatient = apiRepository.getPatientProfile(patientId)
+                if (remotePatient != null) {
+                    patient = remotePatient
+                    sessionManager.savePatient(remotePatient)
+                }
             }
-        } else {
-            isLoading = false
         }
     }
 

@@ -9,6 +9,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +20,8 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.org.patientchakravue.data.ApiRepository
@@ -42,6 +46,10 @@ fun RegisterScreen(
     val scope = rememberCoroutineScope()
     val api = remember { ApiRepository() }
 
+    // Multi-step form state
+    var step by remember { mutableIntStateOf(1) }
+
+    // Step 1 Fields
     var name by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var sex by remember { mutableStateOf("") }
@@ -57,11 +65,19 @@ fun RegisterScreen(
     var insType by remember { mutableStateOf("") }
     var insCompany by remember { mutableStateOf("") }
     var insTpa by remember { mutableStateOf("") }
-    var submitted by remember { mutableStateOf(false) }
+
+    // Step 2 Fields
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+
+    var submittedStep1 by remember { mutableStateOf(false) }
+    var submittedStep2 by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
-    // Same rules the backend enforces (register.py); the server stays the authority.
-    val errors = buildMap<String, String> {
+    // Step 1 Validation
+    val errorsStep1 = buildMap<String, String> {
         if (name.isBlank()) put("name", "Name is required")
         if (age.toIntOrNull()?.let { it in 1..129 } != true) put("age", "Enter a valid age")
         if (sex.isBlank()) put("sex", "Select sex")
@@ -70,7 +86,15 @@ fun RegisterScreen(
         if (aadhaar.isNotBlank() && !Regex("^\\d{12}$").matches(aadhaar)) put("aadhaar", "Aadhaar must be 12 digits")
         if (pan.isNotBlank() && !Regex("^[A-Z]{5}[0-9]{4}[A-Z]$").matches(pan.uppercase())) put("pan", "Invalid PAN")
     }
-    fun err(key: String) = if (submitted) errors[key] else null
+
+    // Step 2 Validation
+    val errorsStep2 = buildMap<String, String> {
+        if (password.length < 8) put("password", "Password must be at least 8 characters")
+        if (password != confirmPassword) put("confirmPassword", "Passwords do not match")
+    }
+
+    fun err1(key: String) = if (submittedStep1) errorsStep1[key] else null
+    fun err2(key: String) = if (submittedStep2) errorsStep2[key] else null
 
     Column(
         modifier = Modifier
@@ -81,75 +105,152 @@ fun RegisterScreen(
     ) {
         Spacer(Modifier.height(16.dp))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
+            IconButton(
+                onClick = { if (step == 2) step = 1 else onBack() },
+                modifier = Modifier.size(48.dp)
+            ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Navy, modifier = Modifier.size(24.dp))
             }
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Patient Registration", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Navy)
-                Text("Create your patient account", color = Color.Gray, fontSize = 14.sp)
+                Text(
+                    if (step == 1) "Step 1 of 2: Personal Details" else "Step 2 of 2: Set Password",
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
             }
             Spacer(Modifier.size(48.dp))
         }
         Spacer(Modifier.height(24.dp))
 
-        FormSection("Basic Information") {
-            FormField("Full name *", name, { name = it }, err("name"))
-            FormField("Age *", age, { age = it.filter(Char::isDigit).take(3) }, err("age"), KeyboardType.Number)
-            DropdownField("Sex *", sex, SexOptions, { sex = it }, err("sex"))
-            DropdownField("Blood group", bloodType, BloodTypes, { bloodType = it })
-            FormField("Allergies (comma separated)", allergies, { allergies = it })
-        }
-        FormSection("Contact Information") {
-            FormField("Phone number *", phone, { phone = it.filter(Char::isDigit).take(10) }, err("phone"), KeyboardType.Phone)
-            FormField("Email", email, { email = it.trim() }, err("email"), KeyboardType.Email)
-            FormField("Address", address, { address = it }, singleLine = false)
-        }
-        FormSection("Emergency Contact") {
-            FormField("Contact name", ecName, { ecName = it })
-            FormField("Contact phone", ecPhone, { ecPhone = it.filter(Char::isDigit).take(10) }, keyboard = KeyboardType.Phone)
-        }
-        FormSection("Identity & Insurance (optional)") {
-            FormField("Aadhaar number", aadhaar, { aadhaar = it.filter(Char::isDigit).take(12) }, err("aadhaar"), KeyboardType.Number)
-            FormField("PAN number", pan, { pan = it.uppercase().take(10) }, err("pan"))
-            FormField("Insurance type", insType, { insType = it })
-            FormField("Insurance company", insCompany, { insCompany = it })
-            FormField("Insurance TPA", insTpa, { insTpa = it })
-        }
+        if (step == 1) {
+            // STEP 1: Personal Details
+            FormSection("Basic Information") {
+                FormField("Full name *", name, { name = it }, err1("name"))
+                FormField("Age *", age, { age = it.filter(Char::isDigit).take(3) }, err1("age"), KeyboardType.Number)
+                DropdownField("Sex *", sex, SexOptions, { sex = it }, err1("sex"))
+                DropdownField("Blood group", bloodType, BloodTypes, { bloodType = it })
+                FormField("Allergies (comma separated)", allergies, { allergies = it })
+            }
+            FormSection("Contact Information") {
+                FormField("Phone number *", phone, { phone = it.filter(Char::isDigit).take(10) }, err1("phone"), KeyboardType.Phone)
+                FormField("Email", email, { email = it.trim() }, err1("email"), KeyboardType.Email)
+                FormField("Address", address, { address = it }, singleLine = false)
+            }
+            FormSection("Emergency Contact") {
+                FormField("Contact name", ecName, { ecName = it })
+                FormField("Contact phone", ecPhone, { ecPhone = it.filter(Char::isDigit).take(10) }, keyboard = KeyboardType.Phone)
+            }
+            FormSection("Identity & Insurance (optional)") {
+                FormField("Aadhaar number", aadhaar, { aadhaar = it.filter(Char::isDigit).take(12) }, err1("aadhaar"), KeyboardType.Number)
+                FormField("PAN number", pan, { pan = it.uppercase().take(10) }, err1("pan"))
+                FormField("Insurance type", insType, { insType = it })
+                FormField("Insurance company", insCompany, { insCompany = it })
+                FormField("Insurance TPA", insTpa, { insTpa = it })
+            }
 
-        if (isLoading) {
-            CircularProgressIndicator(color = Green)
-        } else {
             Button(
                 onClick = {
-                    submitted = true
-                    if (errors.isNotEmpty()) {
+                    submittedStep1 = true
+                    if (errorsStep1.isNotEmpty()) {
                         showSnackbar("Please fix the highlighted fields")
                         return@Button
                     }
-                    isLoading = true
-                    scope.launch {
-                        try {
-                            val (res, message) = api.registerPatient(
-                                RegisterRequest(
-                                    name = name.trim(), age = age, sex = sex, phone = phone,
-                                    email = email, address = address.trim(), bloodType = bloodType,
-                                    aadhaarNumber = aadhaar, panNumber = pan.uppercase(),
-                                    insuranceType = insType.trim(), insuranceCompany = insCompany.trim(),
-                                    insuranceTPA = insTpa.trim(), allergies = allergies.trim(),
-                                    emergencyContactName = ecName.trim(), emergencyContactPhone = ecPhone,
-                                    deviceId = getDeviceId()
-                                )
-                            )
-                            if (res != null) onRegistered(res) else showSnackbar(message ?: "Registration failed")
-                        } finally {
-                            isLoading = false
-                        }
-                    }
+                    step = 2
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Green, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(25.dp)
-            ) { Text("Register", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+            ) {
+                Text("Next: Set Password", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+        } else {
+            // STEP 2: Password Setup
+            FormSection("Account Password") {
+                Text(
+                    "Create a password to secure your patient account. You will use your Name or Registration ID with this password to log in.",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                PasswordField(
+                    label = "Password *",
+                    value = password,
+                    onChange = { password = it },
+                    isVisible = passwordVisible,
+                    onToggleVisibility = { passwordVisible = !passwordVisible },
+                    error = err2("password")
+                )
+
+                PasswordField(
+                    label = "Confirm Password *",
+                    value = confirmPassword,
+                    onChange = { confirmPassword = it },
+                    isVisible = confirmPasswordVisible,
+                    onToggleVisibility = { confirmPasswordVisible = !confirmPasswordVisible },
+                    error = err2("confirmPassword")
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            if (isLoading) {
+                CircularProgressIndicator(color = Green)
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { step = 1 },
+                        modifier = Modifier.weight(1f).height(50.dp),
+                        shape = RoundedCornerShape(25.dp)
+                    ) {
+                        Text("Back", fontSize = 16.sp, color = Navy)
+                    }
+
+                    Button(
+                        onClick = {
+                            submittedStep2 = true
+                            if (errorsStep2.isNotEmpty()) {
+                                showSnackbar(errorsStep2.values.first())
+                                return@Button
+                            }
+                            isLoading = true
+                            scope.launch {
+                                try {
+                                    val (res, message) = api.registerPatient(
+                                        RegisterRequest(
+                                            name = name.trim(), age = age, sex = sex, phone = phone,
+                                            email = email, address = address.trim(), bloodType = bloodType,
+                                            aadhaarNumber = aadhaar, panNumber = pan.uppercase(),
+                                            insuranceType = insType.trim(), insuranceCompany = insCompany.trim(),
+                                            insuranceTPA = insTpa.trim(), allergies = allergies.trim(),
+                                            emergencyContactName = ecName.trim(), emergencyContactPhone = ecPhone,
+                                            deviceId = getDeviceId(),
+                                            password = password,
+                                            confirmPassword = confirmPassword
+                                        )
+                                    )
+                                    if (res != null) {
+                                        onRegistered(res)
+                                    } else {
+                                        showSnackbar(message ?: "Registration failed")
+                                    }
+                                } finally {
+                                    isLoading = false
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Green, contentColor = Color.White),
+                        modifier = Modifier.weight(2f).height(50.dp),
+                        shape = RoundedCornerShape(25.dp)
+                    ) {
+                        Text("Register", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
         }
         Spacer(Modifier.height(24.dp))
     }
@@ -176,26 +277,21 @@ fun RegistrationSuccessScreen(
         Text("Registration Successful", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Navy)
         Spacer(Modifier.height(4.dp))
         Text(
-            "Save these details. You will use them to sign in.",
+            "Your patient account is ready! Use your Name or Registration ID to log in.",
             color = Color.Gray, fontSize = 14.sp
         )
         Spacer(Modifier.height(24.dp))
         Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
             Column(Modifier.padding(16.dp)) {
-                CredentialRow("Username", credentials.username) {
+                CredentialRow("Username (Name)", credentials.username) {
                     clipboard.setText(AnnotatedString(credentials.username)); showSnackbar("Username copied")
                 }
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                CredentialRow("Password", credentials.password) {
-                    clipboard.setText(AnnotatedString(credentials.password)); showSnackbar("Password copied")
+                CredentialRow("Registration ID", credentials.registrationId) {
+                    clipboard.setText(AnnotatedString(credentials.registrationId)); showSnackbar("Registration ID copied")
                 }
             }
         }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "This password is shown only once.",
-            color = Color(0xFFD32F2F), fontSize = 13.sp, fontWeight = FontWeight.Medium
-        )
         Spacer(Modifier.height(24.dp))
         if (isLoading) {
             CircularProgressIndicator(color = Green)
@@ -205,13 +301,17 @@ fun RegistrationSuccessScreen(
                     isLoading = true
                     scope.launch {
                         try {
-                            val patient = api.login(credentials.username, credentials.password)
+                            // Try logging in with the username/name first, fallback to registrationId if needed
+                            var patient = api.login(credentials.username, credentials.password)
+                            if (patient == null) {
+                                patient = api.login(credentials.registrationId, credentials.password)
+                            }
                             if (patient != null) {
                                 sessionManager.savePatient(patient)
                                 registerFcmTokenAfterLogin(patient.id)
                                 onContinue()
                             } else {
-                                showSnackbar("Could not sign in. Please try again.")
+                                showSnackbar("Could not sign in automatically. Please log in manually.")
                             }
                         } finally {
                             isLoading = false
@@ -221,7 +321,7 @@ fun RegistrationSuccessScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = Green, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(25.dp)
-            ) { Text("Sign in", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+            ) { Text("Sign In Now", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
         }
     }
 }
@@ -231,7 +331,7 @@ private fun CredentialRow(label: String, value: String, onCopy: () -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(label, color = Color.Gray, fontSize = 12.sp)
-            Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Navy)
+            Text(value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Navy)
         }
         TextButton(onClick = onCopy) { Text("Copy") }
     }
@@ -265,6 +365,34 @@ private fun FormField(
         supportingText = error?.let { { Text(it) } },
         keyboardOptions = KeyboardOptions(keyboardType = keyboard),
         singleLine = singleLine,
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+private fun PasswordField(
+    label: String,
+    value: String,
+    onChange: (String) -> Unit,
+    isVisible: Boolean,
+    onToggleVisibility: () -> Unit,
+    error: String? = null
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onChange,
+        label = { Text(label) },
+        isError = error != null,
+        supportingText = error?.let { { Text(it) } },
+        visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        trailingIcon = {
+            val image = if (isVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+            IconButton(onClick = onToggleVisibility) {
+                Icon(imageVector = image, contentDescription = "Toggle password visibility")
+            }
+        },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        singleLine = true,
         modifier = Modifier.fillMaxWidth()
     )
 }

@@ -1,6 +1,7 @@
 package com.org.patientchakravue.data
 
 import com.org.patientchakravue.model.AdherenceResponse
+import com.org.patientchakravue.model.BookAppointmentRequest
 import com.org.patientchakravue.model.ChatMessage
 import com.org.patientchakravue.model.DoctorNote
 import com.org.patientchakravue.model.DoseItem
@@ -92,7 +93,7 @@ object RemoteLogger {
 class ApiRepository {
     // PUBLIC BASE URL for use by UI components (e.g., image loading)
     companion object {
-        const val BASE_URL = "https://admin.chakravue.co.in/api/mobile"
+        const val BASE_URL = "https://grovelingly-stey-armani.ngrok-free.dev"
     }
 
     private val baseUrl = BASE_URL
@@ -420,6 +421,30 @@ class ApiRepository {
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+
+    // Book Appointment for Patient
+    suspend fun bookAppointment(req: BookAppointmentRequest): Boolean {
+        return try {
+            // Try canonical endpoint /api/mobile/appointments, then /appointments
+            val response = NetworkClient.client.post("$baseUrl/api/mobile/appointments") {
+                contentType(ContentType.Application.Json)
+                setBody(req)
+            }
+            if (response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK) {
+                true
+            } else if (response.status == HttpStatusCode.NotFound) {
+                // Fallback to legacy path /appointments
+                val legacyResponse = NetworkClient.client.post("$baseUrl/appointments") {
+                    contentType(ContentType.Application.Json)
+                    setBody(req)
+                }
+                legacyResponse.status == HttpStatusCode.Created || legacyResponse.status == HttpStatusCode.OK
+            } else false
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
     }
 

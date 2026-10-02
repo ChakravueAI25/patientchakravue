@@ -221,6 +221,22 @@ data class UpcomingAppointmentsResponse(
     @SerialName("next_appointment") val nextAppointment: AppointmentItem? = null
 )
 
+@Serializable
+data class BookAppointmentRequest(
+    @SerialName("patient_id") val patientId: String,
+    @SerialName("patient_name") val patientName: String,
+    val phone: String = "",
+    val email: String = "",
+    val date: String,
+    val time: String = "10:00 AM",
+    val reason: String = "General Checkup",
+    val department: String = "Ophthalmology",
+    val status: String = "Scheduled",
+    val age: String = "",
+    val sex: String = "",
+    val address: String = ""
+)
+
 // --- Video Call Models ---
 @Serializable
 data class CallTokenResponse(
@@ -254,7 +270,9 @@ data class RegisterRequest(
     val allergies: String = "",
     val emergencyContactName: String = "",
     val emergencyContactPhone: String = "",
-    @SerialName("device_id") val deviceId: String
+    @SerialName("device_id") val deviceId: String,
+    val password: String = "",
+    @SerialName("confirmPassword") val confirmPassword: String = ""
 )
 
 @Serializable
