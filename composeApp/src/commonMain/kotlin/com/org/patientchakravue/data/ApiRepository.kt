@@ -6,6 +6,7 @@ import com.org.patientchakravue.model.DoctorNote
 import com.org.patientchakravue.model.DoseItem
 import com.org.patientchakravue.model.LoginRequest
 import com.org.patientchakravue.model.Patient
+import com.org.patientchakravue.model.RegisterResponse
 import com.org.patientchakravue.model.VisionTestRecord
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -16,6 +17,8 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -64,12 +67,28 @@ class ApiRepository {
     suspend fun registerPatient(req: com.org.patientchakravue.model.RegisterRequest):
             Pair<com.org.patientchakravue.model.RegisterResponse?, String?> {
         return try {
-            val response = NetworkClient.client.post("$baseUrl/register") {
+            // Try canonical endpoint first: /api/mobile/register
+            val response = NetworkClient.client.post("$baseUrl/api/mobile/register") {
                 contentType(ContentType.Application.Json)
                 setBody(req)
             }
             if (response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK) {
                 response.body<com.org.patientchakravue.model.RegisterResponse>() to null
+            } else if (response.status == HttpStatusCode.NotFound) {
+                // Fallback to legacy alias endpoint: /register
+                val legacyResponse = NetworkClient.client.post("$baseUrl/register") {
+                    contentType(ContentType.Application.Json)
+                    setBody(req)
+                }
+                if (legacyResponse.status == HttpStatusCode.Created || legacyResponse.status == HttpStatusCode.OK) {
+                    legacyResponse.body<RegisterResponse>() to null
+                } else {
+                    val detail = try {
+                        (Json.parseToJsonElement(legacyResponse.bodyAsText()) as? JsonObject)
+                            ?.get("detail")?.let { (it as? JsonPrimitive)?.content }
+                    } catch (e: Exception) { null }
+                    null to (detail ?: "Registration failed (${legacyResponse.status.value})")
+                }
             } else {
                 val detail = try {
                     (Json.parseToJsonElement(response.bodyAsText()) as? kotlinx.serialization.json.JsonObject)
