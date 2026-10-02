@@ -1,5 +1,6 @@
 package com.org.patientchakravue.ui
 
+import com.org.patientchakravue.data.ApiRepository
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -47,7 +48,7 @@ fun FeedbackDetailScreen(
             if (note.details?.imageId != null) {
                 Card(modifier = Modifier.fillMaxWidth().height(250.dp)) {
                     AsyncImage(
-                        model = "https://patient.chakravue.co.in/images/${note.details.imageId}",
+                        model = "${ApiRepository.BASE_URL}/images/${note.details.imageId}",
                         contentDescription = "Eye Photo",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
