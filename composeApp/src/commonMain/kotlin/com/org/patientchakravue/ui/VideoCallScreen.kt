@@ -11,5 +11,7 @@ import androidx.compose.runtime.Composable
 expect fun VideoCallScreen(
     channelName: String,
     doctorId: String,
+    agoraToken: String? = null,
+    appId: String? = null,
     onCallEnded: () -> Unit
 )

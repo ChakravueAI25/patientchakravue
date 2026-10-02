@@ -19,18 +19,22 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.AnimatedContentTransitionScope
 
+import com.org.patientchakravue.model.CallData
+
 @Composable
 fun App(
-    initialCallData: Pair<String, String>? = null,
-    liveCallData: Pair<String, String>? = null
+    initialCallData: CallData? = null,
+    liveCallData: CallData? = null
 ) {
     AppTheme {
         AppLocalizationProvider {
             val sessionManager = remember { SessionManager() }
             val initialScreen = when {
                 initialCallData != null -> Screen.VideoCall(
-                    initialCallData.first,
-                    initialCallData.second
+                    initialCallData.channelName,
+                    initialCallData.doctorId,
+                    initialCallData.agoraToken,
+                    initialCallData.appId
                 )
 
                 sessionManager.getPatient() != null ->
@@ -50,7 +54,12 @@ fun App(
             LaunchedEffect(liveCallData) {
                 if (liveCallData != null && sessionManager.getPatient() != null) {
                     navigator.navigateAsPillar(
-                        Screen.VideoCall(liveCallData.first, liveCallData.second)
+                        Screen.VideoCall(
+                            liveCallData.channelName,
+                            liveCallData.doctorId,
+                            liveCallData.agoraToken,
+                            liveCallData.appId
+                        )
                     )
                 }
             }
@@ -315,6 +324,8 @@ fun App(
                     is Screen.VideoCall -> VideoCallScreen(
                         screen.channelName,
                         screen.doctorId,
+                        screen.agoraToken,
+                        screen.appId,
                         { navigator.navigateAsPillar(Screen.Dashboard) }
                     )
 

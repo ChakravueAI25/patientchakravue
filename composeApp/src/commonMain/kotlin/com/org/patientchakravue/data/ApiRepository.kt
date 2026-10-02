@@ -10,12 +10,16 @@ import com.org.patientchakravue.model.RegisterResponse
 import com.org.patientchakravue.model.VisionTestRecord
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
-import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -36,6 +40,51 @@ object NetworkClient {
             })
         }
         // Logging removed in production for smaller APK size
+        // Forward every failed call (non-2xx and network/timeout) to the backend
+        // "mobile_app" logger so errors are visible in the server logs.
+        HttpResponseValidator {
+            validateResponse { response ->
+                if (!response.status.isSuccess()) {
+                    RemoteLogger.report(
+                        "error",
+                        "HTTP ${response.status.value} ${response.request.method.value} ${response.request.url.encodedPath}"
+                    )
+                }
+            }
+            handleResponseExceptionWithRequest { cause, request ->
+                RemoteLogger.report(
+                    "error",
+                    "NET ${request.method.value} ${request.url.encodedPath} :: ${cause.message}"
+                )
+                throw cause
+            }
+        }
+    }
+}
+
+/** Fire-and-forget client error reporter -> backend "mobile_app" logger. */
+object RemoteLogger {
+    private const val APP = "patient"
+    private val scope = CoroutineScope(Dispatchers.Default)
+    // Own client with NO validator, so a failing report never recurses.
+    private val client = HttpClient {
+        install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+    }
+
+    fun report(level: String, message: String, context: String? = null) {
+        scope.launch {
+            runCatching {
+                client.post("${ApiRepository.BASE_URL}/client-logs") {
+                    contentType(ContentType.Application.Json)
+                    setBody(
+                        mapOf(
+                            "app" to APP, "level" to level,
+                            "message" to message, "context" to (context ?: "")
+                        )
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -43,7 +92,7 @@ object NetworkClient {
 class ApiRepository {
     // PUBLIC BASE URL for use by UI components (e.g., image loading)
     companion object {
-        const val BASE_URL = "https://patient.chakravue.co.in"
+        const val BASE_URL = "https://admin.chakravue.co.in/api/mobile"
     }
 
     private val baseUrl = BASE_URL

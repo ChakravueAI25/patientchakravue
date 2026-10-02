@@ -1,6 +1,7 @@
 package com.org.patientchakravue
 
 import android.Manifest
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
@@ -29,6 +30,8 @@ import com.org.patientchakravue.platform.androidContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+import com.org.patientchakravue.model.CallData
 
 class MainActivity : ComponentActivity() {
 
@@ -72,11 +75,14 @@ class MainActivity : ComponentActivity() {
 
         // Check if launched from a call notification (cold start / killed app)
         val targetScreen = intent.getStringExtra("target_screen")
+        val type = intent.getStringExtra("type")
         val channelName = intent.getStringExtra("channel_name")
         val doctorId = intent.getStringExtra("doctor_id")
+        val agoraToken = intent.getStringExtra("agora_token")
+        val appId = intent.getStringExtra("app_id")
 
         // If this is a call intent AND the patient is logged in, skip the splash entirely
-        val isCallIntent = targetScreen == "call_screen" && !channelName.isNullOrEmpty()
+        val isCallIntent = (targetScreen == "call_screen" || type == "incoming_call") && !channelName.isNullOrEmpty()
         val session = SessionManager()
         val isLoggedIn = session.getPatient() != null
 
@@ -115,7 +121,7 @@ class MainActivity : ComponentActivity() {
                 App(
                     // Cold-start call intent: pass channel directly as initialCallData
                     initialCallData = if (isCallIntent && isLoggedIn) {
-                        Pair(channelName, doctorId ?: "unknown")
+                        CallData(channelName!!, doctorId ?: "unknown", agoraToken, appId)
                     } else null,
                     // Live call data: pushed by onNewIntent when app is already running
                     liveCallData = liveCallData
@@ -133,17 +139,20 @@ class MainActivity : ComponentActivity() {
         setIntent(intent) // Keep intent fresh for any future reads
 
         val targetScreen = intent.getStringExtra("target_screen")
+        val type = intent.getStringExtra("type")
         val channelName = intent.getStringExtra("channel_name")
         val doctorId = intent.getStringExtra("doctor_id")
+        val agoraToken = intent.getStringExtra("agora_token")
+        val appId = intent.getStringExtra("app_id")
 
-        if (targetScreen == "call_screen" && !channelName.isNullOrEmpty()) {
+        if ((targetScreen == "call_screen" || type == "incoming_call") && !channelName.isNullOrEmpty()) {
             // Patient answered while the app was open -> silence the ring.
             com.org.patientchakravue.firebase.IncomingCallRingtone.stop()
             val session = SessionManager()
             if (session.getPatient() != null) {
                 Log.d("MainActivity", "onNewIntent: routing to video call channel=$channelName")
                 // Push the call data — App's LaunchedEffect will navigate immediately
-                liveCallData.value = Pair(channelName, doctorId ?: "unknown")
+                liveCallData.value = CallData(channelName, doctorId ?: "unknown", agoraToken, appId)
             }
         }
     }
@@ -169,13 +178,8 @@ class MainActivity : ComponentActivity() {
                 setShowBadge(true)
             }
 
-            // 2. Incoming Calls Channel (HIGH importance, full-screen + vibration).
-            // Versioned id (_v2) because channels are immutable once created — this
-            // forces a clean channel on devices that had the old build's channel.
-            // Sound is intentionally OFF here: the continuous ring is played by
-            // IncomingCallRingtone (a looping MediaPlayer), so we suppress the
-            // channel's one-shot sound to avoid a double chime.
-            val callChannel = NotificationChannel(
+            // 2. Incoming Calls Channel (v2)
+            val callChannelV2 = NotificationChannel(
                 "call_channel_id_v2",
                 "Incoming Calls",
                 NotificationManager.IMPORTANCE_HIGH
@@ -187,7 +191,20 @@ class MainActivity : ComponentActivity() {
                 lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             }
 
-            // 3. Default/General Channel
+            // 3. Incoming Calls Channel (Legacy ID matching backend payload)
+            val callChannelLegacy = NotificationChannel(
+                "call_channel_id",
+                "Incoming Calls",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Incoming doctor video calls"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 500, 200, 500)
+                setSound(null, null)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            }
+
+            // 4. Default/General Channel
             val generalChannel = NotificationChannel(
                 "default_channel_id",
                 "General Notifications",
@@ -197,7 +214,7 @@ class MainActivity : ComponentActivity() {
             }
 
             manager.createNotificationChannels(
-                listOf(medicineChannel, callChannel, generalChannel)
+                listOf(medicineChannel, callChannelV2, callChannelLegacy, generalChannel)
             )
             Log.d("FCM", "Notification channels created")
         }
@@ -264,9 +281,9 @@ class MainActivity : ComponentActivity() {
         /**
          * Observable live call data. Updated by onNewIntent when app is already open.
          * App composable observes this and navigates directly to VideoCall screen.
-         * Value is Pair(channelName, doctorId) or null when no active call intent.
+         * Value is CallData or null when no active call intent.
          */
-        val liveCallData = mutableStateOf<Pair<String, String>?>(null)
+        val liveCallData = mutableStateOf<CallData?>(null)
 
         /**
          * Static helper to register FCM token after login.
